@@ -3,6 +3,7 @@
 from collections.abc import Callable
 
 from agentcore_eval.harness import InvokeResult, RuntimeHarness, SessionHandle
+from agentcore_eval.tags import DatasetTags
 
 
 class EvalContext:
@@ -30,13 +31,17 @@ class Eval:
         act: Hook,
         assert_: Hook,
         setup: Hook | None = None,
+        tags: DatasetTags | None = None,
     ) -> None:
         if not name or any(char.isspace() for char in name):
             raise ValueError("eval name must be a non-empty slug without spaces")
         if not rubric.strip():
             raise ValueError("rubric is required")
+        if tags is not None and not isinstance(tags, DatasetTags):
+            raise ValueError("tags must be a DatasetTags instance")
         self.name = name
         self.rubric = rubric
         self.act = act
         self.assert_ = assert_
         self.setup = setup
+        self.tags = tags

@@ -24,6 +24,8 @@ def write_evidence(directory: Path, verdict: Verdict, bundle: TraceBundle) -> Pa
         "spans": [span.as_dict() for span in bundle.spans],
         "status": verdict.status.value,
     }
+    if verdict.tags is not None:
+        body.update(verdict.tags.as_dict())
     text = json.dumps(body, indent=2, sort_keys=True) + "\n"
     assert_no_resource_arn(text)
     path = directory / f"{verdict.eval_name}.json"

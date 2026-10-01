@@ -67,3 +67,7 @@ Real Runtime: add `--harness runtime` after `AWS_ACCESS_KEY_ID`, `AWS_REGION`, `
 Do not start a second writer until a coordinator leases a free path. Lane B/C/D are the first parallel wave **after** an independent judge PASS on the real Runtime golden eval. Until that PASS exists, extra writers multiply unproven merges. Scouts may write under `docs/capability-maps/` only.
 
 If your task needs `agentcore-session` and `agentcore-tools` in one PR, split it. Memory waits on guardrails (guard before write).
+
+## Hill-climbing
+
+Once Runtime and tracing are hooked up, harness changes follow [docs/evals/hill-climbing.md](docs/evals/hill-climbing.md): source and tag cases, split optimization from holdout, record a baseline, make one harness change, check regressions, human review, then promote or prune. `uv run python -m agentcore_eval.hillclimb steps` prints the commands. A climb diff is not an independent Runtime verdict. This repo has not recorded a production climb.
