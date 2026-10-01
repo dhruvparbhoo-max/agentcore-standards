@@ -11,6 +11,8 @@ tear_down(session)
 
 `run_eval` / `run_suite` return `PASS`, `PASS+NOTES`, or `FAIL` and write an evidence JSON file. They always capture traces and tear the session down, including on failure.
 
+`python -m agentcore_eval.judge` is the separate judge process. It records the lifecycle (`start`, `invoke`, `capture_traces`, `tear_down`) into `verdict.json`. See [docs/eval-pass-path.md](../../docs/eval-pass-path.md).
+
 | Type | Role |
 | --- | --- |
 | `InMemoryRuntimeHarness` | Calls a Python entrypoint in-process. Default golden path. |

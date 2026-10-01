@@ -1,20 +1,14 @@
 """Golden eval: in-memory by default, real AgentCore Runtime when configured."""
 
-import os
 from pathlib import Path
 
 import pytest
-from agentcore_eval import VerdictStatus, run_suite
+from agentcore_eval import VerdictStatus, missing_runtime_settings, run_suite
 from minimal_agent import AGENT_VERSION, MinimalAgentHarness
 
 _EVALS = Path(__file__).resolve().parents[1] / "evals"
 _RUNTIME = pytest.mark.runtime
-_MISSING_RUNTIME = not (
-    os.environ.get("AGENTCORE_RUNTIME_ARN")
-    and os.environ.get("AWS_REGION")
-    and os.environ.get("AWS_ACCESS_KEY_ID")
-    and os.environ.get("AGENTCORE_SPAN_LOG_GROUP")
-)
+_MISSING_RUNTIME = bool(missing_runtime_settings())
 
 
 def test_golden_turn_on_in_memory_harness(tmp_path: Path) -> None:

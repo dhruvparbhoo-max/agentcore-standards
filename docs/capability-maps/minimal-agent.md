@@ -18,6 +18,8 @@ Input payload: `{"prompt": "<non-empty string>"}`. Any other JSON type for `prom
 
 In-process eval driver: `MinimalAgentHarness()`. Service driver: `MinimalAgentHarness.for_agentcore_runtime()` when `AGENTCORE_RUNTIME_ARN`, `AWS_REGION`, credentials, and `AGENTCORE_SPAN_LOG_GROUP` are set in the environment.
 
+Judge process, from the repo root: `PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge --evidence-dir evidence/judge`. Add `--harness runtime` for the service. Evidence is `evidence/judge/verdict.json` and `evidence/judge/minimal-agent.golden-turn.json`. The PASS path is [docs/eval-pass-path.md](../eval-pass-path.md).
+
 Actor id on the in-process path is request header `x-agentcore-actor-id`, set by `handle_turn`. The session package will own actor identity later. Until then a hosted Runtime call that does not send the header logs `actorId` as `unknown`.
 
 ## Observable

@@ -25,3 +25,11 @@ jobs:
         run: uv run pytest -m "not runtime"
       - name: Path bans
         run: uv run python scripts/check_boundaries.py
+      - name: Judge mock golden eval
+        run: PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge --evidence-dir evidence/judge
+      - name: Upload judge evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: minimal-agent-judge-evidence
+          path: evidence/judge
+          if-no-files-found: error
