@@ -1,6 +1,6 @@
 # pstack and AgentCore skills
 
-pstack (poteto-mode, its playbooks, and the principle skills) is the general method. Skills in this repo exist only for the AgentCore gap: `RuntimeHarness`, the independent Runtime judge, path leases, the failing-gate order, and `docs/capability-maps/`.
+pstack (poteto-mode, its playbooks, and the principle skills) is the general method. Skills in this repo exist only for the AgentCore gap: `RuntimeHarness`, the independent Runtime judge, path leases, the failing-gate order, `docs/capability-maps/`, eval-case shape, Gateway tool registration, loop evidence, and the production-miss path that stops at an eval.
 
 Read this before adding a skill. If a row already says to use pstack, do not write a second copy under `skills/`.
 
@@ -16,7 +16,7 @@ Repo skills live in `skills/<name>/SKILL.md` (DESIGN §8.5). They are not a seco
 | **architect** | Types and module shape before code. | None. DESIGN §2 is the catalog. A sketch does not widen a lease. |
 | **interrogate** | Adversarial multi-model review of a diff. | Review is not the ship gate. The ship gate is `agentcore-judge`. |
 | **arena** | Several implementations of one artifact. Keep a base, graft the rest. | None. |
-| **Eval playbook** (`poteto-mode/playbooks/eval.md`) | Blinded bakeoff of agent variants. | A different judge from the Runtime ship check. |
+| **Eval playbook** (`poteto-mode/playbooks/eval.md`) | Blinded bakeoff of agent variants. | A different judge from the Runtime ship check. Authoring one case is `agentcore-eval-dataset`. |
 | **figure-it-out** | Large or odd work that matches no narrower playbook. | None. |
 | **blast-radius** | What a change can break outside the diff, proved by running code. | None. Scouts use this. The surface list they consult is the capability map. |
 | **create-verification-skill** | A project with a UI, CLI, or service and no scripted way to drive it. | Do not run it here. Proof is `RuntimeHarness`. Maps stay in `docs/capability-maps/`. |
@@ -24,7 +24,7 @@ Repo skills live in `skills/<name>/SKILL.md` (DESIGN §8.5). They are not a seco
 | **principle-prove-it-works** | Before calling any task done. Check the real artifact. | Then `agentcore-verify` for the harness, evidence file, and ship bar. |
 | **principle-separate-before-serializing-shared-state** | Two actors would write one worktree, branch, or file. | Then `agentcore-lease` for the path prefix. |
 | **principle-sequence-verifiable-units** | Stacking commits and PRs so each step can be checked. | Lease one path. Land with the Shipping playbook after a Runtime verdict. |
-| **principle-encode-lessons-in-structure** | The same correction is about to become another paragraph. | Then `agentcore-encode-miss` for the order: red eval or CI gate, then the fix. |
+| **principle-encode-lessons-in-structure** | The same correction is about to become another paragraph. | Then `agentcore-encode-miss` for the order: red eval or CI gate, then the fix. A production recurrence that someone wants to train away continues at `agentcore-experience-to-gate`. |
 | **principle-make-operations-idempotent** | Retries must converge. | None as a skill. A side-effecting tool still needs a double-invoke eval (DESIGN §1.6). |
 | **swarm** | Parallel coverage or exploration. | Workers still take one lease each. |
 | **Orchestrate playbook** | A standing coordinator and many stacked PRs. | Briefs still name one path. Spawn text is DESIGN §8.8. |
@@ -54,3 +54,9 @@ When the metric is an AgentCore behavior:
 | `skills/agentcore-lease/` | One `packages/<name>/` or one `templates/<name>/` per PR. |
 | `skills/agentcore-encode-miss/` | Reproduce, add a failing eval or CI gate, confirm red, then fix. |
 | `skills/agentcore-capability-map/` | Edit `docs/capability-maps/` when a driveable surface changes. |
+| `skills/agentcore-eval-dataset/` | Author one eval case: four-part task, deterministic checks, anti-cheat. The ship gate stays `agentcore-judge`. |
+| `skills/agentcore-tool-register/` | Register a Gateway tool: goal-shaped schema, argument fidelity, deny-by-default, double-invoke evidence. Idempotency itself stays DESIGN §1.6. |
+| `skills/agentcore-loop-verifier/` | An agent "done" claim needs evidence the model cannot edit. Budgets fail closed. |
+| `skills/agentcore-experience-to-gate/` | A repeated production miss becomes a failing eval, then a doc or skill. Weight updates stay out of this repo. |
+
+Tool-catalog disclosure, MCP versus skills, and the four-layer fault map stay in `docs/tools/` and `docs/runtime/error-recovery.md`. They are not extra skills. `agentcore-encode-miss` remains the red-then-fix order; `agentcore-experience-to-gate` only chooses the artifact and blocks a training detour.

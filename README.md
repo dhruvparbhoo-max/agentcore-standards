@@ -2,7 +2,7 @@
 
 Standards library for coding agents and humans building on [Amazon Bedrock AgentCore](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/what-is-bedrock-agentcore.html). This repository holds versioned Python primitives, runnable agent templates, and the eval harness those templates share. It is not a hosted platform.
 
-Normative rules live in [docs/DESIGN.md](docs/DESIGN.md). Path leases for parallel agents live in [AGENTS.md](AGENTS.md) (DESIGN §8).
+Normative rules live in [docs/DESIGN.md](docs/DESIGN.md). Path leases for parallel agents live in [AGENTS.md](AGENTS.md) (DESIGN §8). Playbooks for eval cases, tools, recovery, and production misses are indexed in [docs/README.md](docs/README.md). Those pages restate selected rules from Bojie Li's *AI Agent* skill pack for AgentCore; the credit matrix is [docs/attribution/bojieli-ai-agent-book.md](docs/attribution/bojieli-ai-agent-book.md).
 
 Lane A is the root of every later stack: `agentcore-tracing`, `agentcore-eval`, and `templates/minimal-agent`, with one golden eval. `agentcore-tools` is implemented. Session, memory, and guardrails are path stubs only.
 
@@ -22,10 +22,12 @@ templates/multi-agent/          stub
 templates/human-in-the-loop/    stub
 experiments/                    messy drafts allowed; templates and packages must not import them
 docs/DESIGN.md                  team standards
+docs/README.md                  index of playbooks (evals, tools, runtime, ops)
 docs/capability-maps/           how to drive a template and what observable proves it
-docs/evals/                     eval pack index and the hill-climbing rhythm
+docs/evals/                     eval pack index, dataset design, hill-climbing
 docs/skills/pstack-vs-agentcore.md   pstack skill to run, and the AgentCore skill if one exists
-skills/                         verify, judge, lease, encode-miss, capability map
+docs/attribution/               credit for distilled playbooks
+skills/                         verify, judge, lease, encode-miss, capability map, eval-dataset, tool-register, loop-verifier, experience-to-gate
 ```
 
 ## Two different things named like a harness
