@@ -1,0 +1,348 @@
+{
+  "schema_version": "agentcore-standards.golden.v1",
+  "suite": "business",
+  "scenarios": [
+    {
+      "scenario_id": "invoice.lookup-open",
+      "turns": [
+        {
+          "input": {
+            "prompt": "What is the open balance on invoice INV-1042?",
+            "tool": "invoice.lookup",
+            "args": {"invoice_id": "INV-1042"}
+          },
+          "expected_response": "Invoice INV-1042 is open with a balance of 1250.00 USD."
+        }
+      ],
+      "expected_trajectory": ["invoice.lookup"],
+      "assertions": [
+        "The reply names invoice INV-1042 and states the open balance 1250.00 USD."
+      ],
+      "metadata": {
+        "actor_id": "actor-ap-clerk",
+        "shelf": "tools",
+        "outcomes": [
+          {
+            "status": "ok",
+            "tool_calls": ["invoice.lookup"],
+            "replayed": false,
+            "balance": "1250.00"
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "invoice.lookup-missing",
+      "turns": [
+        {
+          "input": {
+            "prompt": "What is the open balance on invoice INV-9999?",
+            "tool": "invoice.lookup",
+            "args": {"invoice_id": "INV-9999"}
+          },
+          "expected_response": "Invoice INV-9999 was not found."
+        }
+      ],
+      "expected_trajectory": ["invoice.lookup"],
+      "assertions": [
+        "A missing invoice returns not-found and does not invent a balance."
+      ],
+      "metadata": {
+        "actor_id": "actor-ap-clerk",
+        "shelf": "tools",
+        "outcomes": [
+          {
+            "status": "not_found",
+            "tool_calls": ["invoice.lookup"],
+            "replayed": false,
+            "balance": null,
+            "result_excludes": ["USD", "1250.00"]
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "invoice.record-payment-idempotent",
+      "turns": [
+        {
+          "input": {
+            "prompt": "Record a payment of 100.00 USD on invoice INV-1042.",
+            "tool": "invoice.record_payment",
+            "args": {
+              "invoice_id": "INV-1042",
+              "amount": "100.00",
+              "idempotency_key": "pay-1042-100"
+            }
+          },
+          "expected_response": "Recorded 100.00 USD against INV-1042. Balance is 1150.00 USD."
+        },
+        {
+          "input": {
+            "prompt": "Record the same 100.00 USD payment on invoice INV-1042 again.",
+            "tool": "invoice.record_payment",
+            "args": {
+              "invoice_id": "INV-1042",
+              "amount": "100.00",
+              "idempotency_key": "pay-1042-100"
+            }
+          },
+          "expected_response": "Recorded 100.00 USD against INV-1042. Balance is 1150.00 USD."
+        }
+      ],
+      "expected_trajectory": ["invoice.record_payment", "invoice.record_payment"],
+      "assertions": [
+        "The first payment reduces INV-1042 by 100.00 USD.",
+        "The second call uses the same idempotency key and leaves the balance at 1150.00 USD."
+      ],
+      "metadata": {
+        "actor_id": "actor-ap-clerk",
+        "shelf": "tools",
+        "outcomes": [
+          {
+            "status": "ok",
+            "tool_calls": ["invoice.record_payment"],
+            "replayed": false,
+            "balance": "1150.00"
+          },
+          {
+            "status": "ok",
+            "tool_calls": ["invoice.record_payment"],
+            "replayed": true,
+            "balance": "1150.00"
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "crm.lookup-account",
+      "turns": [
+        {
+          "input": {
+            "prompt": "Look up CRM account acct-100.",
+            "tool": "crm.lookup_account",
+            "args": {"account_id": "acct-100"}
+          },
+          "expected_response": "Account acct-100 is Northwind Traders, owner ap-clerk."
+        }
+      ],
+      "expected_trajectory": ["crm.lookup_account"],
+      "assertions": [
+        "The reply names account acct-100 as Northwind Traders owned by ap-clerk."
+      ],
+      "metadata": {
+        "actor_id": "actor-crm",
+        "shelf": "tools",
+        "outcomes": [
+          {
+            "status": "ok",
+            "tool_calls": ["crm.lookup_account"],
+            "replayed": false,
+            "balance": null
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "crm.write-note-denied",
+      "turns": [
+        {
+          "input": {
+            "prompt": "Write a CRM note on account acct-100 that invoice INV-1042 was discussed.",
+            "tool": "crm.write_note",
+            "args": {
+              "account_id": "acct-100",
+              "note": "Discussed invoice INV-1042 with the clerk."
+            }
+          },
+          "expected_response": "Tool crm.write_note is not allowed."
+        }
+      ],
+      "expected_trajectory": [],
+      "assertions": [
+        "crm.write_note is outside the allowlist, so no note is written."
+      ],
+      "metadata": {
+        "actor_id": "actor-crm",
+        "shelf": "tools",
+        "outcomes": [
+          {
+            "status": "denied",
+            "tool_calls": [],
+            "replayed": false,
+            "balance": null
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "approve.blocked-without-approval",
+      "turns": [
+        {
+          "input": {
+            "prompt": "Pay invoice INV-1042 in full.",
+            "tool": "approve.payment",
+            "args": {
+              "invoice_id": "INV-1042",
+              "amount": "1250.00",
+              "approval_id": "apr-1042-block",
+              "now": "2026-10-01T12:00:00+00:00",
+              "expires_at": "2026-10-01T13:00:00+00:00"
+            }
+          },
+          "expected_response": "Payment for INV-1042 is pending."
+        }
+      ],
+      "expected_trajectory": ["approve.payment"],
+      "assertions": [
+        "A full payment without an approval decision stays pending and does not change the balance."
+      ],
+      "metadata": {
+        "actor_id": "actor-controller",
+        "shelf": "hitl",
+        "outcomes": [
+          {
+            "status": "blocked",
+            "tool_calls": ["approve.payment"],
+            "replayed": false,
+            "balance": "1250.00"
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "approve.proceeds-with-approval",
+      "turns": [
+        {
+          "input": {
+            "prompt": "Pay invoice INV-1042 in full. Wait for approval apr-1042-ok.",
+            "tool": "approve.payment",
+            "args": {
+              "invoice_id": "INV-1042",
+              "amount": "1250.00",
+              "approval_id": "apr-1042-ok",
+              "now": "2026-10-01T12:00:00+00:00",
+              "expires_at": "2026-10-01T13:00:00+00:00"
+            }
+          },
+          "expected_response": "Payment for INV-1042 is pending."
+        },
+        {
+          "input": {
+            "prompt": "Approval apr-1042-ok is granted. Pay invoice INV-1042.",
+            "tool": "approve.payment",
+            "args": {
+              "invoice_id": "INV-1042",
+              "amount": "1250.00",
+              "approval_id": "apr-1042-ok",
+              "decision": "approve",
+              "now": "2026-10-01T12:05:00+00:00"
+            }
+          },
+          "expected_response": "Payment for INV-1042 is approved. Balance is 0.00 USD."
+        }
+      ],
+      "expected_trajectory": ["approve.payment", "approve.payment"],
+      "assertions": [
+        "The payment stays pending until approval apr-1042-ok is granted.",
+        "After that approval, and before expiry, the balance becomes 0.00 USD."
+      ],
+      "metadata": {
+        "actor_id": "actor-controller",
+        "shelf": "hitl",
+        "outcomes": [
+          {
+            "status": "blocked",
+            "tool_calls": ["approve.payment"],
+            "replayed": false,
+            "balance": "1250.00"
+          },
+          {
+            "status": "ok",
+            "tool_calls": ["approve.payment"],
+            "replayed": false,
+            "balance": "0.00"
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "approve.expires",
+      "turns": [
+        {
+          "input": {
+            "prompt": "Approval apr-1042-exp arrived after it expired. Pay invoice INV-1042.",
+            "tool": "approve.payment",
+            "args": {
+              "invoice_id": "INV-1042",
+              "amount": "1250.00",
+              "approval_id": "apr-1042-exp",
+              "decision": "approve",
+              "now": "2026-10-01T13:00:00+00:00",
+              "expires_at": "2026-10-01T13:00:00+00:00"
+            }
+          },
+          "expected_response": "Payment for INV-1042 is expired."
+        }
+      ],
+      "expected_trajectory": ["approve.payment"],
+      "assertions": [
+        "An approval at its expiry time does not pay the invoice. The balance stays 1250.00 USD."
+      ],
+      "metadata": {
+        "actor_id": "actor-controller",
+        "shelf": "hitl",
+        "outcomes": [
+          {
+            "status": "expired",
+            "tool_calls": ["approve.payment"],
+            "replayed": false,
+            "balance": "1250.00"
+          }
+        ]
+      }
+    },
+    {
+      "scenario_id": "invoice.then-crm",
+      "turns": [
+        {
+          "input": {
+            "prompt": "What is the open balance on invoice INV-1042?",
+            "tool": "invoice.lookup",
+            "args": {"invoice_id": "INV-1042"}
+          },
+          "expected_response": "Invoice INV-1042 is open with a balance of 1250.00 USD."
+        },
+        {
+          "input": {
+            "prompt": "Who owns the CRM account for that invoice?",
+            "tool": "crm.lookup_account",
+            "args": {"account_id": "acct-100"}
+          },
+          "expected_response": "Account acct-100 is Northwind Traders, owner ap-clerk."
+        }
+      ],
+      "expected_trajectory": ["invoice.lookup", "crm.lookup_account"],
+      "assertions": [
+        "The session looks up INV-1042 and then CRM account acct-100, in that order."
+      ],
+      "metadata": {
+        "actor_id": "actor-ap-clerk",
+        "shelf": "tools",
+        "outcomes": [
+          {
+            "status": "ok",
+            "tool_calls": ["invoice.lookup"],
+            "replayed": false,
+            "balance": "1250.00"
+          },
+          {
+            "status": "ok",
+            "tool_calls": ["crm.lookup_account"],
+            "replayed": false,
+            "balance": null
+          }
+        ]
+      }
+    }
+  ]
+}

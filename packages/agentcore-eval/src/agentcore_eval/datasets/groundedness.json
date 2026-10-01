@@ -1,0 +1,58 @@
+{
+  "schema_version": "agentcore-standards.groundedness.v1",
+  "rubric": {
+    "name": "answer-vs-sources",
+    "allow_abstain": true,
+    "require_citation": true,
+    "minimum_score": 1.0
+  },
+  "cases": [
+    {
+      "name": "invoice-balance-supported",
+      "answer": "Invoice INV-1042 is open with a balance of 1250.00 USD.",
+      "claims": ["1250.00 USD", "open"],
+      "sources": [
+        {
+          "source_id": "INV-1042",
+          "text": "Invoice INV-1042 status=open balance=1250.00 USD customer=Northwind Traders"
+        }
+      ],
+      "contradictions": [],
+      "expect": "supported"
+    },
+    {
+      "name": "invoice-balance-invented",
+      "answer": "Invoice INV-1042 is open with a balance of 9999.00 USD.",
+      "claims": ["9999.00 USD"],
+      "sources": [
+        {
+          "source_id": "INV-1042",
+          "text": "Invoice INV-1042 status=open balance=1250.00 USD customer=Northwind Traders"
+        }
+      ],
+      "contradictions": [],
+      "expect": "unsupported"
+    },
+    {
+      "name": "invoice-status-contradicted",
+      "answer": "Invoice INV-1042 is paid in full.",
+      "claims": [],
+      "sources": [
+        {
+          "source_id": "INV-1042",
+          "text": "Invoice INV-1042 status=open balance=1250.00 USD customer=Northwind Traders"
+        }
+      ],
+      "contradictions": ["paid in full"],
+      "expect": "contradicted"
+    },
+    {
+      "name": "invoice-abstain",
+      "answer": "I do not have a source for that invoice.",
+      "claims": [],
+      "sources": [],
+      "contradictions": [],
+      "expect": "abstain"
+    }
+  ]
+}

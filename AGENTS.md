@@ -20,7 +20,7 @@ One writer per path prefix. Scouts may read anything. Writers need a lease.
 | `packages/agentcore-eval/` | A | implemented |
 | `templates/minimal-agent/` | A | implemented |
 | `packages/agentcore-session/` | B | stub, do not implement without a lease |
-| `packages/agentcore-tools/` | C | stub |
+| `packages/agentcore-tools/` | C | implemented |
 | `packages/agentcore-guardrails/` | D | stub |
 | `packages/agentcore-memory/` | E | stub, after guardrails |
 | `templates/agent-with-tools/` | F | stub |

@@ -4,7 +4,7 @@ Standards library for coding agents and humans building on [Amazon Bedrock Agent
 
 Normative rules live in [docs/DESIGN.md](docs/DESIGN.md). Path leases for parallel agents live in [AGENTS.md](AGENTS.md) (DESIGN §8).
 
-Lane A is the root of every later stack: `agentcore-tracing`, `agentcore-eval`, and `templates/minimal-agent`, with one golden eval. Session, tools, memory, and guardrails are path stubs only.
+Lane A is the root of every later stack: `agentcore-tracing`, `agentcore-eval`, and `templates/minimal-agent`, with one golden eval. `agentcore-tools` is implemented. Session, memory, and guardrails are path stubs only.
 
 ## Layout
 
@@ -13,7 +13,7 @@ packages/agentcore-tracing/     OTEL span names, hashed session id, cost attribu
 packages/agentcore-eval/        RuntimeHarness, verdicts, suite runner, in-memory harness, Runtime client
 templates/minimal-agent/        BedrockAgentCoreApp entrypoint plus a harness binding (an app, not a PyPI lib)
 packages/agentcore-session/     stub (lane B)
-packages/agentcore-tools/       stub (lane C)
+packages/agentcore-tools/       registry, Gateway Lambda targets, idempotency (lane C)
 packages/agentcore-guardrails/  stub (lane D)
 packages/agentcore-memory/      stub (lane E)
 templates/agent-with-tools/     stub
@@ -60,7 +60,11 @@ uv run python scripts/check_boundaries.py
 
 ## Evals and the independent judge
 
+The shared eval pack (business goldens, guardrail fixtures, groundedness, HITL, and the optional Evaluators adapter) is documented in [docs/evals/README.md](docs/evals/README.md). Offline, `run_suite` drives those cases through `InMemoryRuntimeHarness`. That pass is not a Runtime verdict.
+
 The full PASS path is [docs/eval-pass-path.md](docs/eval-pass-path.md). Short version: a **separate process** re-runs `minimal-agent.golden-turn` through `start`, `invoke`, `capture_traces`, and `tear_down`, then writes evidence.
+
+The template golden eval is `minimal-agent.golden-turn` in `templates/minimal-agent/evals/golden_turn.py`. It sends two turns on one session and checks the deterministic `pong:` completion, the `agent.turn` / `model.invoke` span tree, cost attributes, and structured logs.
 
 Mock / bootstrap (no AWS credentials). This is runnable now:
 
@@ -104,4 +108,4 @@ Read [AGENTS.md](AGENTS.md) before editing. Short version:
 
 ## Not in this lane
 
-`agentcore-session`, `agentcore-tools`, `agentcore-memory`, and `agentcore-guardrails` are README stubs so later agents have stable paths. Do not implement them here. Memory-via-Gateway is still an open decision (DESIGN §7).
+`agentcore-session`, `agentcore-memory`, and `agentcore-guardrails` are README stubs so later agents have stable paths. Do not implement them here. `agentcore-tools` lives in `packages/agentcore-tools`. Memory-via-Gateway is still an open decision (DESIGN §7).
