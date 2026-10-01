@@ -17,6 +17,7 @@ default-groups = ["dev"]
 members = [
   "packages/agentcore-tracing",
   "packages/agentcore-eval",
+  "packages/agentcore-tools",
   "templates/minimal-agent",
 ]
 
@@ -52,6 +53,7 @@ warn_unused_configs = true
 files = [
   "packages/agentcore-tracing/src",
   "packages/agentcore-eval/src",
+  "packages/agentcore-tools/src",
   "templates/minimal-agent/src",
   "scripts/check_boundaries.py",
 ]
@@ -65,10 +67,14 @@ ignore_missing_imports = true
 testpaths = [
   "packages/agentcore-tracing/tests",
   "packages/agentcore-eval/tests",
+  "packages/agentcore-tools/tests",
   "templates/minimal-agent/tests",
   "tests",
 ]
-pythonpath = ["templates/minimal-agent/src"]
+pythonpath = [
+  "templates/minimal-agent/src",
+  "packages/agentcore-tools/tests",
+]
 addopts = "--strict-markers"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"

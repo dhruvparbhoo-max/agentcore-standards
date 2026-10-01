@@ -10,6 +10,7 @@ resolution-markers = [
 members = [
     "agentcore-eval",
     "agentcore-standards",
+    "agentcore-tools",
     "agentcore-tracing",
     "minimal-agent",
 ]
@@ -60,6 +61,21 @@ dev = [
     { name = "pytest", specifier = ">=8.3" },
     { name = "pytest-asyncio", specifier = ">=0.25" },
     { name = "ruff", specifier = ">=0.8" },
+]
+
+[[package]]
+name = "agentcore-tools"
+version = "0.1.0"
+source = { editable = "packages/agentcore-tools" }
+dependencies = [
+    { name = "agentcore-tracing" },
+    { name = "boto3" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "agentcore-tracing", editable = "packages/agentcore-tracing" },
+    { name = "boto3", specifier = ">=1.35" },
 ]
 
 [[package]]
