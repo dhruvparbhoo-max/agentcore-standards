@@ -19,10 +19,11 @@ from agentcore_eval.harness import (
     SpanRecord,
     TraceBundle,
 )
+from agentcore_eval.judge import judge_suite
 from agentcore_eval.memory import InMemoryRuntimeHarness, TurnHandler
 from agentcore_eval.model import Eval, EvalContext
 from agentcore_eval.runner import load_evals, run_eval, run_suite
-from agentcore_eval.runtime_client import AgentCoreRuntimeHarness
+from agentcore_eval.runtime_client import AgentCoreRuntimeHarness, missing_runtime_settings
 from agentcore_eval.verdict import Report, Verdict, VerdictStatus
 
 __all__ = [
@@ -43,8 +44,10 @@ __all__ = [
     "TurnHandler",
     "Verdict",
     "VerdictStatus",
+    "judge_suite",
     "load_evals",
     "load_on_demand_runner",
+    "missing_runtime_settings",
     "run_eval",
     "run_suite",
 ]

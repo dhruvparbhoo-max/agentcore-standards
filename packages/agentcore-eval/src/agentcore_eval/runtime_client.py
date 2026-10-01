@@ -27,6 +27,17 @@ from agentcore_eval.harness import (
 _ARN_PREFIX = "arn:" + "aws:"
 _MIN_SESSION_CHARS = 33
 _MAX_SESSION_CHARS = 256
+RUNTIME_SETTINGS: tuple[str, ...] = (
+    "AWS_ACCESS_KEY_ID",
+    "AWS_REGION",
+    "AGENTCORE_RUNTIME_ARN",
+    "AGENTCORE_SPAN_LOG_GROUP",
+)
+
+
+def missing_runtime_settings() -> tuple[str, ...]:
+    """Environment names still empty. A real Runtime PASS needs every one of them."""
+    return tuple(name for name in RUNTIME_SETTINGS if not os.environ.get(name, "").strip())
 
 
 class _Readable(Protocol):

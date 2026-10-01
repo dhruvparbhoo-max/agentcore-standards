@@ -54,9 +54,13 @@ uv run pytest -m "not runtime"
 uv run python scripts/check_boundaries.py
 ```
 
-Golden eval details: [templates/minimal-agent/README.md](templates/minimal-agent/README.md).
+Independent judge (mock path, no AWS). Evidence is `evidence/judge/verdict.json`. Full sequence: [docs/eval-pass-path.md](docs/eval-pass-path.md).
 
-Real Runtime evals: `uv run pytest -m runtime` after `AWS_ACCESS_KEY_ID`, `AWS_REGION`, `AGENTCORE_RUNTIME_ARN`, and `AGENTCORE_SPAN_LOG_GROUP` are set in the environment. The `runtime-evals` workflow skips cleanly without them.
+```bash
+PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge --evidence-dir evidence/judge
+```
+
+Real Runtime: add `--harness runtime` after `AWS_ACCESS_KEY_ID`, `AWS_REGION`, `AGENTCORE_RUNTIME_ARN`, and `AGENTCORE_SPAN_LOG_GROUP` are set. Missing settings write `SKIPPED`, not `PASS`. The `runtime-evals` workflow uses the same gate.
 
 ## Next agents
 

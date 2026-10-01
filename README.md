@@ -58,53 +58,34 @@ uv run python scripts/check_boundaries.py
 
 `pytest` without the marker also skips the real Runtime test when credentials are absent. CI runs the commands above.
 
-## Evals
+## Evals and the independent judge
 
-The golden eval is `minimal-agent.golden-turn` in `templates/minimal-agent/evals/golden_turn.py`. It sends two turns on one session and checks the deterministic `pong:` completion, the `agent.turn` / `model.invoke` span tree, cost attributes, and structured logs.
+The full PASS path is [docs/eval-pass-path.md](docs/eval-pass-path.md). Short version: a **separate process** re-runs `minimal-agent.golden-turn` through `start`, `invoke`, `capture_traces`, and `tear_down`, then writes evidence.
 
-Local path (no AWS account):
+Mock / bootstrap (no AWS credentials). This is runnable now:
+
+```bash
+PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge --evidence-dir evidence/judge
+```
+
+Evidence lands in `evidence/judge/verdict.json` and `evidence/judge/minimal-agent.golden-turn.json`. `status: PASS` here proves the in-process entrypoint. It does not prove AgentCore Runtime.
+
+Real Runtime (same command, different harness). Skips cleanly when credentials are absent (`status: SKIPPED`, exit 0, not a PASS):
+
+```bash
+PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge --harness runtime --evidence-dir evidence/judge
+```
+
+Set `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AGENTCORE_RUNTIME_ARN`, and `AGENTCORE_SPAN_LOG_GROUP` in the environment. The dev account is the eval account. IAM needs `bedrock-agentcore:InvokeAgentRuntime`, `logs:StartQuery`, and `logs:GetQueryResults`. Names are listed in `.env.example`. Do not commit values.
+
+`.github/workflows/ci.yml` runs the mock judge and uploads `evidence/judge`. `.github/workflows/runtime-evals.yml` runs the runtime harness only when those settings exist.
+
+Author pytest is still useful, and it is not the ship verdict:
 
 ```bash
 uv run pytest templates/minimal-agent/tests/test_golden_eval.py -m "not runtime"
-```
-
-That run uses `MinimalAgentHarness`, which calls the entrypoint in-process. Evidence JSON is written under the pytest `tmp_path` for the test, or pass your own directory when you call `run_suite` yourself:
-
-```bash
-PYTHONPATH=templates/minimal-agent/src uv run python - <<'PY'
-from pathlib import Path
-from agentcore_eval import run_suite
-from minimal_agent import AGENT_VERSION, MinimalAgentHarness
-
-report = run_suite(
-    Path("templates/minimal-agent/evals"),
-    harness_factory=MinimalAgentHarness,
-    agent_version=AGENT_VERSION,
-    evidence_dir=Path("evidence"),
-)
-print([(item.eval_name, item.status.value, item.evidence_path) for item in report.verdicts])
-PY
-```
-
-`evidence/` is gitignored.
-
-### Real AgentCore Runtime
-
-Same eval, different harness. Copy `.env.example` to `.env` and fill values locally. Do not commit them. There are no resource ARNs in git.
-
-Required environment variables:
-
-- `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` (dev account; evals use that same account)
-- `AWS_REGION`
-- `AGENTCORE_RUNTIME_ARN` (the deployed runtime identifier)
-- `AGENTCORE_SPAN_LOG_GROUP` (CloudWatch log group name for span collection)
-- `AGENTCORE_RUNTIME_QUALIFIER` (optional endpoint qualifier)
-
-```bash
 uv run pytest -m runtime
 ```
-
-The GitHub workflow `.github/workflows/runtime-evals.yml` runs that marker and exits cleanly when those values are unset. A local pass on the in-memory harness is not an independent Runtime verdict. Auto-merge still waits on a separate judge (DESIGN §4.2 and §8).
 
 Serve the entrypoint the way Runtime hosts it (port 8080):
 
