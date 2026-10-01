@@ -213,6 +213,12 @@ The eval harness exposes a thin interface; each product harness implements it:
 - Evidence retained as CI artifacts.
 - Evals run in the **same AWS account as dev** (resolved) — use stage isolation via agent versions / namespaces / IAM paths, not a separate account.
 
+### 2.7 Hill-climbing (harness improvement loop)
+
+Once Runtime and tracing are hooked up, a harness change follows the rhythm in [docs/evals/hill-climbing.md](evals/hill-climbing.md). It is adapted from LangChain's Better Harness recipe: source and tag cases, split each topic into an optimization set and a holdout set, record a baseline, make one harness change, validate regressions, human review, then promote or prune. Production traces feed the next cases.
+
+`uv run python -m agentcore_eval.hillclimb steps` prints that command sequence. `compare` diffs two evidence directories and blocks when a previously passing case fails or a case disappears. That diff is a structure check. It is not an independent Runtime verdict, and writing the rhythm down is not a claim that a production climb has been run. The ship gate stays §4.2.7.
+
 ---
 
 ## 3. Starter templates
@@ -314,6 +320,7 @@ A sloppy experiment **cannot** become a starter default without crossing these g
 | Shortest path = correct path | Importable primitives + CI bans on copy-paste / forbidden imports |
 | Soft rules → hard gates | Guardrails, Cedar/IAM, eval CI, CODEOWNERS |
 | Independent ship verdict | Separate eval runner / judge; CI green alone ≠ merge; auto-merge only on independent PASS / PASS+NOTES |
+| Hill-climb a harness | Tagged optimization/holdout sets, one change, regression diff, human review; the climb diff does not replace the Runtime verdict |
 
 ---
 

@@ -61,6 +61,7 @@ def run_eval(
         notes=tuple(ctx.notes),
         failures=tuple(failures),
         evidence_path=None,
+        tags=evaluation.tags,
     )
     path = write_evidence(evidence_dir, verdict, bundle)
     verdict.evidence_path = path

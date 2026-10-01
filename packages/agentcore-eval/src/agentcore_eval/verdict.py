@@ -3,6 +3,8 @@
 from enum import StrEnum
 from pathlib import Path
 
+from agentcore_eval.tags import DatasetTags
+
 
 class VerdictStatus(StrEnum):
     """Independent surface result. Auto-merge is allowed only for PASS and PASS+NOTES."""
@@ -24,13 +26,17 @@ class Verdict:
         notes: tuple[str, ...],
         failures: tuple[str, ...],
         evidence_path: Path | None,
+        tags: DatasetTags | None = None,
     ) -> None:
+        if tags is not None and not isinstance(tags, DatasetTags):
+            raise ValueError("tags must be a DatasetTags instance")
         self.status = status
         self.eval_name = eval_name
         self.agent_version = agent_version
         self.notes = notes
         self.failures = failures
         self.evidence_path = evidence_path
+        self.tags = tags
 
 
 class Report:
