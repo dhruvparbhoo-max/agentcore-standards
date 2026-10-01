@@ -23,6 +23,7 @@ templates/human-in-the-loop/    stub
 experiments/                    messy drafts allowed; templates and packages must not import them
 docs/DESIGN.md                  team standards
 docs/capability-maps/           how to drive a template and what observable proves it
+docs/evals/                     eval pack index and the hill-climbing rhythm
 docs/skills/pstack-vs-agentcore.md   pstack skill to run, and the AgentCore skill if one exists
 skills/                         verify, judge, lease, encode-miss, capability map
 ```

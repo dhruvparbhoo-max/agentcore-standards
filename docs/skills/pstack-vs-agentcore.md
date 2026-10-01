@@ -35,7 +35,9 @@ Repo skills live in `skills/<name>/SKILL.md` (DESIGN §8.5). They are not a seco
 
 ## Hill-climbing
 
-`docs/evals/hill-climbing.md` is not in this repo. Do not add a skill that restates the Hillclimb playbook.
+The poteto Hillclimb playbook stays the method. There is no `agentcore-hill-climb` skill.
+
+[docs/evals/hill-climbing.md](../evals/hill-climbing.md) is the command sequence on this repo: `DatasetTags`, `uv run python -m agentcore_eval.hillclimb`, and `compare` of two evidence directories. That compare does not call Runtime and is not a ship verdict. This repo has not recorded a production climb.
 
 When the metric is an AgentCore behavior:
 
