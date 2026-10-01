@@ -1,0 +1,77 @@
+[project]
+name = "agentcore-standards"
+version = "0.1.0"
+description = "Standards library for agents on Amazon Bedrock AgentCore. Not a hosted platform."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "agentcore-eval",
+  "agentcore-tracing",
+]
+
+[tool.uv]
+package = false
+default-groups = ["dev"]
+
+[tool.uv.workspace]
+members = [
+  "packages/agentcore-tracing",
+  "packages/agentcore-eval",
+  "templates/minimal-agent",
+]
+
+[tool.uv.sources]
+agentcore-eval = { workspace = true }
+agentcore-tracing = { workspace = true }
+
+[dependency-groups]
+dev = [
+  "mypy>=1.13",
+  "pytest>=8.3",
+  "pytest-asyncio>=0.25",
+  "ruff>=0.8",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+src = ["packages", "templates", "scripts", "tests"]
+extend-exclude = [".venv", "evidence", "uploads"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+"**/tests/**" = ["S101"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_configs = true
+files = [
+  "packages/agentcore-tracing/src",
+  "packages/agentcore-eval/src",
+  "templates/minimal-agent/src",
+  "scripts/check_boundaries.py",
+]
+mypy_path = "templates/minimal-agent/src"
+
+[[tool.mypy.overrides]]
+module = ["boto3"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = [
+  "packages/agentcore-tracing/tests",
+  "packages/agentcore-eval/tests",
+  "templates/minimal-agent/tests",
+  "tests",
+]
+pythonpath = ["templates/minimal-agent/src"]
+addopts = "--strict-markers"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+  "runtime: calls Amazon Bedrock AgentCore Runtime; skipped unless AWS credentials and AGENTCORE_RUNTIME_ARN are set",
+]

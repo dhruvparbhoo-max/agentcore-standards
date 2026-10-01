@@ -1,0 +1,27 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - name: Install workspace
+        run: uv sync --all-packages --frozen
+      - name: Ruff
+        run: uv run ruff check .
+      - name: Ruff format
+        run: uv run ruff format --check .
+      - name: Mypy
+        run: uv run mypy
+      - name: Pytest
+        run: uv run pytest -m "not runtime"
+      - name: Path bans
+        run: uv run python scripts/check_boundaries.py

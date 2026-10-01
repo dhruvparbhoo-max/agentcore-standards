@@ -1,0 +1,32 @@
+name: runtime-evals
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  agentcore-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - name: Install workspace
+        run: uv sync --all-packages --frozen
+      - name: Golden eval on AgentCore Runtime
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AGENTCORE_RUNTIME_ARN: ${{ secrets.AGENTCORE_RUNTIME_ARN }}
+          AGENTCORE_RUNTIME_QUALIFIER: ${{ secrets.AGENTCORE_RUNTIME_QUALIFIER }}
+          AGENTCORE_SPAN_LOG_GROUP: ${{ secrets.AGENTCORE_SPAN_LOG_GROUP }}
+        run: |
+          if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_REGION" ] || [ -z "$AGENTCORE_RUNTIME_ARN" ] || [ -z "$AGENTCORE_SPAN_LOG_GROUP" ]; then
+            echo "Skipping real AgentCore Runtime evals. Set AWS_ACCESS_KEY_ID, AWS_REGION, AGENTCORE_RUNTIME_ARN, and AGENTCORE_SPAN_LOG_GROUP to run them."
+            exit 0
+          fi
+          uv run pytest -m runtime
