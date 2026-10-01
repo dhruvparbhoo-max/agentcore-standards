@@ -15,9 +15,10 @@ tear_down(session)
 | --- | --- |
 | `InMemoryRuntimeHarness` | Calls a Python entrypoint in-process. Default golden path. |
 | `AgentCoreRuntimeHarness` | Calls `InvokeAgentRuntime`. Built with `from_env()`. |
-| `HarnessAgentInvoker` | Adapts a harness to the `payload` + `session_id` turn shape used by `OnDemandEvaluationDatasetRunner`. |
-| `load_on_demand_runner` | Imports that SDK runner. Lane A does not call `run`. |
+| `HarnessAgentInvoker` | Adapts a harness to the `payload` + `session_id` turn shape used by `OnDemandEvaluationDatasetRunner`. A string payload becomes `{"prompt": ...}`. |
+| `load_on_demand_runner` | Imports that SDK runner. |
+| `OnDemandEvaluatorsAdapter` | Optional call to `OnDemandEvaluationDatasetRunner.run`. Returns the SDK result, not a `Verdict`. |
 
-`OnDemandEvaluationDatasetRunner` is the later service-side path (invoke, wait for CloudWatch, call Evaluate). Wire it in the runtime-evals workflow when a dataset and span log group exist. Do not confuse it with `RuntimeHarness`.
+`OnDemandEvaluationDatasetRunner` is the service-side path (invoke, wait for CloudWatch, call Evaluate). It does not replace `run_eval` / `run_suite`. The eval pack — business goldens, guardrail fixtures, groundedness, and HITL — is documented in [docs/evals/README.md](../../docs/evals/README.md). Offline runs use `business_harness()` and `pack_suite_dir()`.
 
 Evidence files refuse to persist a resource ARN.

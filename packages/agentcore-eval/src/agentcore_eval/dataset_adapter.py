@@ -1,12 +1,12 @@
 """Adapter toward the SDK on-demand dataset runner.
 
 ``OnDemandEvaluationDatasetRunner`` (bedrock-agentcore) invokes an agent, waits
-for telemetry, collects CloudWatch spans, and calls Evaluate. That runner is the
-later service-side eval path. Lane A does not call it.
+for telemetry, collects CloudWatch spans, and calls Evaluate. Calling ``run``
+is optional and lives in ``agentcore_eval.evaluators``. It does not replace
+``RuntimeHarness`` outcome checks.
 
-What lands here is the invoker callable that runner accepts: one turn object
-with ``payload`` and ``session_id``, returning ``AgentInvokerOutput``. A future
-runtime-evals job can pass ``HarnessAgentInvoker`` as ``agent_invoker``.
+``HarnessAgentInvoker`` is the callable that runner accepts: one turn with
+``payload`` and ``session_id``, returning ``AgentInvokerOutput``.
 """
 
 from collections.abc import Mapping
@@ -63,13 +63,28 @@ def load_on_demand_runner() -> type[Any]:
     return OnDemandEvaluationDatasetRunner
 
 
+def payload_from_turn_input(payload: object) -> dict[str, Any]:
+    """Normalize a dataset turn input into a harness payload.
+
+    A string becomes ``{"prompt": payload}``. A mapping is copied. The
+    outcome checks and the optional Evaluators invoker both use this shape.
+    """
+    if isinstance(payload, str):
+        if not payload.strip():
+            raise HarnessError("agent invoker turn payload is empty")
+        return {"prompt": payload}
+    if isinstance(payload, Mapping):
+        return dict(payload)
+    raise HarnessError("agent invoker turn payload must be a string or a mapping")
+
+
 def _payload_of(turn: Any) -> Mapping[str, Any]:
     payload = getattr(turn, "payload", None)
     if payload is None and isinstance(turn, Mapping):
         payload = turn.get("payload")
-    if not isinstance(payload, Mapping):
-        raise HarnessError("agent invoker turn is missing a mapping payload")
-    return payload
+    if payload is None:
+        raise HarnessError("agent invoker turn is missing a payload")
+    return payload_from_turn_input(payload)
 
 
 def _session_of(turn: Any) -> str:

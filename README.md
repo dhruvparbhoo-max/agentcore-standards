@@ -60,7 +60,9 @@ uv run python scripts/check_boundaries.py
 
 ## Evals
 
-The golden eval is `minimal-agent.golden-turn` in `templates/minimal-agent/evals/golden_turn.py`. It sends two turns on one session and checks the deterministic `pong:` completion, the `agent.turn` / `model.invoke` span tree, cost attributes, and structured logs.
+The shared eval pack (business goldens, guardrail fixtures, groundedness, HITL, and the optional Evaluators adapter) is documented in [docs/evals/README.md](docs/evals/README.md). Offline, `run_suite` drives those cases through `InMemoryRuntimeHarness`. That pass is not a Runtime verdict.
+
+The template golden eval is `minimal-agent.golden-turn` in `templates/minimal-agent/evals/golden_turn.py`. It sends two turns on one session and checks the deterministic `pong:` completion, the `agent.turn` / `model.invoke` span tree, cost attributes, and structured logs.
 
 Local path (no AWS account):
 
