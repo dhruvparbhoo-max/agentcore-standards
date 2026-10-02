@@ -62,11 +62,13 @@ Independent judge (mock path, no AWS). Evidence is `evidence/judge/verdict.json`
 PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge --evidence-dir evidence/judge
 ```
 
-Real Runtime: add `--harness runtime` after `AWS_ACCESS_KEY_ID`, `AWS_REGION`, `AGENTCORE_RUNTIME_ARN`, and `AGENTCORE_SPAN_LOG_GROUP` are set. Missing settings write `SKIPPED`, not `PASS`. The `runtime-evals` workflow uses the same gate.
+Real Runtime: add `--harness runtime` after `AWS_REGION`, `AGENTCORE_RUNTIME_ARN`, and `AGENTCORE_SPAN_LOG_GROUP` are set. An access key and its secret are a pair; a role needs neither. Missing settings write `SKIPPED` and the runtime judge exits 1. `SKIPPED` is not a ship verdict. `.github/workflows/runtime-evals.yml` runs that judge and fails closed. This repo does not contain a live Runtime PASS.
 
 ## Next agents
 
-Do not start a second writer until a coordinator leases a free path. Lane B/C/D are the first parallel wave **after** an independent judge PASS on the real Runtime golden eval. Until that PASS exists, extra writers multiply unproven merges. Scouts may write under `docs/capability-maps/` only.
+`agentcore-tools` and the offline eval pack are already on main without an independent Runtime PASS. That landing is a recorded miss, not a precedent.
+
+Do not start a writer on `agentcore-session`, `agentcore-guardrails`, `agentcore-memory`, or an unfinished template until a coordinator leases a free path **and** a separate process records `PASS` or `PASS+NOTES` for `minimal-agent.golden-turn` on `AgentCoreRuntimeHarness`. Scouts may write under `docs/capability-maps/` only.
 
 If your task needs `agentcore-session` and `agentcore-tools` in one PR, split it. Memory waits on guardrails (guard before write).
 

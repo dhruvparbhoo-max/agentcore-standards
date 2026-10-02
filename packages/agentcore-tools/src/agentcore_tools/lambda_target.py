@@ -29,15 +29,24 @@ class LambdaClientContext(Protocol):
 class LambdaContext:
     """In-process stand-in for the Gateway Lambda client context."""
 
-    def __init__(self, *, tool_name: str, gateway_id: str, target_id: str, request_id: str) -> None:
-        self.client_context = _Custom(
-            {
-                "bedrockAgentCoreAwsRequestId": request_id,
-                "bedrockAgentCoreGatewayId": gateway_id,
-                "bedrockAgentCoreTargetId": target_id,
-                "bedrockAgentCoreToolName": tool_name,
-            }
-        )
+    def __init__(
+        self,
+        *,
+        tool_name: str,
+        gateway_id: str,
+        target_id: str,
+        request_id: str,
+        idempotency_key: str | None = None,
+    ) -> None:
+        custom = {
+            "bedrockAgentCoreAwsRequestId": request_id,
+            "bedrockAgentCoreGatewayId": gateway_id,
+            "bedrockAgentCoreTargetId": target_id,
+            "bedrockAgentCoreToolName": tool_name,
+        }
+        if idempotency_key:
+            custom["bedrockAgentCoreIdempotencyKey"] = idempotency_key
+        self.client_context = _Custom(custom)
 
 
 class _Custom:
@@ -51,9 +60,12 @@ Handler = Callable[[Mapping[str, Any], LambdaClientContext], dict[str, Any]]
 def make_lambda_handler(registry: ToolRegistry, *, agent_version: str) -> Handler:
     """Return a Lambda entrypoint that routes one registry's tools.
 
-    Deploy this function as the Gateway Lambda target. The durable idempotency
-    strategy stays inside the tool (put-if-absent). The agent-side idempotency
-    key is enforced by ``ToolRegistry.invoke_tool`` before Gateway is called.
+    Deploy this function as the Gateway Lambda target. Gateway's default event
+    is the tool arguments, so this adapter does not see the agent-side
+    idempotency key unless ``client_context.custom['bedrockAgentCoreIdempotencyKey']``
+    is set. Without that key the handler runs on every delivery. Put-if-absent
+    inside the tool is the durable guard. ``invoke_tool`` still claims the key
+    before it calls Gateway.
     """
 
     def handler(event: Mapping[str, Any], context: LambdaClientContext) -> dict[str, Any]:
@@ -71,6 +83,7 @@ def make_lambda_handler(registry: ToolRegistry, *, agent_version: str) -> Handle
             agent_version=agent_version,
             runtime_session_id=session,
             request_id=request_id,
+            idempotency_key=_custom_str(custom, "bedrockAgentCoreIdempotencyKey"),
         )
         if result.error is not None:
             return _lambda_error(result.error.code, result.error.message)

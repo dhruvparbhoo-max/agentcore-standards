@@ -17,7 +17,7 @@ Depends explicitly on `agentcore-tracing`, `agentcore-eval`, and `bedrock-agentc
 
 `evals/golden_turn.py` exports `EVAL` named `minimal-agent.golden-turn`.
 
-Observable: two turns on one session return `pong:ping` and `pong:again`; each `agent.turn` has cost attributes and a hashed session id; `model.invoke` is a child of that turn; logs carry `runtimeSessionId`, `actorId`, `agentVersion`, `requestId`, and `latencyMs`.
+Observable: two turns on one session return `pong:ping` and `pong:again`; each `agent.turn` has a hashed session id and `cost.source=length-heuristic` at zero USD; `model.invoke` is a child of that turn; logs carry the hashed `runtimeSessionId`, `actorId`, `agentVersion`, `requestId`, and `latencyMs`. The zero-USD figure is the deterministic pong path, not model-reported usage.
 
 Judge process (this is the PASS path, not the author pytest):
 
@@ -25,7 +25,7 @@ Judge process (this is the PASS path, not the author pytest):
 PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge --evidence-dir evidence/judge
 ```
 
-`evidence/judge/verdict.json` is the roll-up. `evidence/judge/minimal-agent.golden-turn.json` is the spans and logs. `--harness runtime` is the real AgentCore Runtime path and writes `SKIPPED` when credentials are missing. Details: [docs/eval-pass-path.md](../../docs/eval-pass-path.md).
+`evidence/judge/verdict.json` is the roll-up. `evidence/judge/minimal-agent.golden-turn.json` is the spans and logs. `--harness runtime` is the real AgentCore Runtime path. Missing settings write `SKIPPED` and exit 1. Details: [docs/eval-pass-path.md](../../docs/eval-pass-path.md).
 
 Author unit check:
 

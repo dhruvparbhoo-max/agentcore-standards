@@ -3,7 +3,8 @@
 import json
 from pathlib import Path
 
-from agentcore_eval import VerdictStatus, business_harness, load_golden_dataset, pack_suite_dir, run_suite
+from agentcore_eval import VerdictStatus, load_golden_dataset, pack_suite_dir, run_suite
+from agentcore_eval.stub_agent import business_harness
 
 _REQUIRED = {
     "approve.blocked-without-approval",

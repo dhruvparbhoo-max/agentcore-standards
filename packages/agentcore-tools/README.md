@@ -9,7 +9,8 @@ The default target is **Lambda**. MCP server targets can be named, and `to_confi
 ## Register and call
 
 ```python
-from agentcore_tools import Policy, build_demo_registry
+from agentcore_tools import Policy
+from agentcore_tools.demo import build_demo_registry
 
 demo = build_demo_registry()
 policy = Policy()
@@ -26,7 +27,11 @@ result = demo.registry.invoke_tool(
 
 `@registry.tool(name, schema, description, idempotent=True)` is the registration decorator. A side-effecting tool with `idempotent=False` raises `IdempotencyRequired` at registration.
 
-`put_record` is the demo tool. It is side-effecting and idempotent. The handler uses put-if-absent on `record_id`: a second call with the same id returns the original row and does not overwrite it. The registry also requires an idempotency key and replays the first result when that key is repeated. Same key with different arguments is a fatal conflict and does not run the handler. Retryable failures are not cached. Fatal failures are cached. A handler timeout, or a call that exceeds `timeout_ms`, is retryable and includes `backoff_ms`. Fatal results have no backoff.
+`put_record` is the demo tool in `agentcore_tools.demo`. It is not exported from the package root. It is side-effecting and idempotent. The handler uses put-if-absent on `record_id`: a second call with the same id returns the original row and does not overwrite it. The registry also requires an idempotency key and replays the first result when that key is repeated. Same key with different arguments is a fatal conflict and does not run the handler. `begin` claims the key before the handler runs, so an overlapping call with the same key gets retryable `idempotency_in_progress` instead of a second execution. Retryable failures are not cached. Fatal failures are cached. A handler timeout, or a call that exceeds `timeout_ms`, is retryable and includes `backoff_ms`. Python cannot cancel the handler thread. The claim stays until that thread finishes, and a later call then replays the stored result. Fatal results have no backoff.
+
+`dispatch_target` and the Lambda handler do not see the agent-side idempotency key unless `bedrockAgentCoreIdempotencyKey` is on the Lambda custom context. Without that key the handler runs on every delivery. Put-if-absent inside the tool is the durable guard.
+
+`sync` treats a target `ConflictException` as already present only when `get_gateway_target` returns the same inline schema. A conflict without that read, or with a different schema, raises `GatewayConfigError`. A policy conflict is the same Cedar statement, because the client token hashes that text. The Cedar statement does not name the agent version. The policy name does (`permit-<version>-<digest>`). Use one policy engine per version.
 
 Schema checks use a JSON Schema subset (object, array, string, number, integer, boolean, properties, required, items). Unknown object properties are rejected unless `additionalProperties` is true. Rejection messages name the path and the expected type. They do not include the rejected value. Breaking schema changes (removed property, type change, new required property) must bump the major in `schema_version`; call `assert_schema_evolution` when a schema changes.
 

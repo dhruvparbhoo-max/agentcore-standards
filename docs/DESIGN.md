@@ -45,7 +45,7 @@ Every agent template ships with:
 | Signal | Requirement |
 |--------|-------------|
 | Tracing | OpenTelemetry through model, tool, Gateway, Memory, Identity, policy evaluation — one correlated trace per turn |
-| Structured logs | JSON logs with `runtimeSessionId`, `actorId`, `agentVersion`, `requestId`, tool name, latency, error class |
+| Structured logs | JSON logs with `runtimeSessionId`, `actorId`, `agentVersion`, `requestId`, tool name, latency, error class. `runtimeSessionId` in the log is the truncated SHA-256, the same value as span `runtime.session_id`. Span `session.id` stays the raw id so CloudWatch can filter on it. |
 | Cost tracking | Token / model / tool invocation cost attributes on spans; per-session and per-eval budgets asserted in CI where practical |
 | Evidence retention | Eval runs upload traces + logs + Memory snapshots (redacted) as PR artifacts |
 
@@ -420,22 +420,24 @@ Shortest path = correct path: import primitives; CI bans copy-paste from `experi
 
 ### 8.6 When NOT to parallelize
 
-Do **not** spawn multiple writing cloud agents until:
+Lane A code (`agentcore-tracing`, `agentcore-eval`, `templates/minimal-agent`) is on main. `agentcore-tools` and the offline eval pack are also on main. Those landings happened without an independent judge PASS of `minimal-agent.golden-turn` on `AgentCoreRuntimeHarness`. That is a recorded miss. It is not permission for the next writer.
 
-1. **Lane A is boringly green:** `agentcore-tracing` + `agentcore-eval` + minimal template have at least one independent PASS on real Runtime.
-2. Local/cloud **verify path** is documented (how to `start` → `invoke` → `capture_traces` → `tear_down` and where evidence lands).
-3. Coordinator can grant/revoke path leases and detect collisions.
-4. Judge path exists as a separate agent/process (even if manually triggered at first).
+Do **not** spawn another writing agent on session, guardrails, memory, or an unfinished template until:
 
-Until then: one coding agent + optional scouts. Parallelizing writers before the verify path works multiplies confident wrong merges.
+1. A **separate process** re-runs `minimal-agent.golden-turn` on `AgentCoreRuntimeHarness` and records `PASS` or `PASS+NOTES` with evidence. `SKIPPED` is not that verdict. The in-process harness is not that verdict.
+2. The verify path stays documented (how to `start` → `invoke` → `capture_traces` → `tear_down` and where evidence lands).
+3. A coordinator grants one free path lease.
+4. The judge stays a different process from the author.
+
+The mock judge and `ruff` / `mypy` / unit tests stay necessary. They do not replace item 1.
 
 Also do not parallelize when: the task is a single-package spike; public API is still thrashing; or two “independent” stories share an unreleased interface — serialize or land the interface first.
 
 ### 8.7 First parallel wave (concrete)
 
-**Prerequisite:** finish sequential bootstrap per §5 step 1 (scaffold + tracing + eval + minimal template, one green Runtime eval + one independent judge PASS).
+**Prerequisite:** an independent judge `PASS` or `PASS+NOTES` of `minimal-agent.golden-turn` on `AgentCoreRuntimeHarness`. That verdict is still absent. Tools already landed without it; do not copy that pattern.
 
-**Wave 1 — spawn exactly three agents:**
+**Wave 1 — after that PASS, spawn exactly three agents:**
 
 | Agent | Lease | Atomic goal | Done means |
 |-------|-------|-------------|------------|
@@ -443,7 +445,7 @@ Also do not parallelize when: the task is a single-package spike; public API is 
 | **Coder-2** | `packages/agentcore-tools` | Tool registry + Gateway bind + one idempotent side-effecting demo tool | Allow/deny + double-invoke evals green; judge PASS |
 | **Scout-1** | read-only | Capability map for `templates/minimal-agent`; draft maps for tools/memory templates; list blast radius if session↔tools shared types needed | Written maps + gap list; **no** write PR (or docs-only PR under `docs/capability-maps/`) |
 
-**Hold back:** memory + guardrails (need guard-before-write order); templates beyond minimal (wait for session/tools PASS); multi-agent/HITL.
+**Hold back:** memory waits on guardrails (guard before write). Templates beyond minimal wait until their primitive dependencies have a judge PASS on Runtime. Session still waits on the lane A Runtime PASS above. Multi-agent and HITL stay later.
 
 **Wave 2 (after Wave 1 lands):** Coder on `agentcore-guardrails`, then `agentcore-memory` (stack, not parallel with each other unless interfaces frozen); parallel template agents for `agent-with-tools` and `agent-with-memory` only after their primitive deps are on `main` with judge PASS.
 

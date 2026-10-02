@@ -8,8 +8,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from agentcore_eval.harness import TraceBundle, assert_no_resource_arn
-from agentcore_eval.verdict import Verdict
+from agentcore_eval.harness import TraceBundle, redact_resource_arns
+from agentcore_eval.verdict import Verdict, VerdictStatus
 
 
 def write_evidence(directory: Path, verdict: Verdict, bundle: TraceBundle) -> Path:
@@ -26,8 +26,15 @@ def write_evidence(directory: Path, verdict: Verdict, bundle: TraceBundle) -> Pa
     }
     if verdict.tags is not None:
         body.update(verdict.tags.as_dict())
-    text = json.dumps(body, indent=2, sort_keys=True) + "\n"
-    assert_no_resource_arn(text)
+    text, redacted = redact_resource_arns(json.dumps(body, indent=2, sort_keys=True) + "\n")
+    if redacted:
+        verdict.status = VerdictStatus.FAIL
+        note = "evidence contained a resource ARN and was redacted"
+        if note not in verdict.failures:
+            verdict.failures = (*verdict.failures, note)
+        body["failures"] = list(verdict.failures)
+        body["status"] = verdict.status.value
+        text, _again = redact_resource_arns(json.dumps(body, indent=2, sort_keys=True) + "\n")
     path = directory / f"{verdict.eval_name}.json"
     path.write_text(text, encoding="utf-8")
     return path

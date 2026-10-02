@@ -8,7 +8,9 @@ credentials exist (see the template README).
 
 from agentcore_eval import Eval, EvalContext, RuntimeHarness
 from agentcore_tracing import (
+    ATTR_COST_SOURCE,
     ATTR_COST_TOKENS,
+    ATTR_COST_USD_ESTIMATE,
     ATTR_RUNTIME_SESSION_ID,
     SPAN_AGENT_TURN,
     SPAN_MODEL_INVOKE,
@@ -60,6 +62,10 @@ def _assert(harness: RuntimeHarness, ctx: EvalContext) -> None:
         tokens = turn.attributes.get(ATTR_COST_TOKENS)
         if not isinstance(tokens, int) or tokens < 1:
             raise AssertionError(f"cost.tokens must be a positive int, got {tokens!r}")
+        if turn.attributes.get(ATTR_COST_USD_ESTIMATE) != 0:
+            raise AssertionError("the pong path records cost.usd_estimate 0; it is not model usage")
+        if turn.attributes.get(ATTR_COST_SOURCE) != "length-heuristic":
+            raise AssertionError("cost.source must label the length heuristic; this is not a billing check")
     for model in models:
         parent = by_id.get(model.parent_span_id or "")
         if parent is None or parent.name != SPAN_AGENT_TURN or parent.trace_id != model.trace_id:
@@ -69,8 +75,10 @@ def _assert(harness: RuntimeHarness, ctx: EvalContext) -> None:
         raise AssertionError(f"expected 2 structured logs, got {len(bundle.logs)}")
     request_ids: set[str] = set()
     for record in bundle.logs:
-        if record.get("runtimeSessionId") != session.session_id:
-            raise AssertionError("log runtimeSessionId drifted from the session")
+        if record.get("runtimeSessionId") != hashed:
+            raise AssertionError("log runtimeSessionId must be the session hash, not the raw id")
+        if session.session_id in record.values():
+            raise AssertionError("structured log must not store the raw session id next to actorId")
         if record.get("actorId") != _ACTOR_ID or record.get("agentVersion") != ctx.agent_version:
             raise AssertionError("log actor or agent version did not match the session")
         request_id = record.get("requestId")
@@ -89,8 +97,9 @@ EVAL = Eval(
     name="minimal-agent.golden-turn",
     rubric=(
         "Two turns on one fresh session return the deterministic pong completions, "
-        "each turn span carries cost attributes and a hashed session id, model.invoke "
-        "is a child of agent.turn, and structured logs carry session, actor, version, "
+        "each turn span carries a hashed session id and the length-heuristic cost "
+        "label at zero USD (not model-reported usage), model.invoke is a child of "
+        "agent.turn, and structured logs carry the hashed session id, actor, version, "
         "and request id."
     ),
     setup=_setup,

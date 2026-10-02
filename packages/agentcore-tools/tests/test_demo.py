@@ -3,7 +3,9 @@
 import json
 from pathlib import Path
 
-from agentcore_tools import DEMO_AGENT_VERSION, PUT_RECORD, Policy, build_demo_registry, write_double_invoke_evidence
+from agentcore_tools import Policy
+from agentcore_tools.checks import write_double_invoke_evidence
+from agentcore_tools.demo import DEMO_AGENT_VERSION, PUT_RECORD, build_demo_registry
 
 
 def test_same_idempotency_key_is_one_side_effect() -> None:

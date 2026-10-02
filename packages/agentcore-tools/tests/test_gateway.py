@@ -6,9 +6,6 @@ from typing import Any
 
 import pytest
 from agentcore_tools import (
-    DEMO_AGENT_VERSION,
-    LAMBDA_TARGET,
-    PUT_RECORD,
     AgentCoreGatewayClient,
     GatewayConfigError,
     LambdaContext,
@@ -16,11 +13,11 @@ from agentcore_tools import (
     Policy,
     ToolConfigurationError,
     ToolRegistry,
-    build_demo_registry,
     gateway_tool_name,
     make_lambda_handler,
     strip_gateway_tool_name,
 )
+from agentcore_tools.demo import DEMO_AGENT_VERSION, LAMBDA_TARGET, PUT_RECORD, build_demo_registry
 from agentcore_tools.naming import InvalidNameError
 from support import AGENT_VERSION, ECHO_SCHEMA, bind, echo_registry
 
@@ -170,6 +167,24 @@ def test_lambda_handler_strips_the_target_prefix_and_dedupes() -> None:
     assert stored["body"] == "one"
     parsed = json.loads(second["content"][0]["text"])
     assert parsed["created"] is False
+    assert demo.executions == 2
+
+
+def test_lambda_handler_uses_the_gateway_idempotency_key_when_present() -> None:
+    demo = build_demo_registry()
+    handler = make_lambda_handler(demo.registry, agent_version=DEMO_AGENT_VERSION)
+    context = LambdaContext(
+        tool_name=gateway_tool_name(LAMBDA_TARGET, PUT_RECORD),
+        gateway_id="gateway-local",
+        target_id="target-local",
+        request_id="request-lambda",
+        idempotency_key="lambda-key-1",
+    )
+    first = handler({"body": "one", "record_id": "rec-9"}, context)
+    second = handler({"body": "one", "record_id": "rec-9"}, context)
+    assert "isError" not in first
+    assert json.loads(second["content"][0]["text"])["created"] is True
+    assert demo.executions == 1
 
 
 def test_sync_submits_lambda_target_and_cedar_permit() -> None:
@@ -207,18 +222,75 @@ def test_sync_without_a_permit_creates_no_policy() -> None:
     assert result.policy_responses == ()
 
 
-def test_sync_treats_conflict_as_already_present() -> None:
+class MatchingConflictControl(RecordingControl):
+    """Conflict whose live target matches the schema this sync tried to write."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.live: dict[str, Any] | None = None
+
+    def create_gateway_target(
+        self,
+        *,
+        gatewayIdentifier: str,
+        name: str,
+        targetConfiguration: Mapping[str, Any],
+        credentialProviderConfigurations: Sequence[Mapping[str, str]],
+    ) -> dict[str, Any]:
+        del gatewayIdentifier, name, credentialProviderConfigurations
+        self.live = json.loads(json.dumps(targetConfiguration))
+        raise _Conflict()
+
+    def get_gateway_target(self, *, gatewayIdentifier: str, name: str) -> dict[str, Any]:
+        del gatewayIdentifier, name
+        assert self.live is not None
+        return {"targetConfiguration": self.live}
+
+
+class DifferentSchemaControl(ConflictControl):
+    def get_gateway_target(self, *, gatewayIdentifier: str, name: str) -> dict[str, Any]:
+        del gatewayIdentifier, name
+        return {
+            "targetConfiguration": {
+                "mcp": {"lambda": {"toolSchema": {"inlinePayload": [{"name": "other"}]}}}
+            }
+        }
+
+
+def _synced_demo() -> Any:
     demo = build_demo_registry()
     policy = Policy()
     policy.permit(DEMO_AGENT_VERSION, PUT_RECORD)
     demo.registry.bind_gateway("gateway-dev", policy=policy)
-    result = _client(ConflictControl()).sync(
-        demo.registry,
-        agent_version=DEMO_AGENT_VERSION,
-        target_name=LAMBDA_TARGET,
-    )
+    return demo
+
+
+def test_sync_conflict_matches_when_the_live_schema_matches() -> None:
+    control = MatchingConflictControl()
+    result = _client(control).sync(_synced_demo().registry, agent_version=DEMO_AGENT_VERSION, target_name=LAMBDA_TARGET)
     assert result.target_response["status"] == "EXISTS"
-    assert result.policy_responses
+    assert result.target_response["schema"] == "matched"
+    statement = control.policies[0]["definition"]["cedar"]["statement"]
+    assert DEMO_AGENT_VERSION not in statement
+    assert "0-1-0" in control.policies[0]["name"]
+
+
+def test_sync_conflict_refuses_a_different_schema() -> None:
+    with pytest.raises(GatewayConfigError, match="different schema"):
+        _client(DifferentSchemaControl()).sync(
+            _synced_demo().registry,
+            agent_version=DEMO_AGENT_VERSION,
+            target_name=LAMBDA_TARGET,
+        )
+
+
+def test_sync_conflict_without_a_schema_read_is_not_success() -> None:
+    with pytest.raises(GatewayConfigError, match="live schema was not read"):
+        _client(ConflictControl()).sync(
+            _synced_demo().registry,
+            agent_version=DEMO_AGENT_VERSION,
+            target_name=LAMBDA_TARGET,
+        )
 
 
 def test_sync_refuses_a_different_gateway_id() -> None:

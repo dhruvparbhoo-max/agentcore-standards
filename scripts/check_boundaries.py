@@ -29,7 +29,7 @@ _SKIP_DIRS = {
 }
 _TEXT_SUFFIXES = {".py", ".md", ".toml", ".yml", ".yaml", ".txt", ".example", ".json"}
 _TEXT_NAMES = {"CODEOWNERS", "AGENTS.md", ".env.example", "uv.lock"}
-_SHINGLE = 6
+_SHINGLE = 4
 _MIN_LINE = 12
 _ARN_RE = re.compile("arn:" + "aws" + r"[a-z0-9-]*:")
 _SECRET_RES = (
@@ -130,8 +130,25 @@ def _code_lines(path: Path) -> list[str]:
             continue
         if stripped.startswith(("import ", "from ", '"""', "'''")):
             continue
+        if _is_structural(stripped):
+            continue
         lines.append(stripped)
     return lines
+
+
+def _is_structural(line: str) -> bool:
+    """Drop import continuations and signatures so a protocol is not a copy.
+
+    The shingle compares statements. A shared ``start`` signature or a shared
+    import list is the public contract, not vendored package source.
+    """
+    if line.startswith(("class ", "def ", "async def ", "@")):
+        return True
+    if line.startswith(")") and "->" in line:
+        return True
+    if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*\s*,?", line):
+        return True
+    return bool(re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*\s*:\s*[^#]+,?", line))
 
 
 def _python_files(base: Path) -> list[Path]:

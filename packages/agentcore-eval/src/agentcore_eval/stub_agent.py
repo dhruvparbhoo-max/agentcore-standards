@@ -10,7 +10,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from agentcore_eval.hitl import ApprovalStatus, InMemoryHitlGate
-from agentcore_eval.memory import InMemoryRuntimeHarness
+from agentcore_eval.in_memory import InMemoryRuntimeHarness
 
 _CENT = Decimal("0.01")
 _ALLOW = frozenset({"invoice.lookup", "invoice.record_payment", "crm.lookup_account", "approve.payment"})

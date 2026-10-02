@@ -2,11 +2,17 @@
 
 Field names match DESIGN §1.4: runtime session, actor, agent version, request id,
 tool name, latency, and error class. Payloads must not carry secrets.
+
+``runtimeSessionId`` is ``hash_session_id`` of the raw session id (first 32 hex
+characters of SHA-256). The same value is span attribute ``runtime.session_id``.
+Callers pass the raw id. The log line does not store it next to ``actorId``.
 """
 
 import json
 import logging
 from typing import Any
+
+from agentcore_tracing.session_id import hash_session_id
 
 LOGGER_NAME = "agentcore.turn"
 
@@ -40,7 +46,7 @@ class TurnLog:
             "errorClass": self.error_class,
             "latencyMs": round(self.latency_ms, 3),
             "requestId": self.request_id,
-            "runtimeSessionId": self.runtime_session_id,
+            "runtimeSessionId": hash_session_id(self.runtime_session_id),
         }
         if self.tool_name is not None:
             body["toolName"] = self.tool_name

@@ -26,7 +26,7 @@ A package or template behavior changed, an eval changed, or someone is about to 
 uv run pytest templates/minimal-agent/tests/test_golden_eval.py -m "not runtime"
 ```
 
-For a suite added with the change, call `run_suite` with that template's harness and an `evidence_dir`. `evidence/` is gitignored. The evidence JSON includes spans, logs, status, and failures. It must match the observable. `write_evidence` refuses a resource ARN.
+For a suite added with the change, call `run_suite` with that template's harness and an `evidence_dir`. `evidence/` is gitignored. The evidence JSON includes spans, logs, status, and failures. It must match the observable. `write_evidence` redacts a resource ARN and records `FAIL`.
 
 3. Put an author draft in the PR: eval name, evidence path, which harness ran, status (`PASS`, `PASS+NOTES`, or `FAIL`), and what this run did not prove.
 4. Hand the ship check to **agentcore-judge**. A different process re-runs the eval. That draft is not the ship verdict.
@@ -41,7 +41,7 @@ uv run pytest -m "not runtime"
 uv run python scripts/check_boundaries.py
 ```
 
-`uv run pytest -m runtime` needs `AWS_ACCESS_KEY_ID`, `AWS_REGION`, `AGENTCORE_RUNTIME_ARN`, and `AGENTCORE_SPAN_LOG_GROUP` in the environment. Names are in `.env.example`. Values stay out of git. The `runtime-evals` workflow exits 0 when those values are unset. An exit 0 from that skip is not a PASS.
+`uv run pytest -m runtime` needs `AWS_REGION`, `AGENTCORE_RUNTIME_ARN`, and `AGENTCORE_SPAN_LOG_GROUP` in the environment. Names are in `.env.example`. Values stay out of git. The `runtime-evals` workflow runs the runtime judge. Missing settings write `SKIPPED` and the job fails. That failure is not a PASS, and a green skip is not the gate.
 
 ## Do not
 

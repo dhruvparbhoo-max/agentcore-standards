@@ -3,14 +3,8 @@
 import os
 
 import pytest
-from agentcore_tools import (
-    DEMO_AGENT_VERSION,
-    LAMBDA_TARGET,
-    PUT_RECORD,
-    AgentCoreGatewayClient,
-    Policy,
-    build_demo_registry,
-)
+from agentcore_tools import AgentCoreGatewayClient, Policy
+from agentcore_tools.demo import DEMO_AGENT_VERSION, LAMBDA_TARGET, PUT_RECORD, build_demo_registry
 
 _REQUIRED = (
     "AWS_ACCESS_KEY_ID",

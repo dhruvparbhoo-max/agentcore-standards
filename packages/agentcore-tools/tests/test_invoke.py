@@ -152,6 +152,107 @@ def test_handler_timeout_is_retryable() -> None:
     assert result.error.backoff_ms == 200
 
 
+def test_overlapping_same_key_does_not_run_the_handler_twice() -> None:
+    started = threading.Event()
+    release = threading.Event()
+    calls = {"n": 0}
+
+    def handler(args: Mapping[str, Any]) -> Mapping[str, Any]:
+        calls["n"] += 1
+        started.set()
+        release.wait(timeout=5)
+        return {"value": str(args["value"])}
+
+    registry = echo_registry(handler, side_effecting=True)
+    bind(registry)
+    box: dict[str, Any] = {}
+
+    def first() -> None:
+        box["result"] = registry.invoke_tool(
+            "echo",
+            {"value": "x"},
+            agent_version=AGENT_VERSION,
+            idempotency_key="overlap-1",
+        )
+
+    thread = threading.Thread(target=first)
+    thread.start()
+    assert started.wait(timeout=2)
+    second = registry.invoke_tool(
+        "echo",
+        {"value": "x"},
+        agent_version=AGENT_VERSION,
+        idempotency_key="overlap-1",
+    )
+    assert second.error is not None
+    assert second.error.code == "idempotency_in_progress"
+    assert calls["n"] == 1
+    release.set()
+    thread.join(timeout=5)
+    first_result = box["result"]
+    assert first_result.ok
+    replayed = registry.invoke_tool(
+        "echo",
+        {"value": "x"},
+        agent_version=AGENT_VERSION,
+        idempotency_key="overlap-1",
+    )
+    assert replayed.replayed is True
+    assert calls["n"] == 1
+
+
+def test_deadline_does_not_start_a_second_handler() -> None:
+    started = threading.Event()
+    release = threading.Event()
+    calls = {"n": 0}
+
+    def handler(args: Mapping[str, Any]) -> Mapping[str, Any]:
+        del args
+        calls["n"] += 1
+        started.set()
+        release.wait(timeout=5)
+        return {"value": "late"}
+
+    registry = echo_registry(handler, side_effecting=True, timeout_ms=50)
+    bind(registry)
+    first = registry.invoke_tool(
+        "echo",
+        {"value": "x"},
+        agent_version=AGENT_VERSION,
+        idempotency_key="deadline-1",
+    )
+    assert first.error is not None
+    assert first.error.code == "timeout"
+    assert started.wait(timeout=2)
+    second = registry.invoke_tool(
+        "echo",
+        {"value": "x"},
+        agent_version=AGENT_VERSION,
+        idempotency_key="deadline-1",
+    )
+    assert second.error is not None
+    assert second.error.code == "idempotency_in_progress"
+    assert calls["n"] == 1
+    release.set()
+    replayed = None
+    for _ in range(50):
+        candidate = registry.invoke_tool(
+            "echo",
+            {"value": "x"},
+            agent_version=AGENT_VERSION,
+            idempotency_key="deadline-1",
+        )
+        if candidate.replayed:
+            replayed = candidate
+            break
+        if candidate.error is not None and candidate.error.code == "timeout":
+            break
+        threading.Event().wait(0.05)
+    assert replayed is not None
+    assert replayed.output["value"] == "late"
+    assert calls["n"] == 1
+
+
 def test_deadline_is_retryable() -> None:
     started = threading.Event()
     release = threading.Event()

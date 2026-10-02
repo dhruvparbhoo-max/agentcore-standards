@@ -20,9 +20,9 @@ Each judge process writes one directory (default `evidence/judge/`, gitignored):
 | `verdict.json` | Roll-up status, harness name, lifecycle, failures, notes |
 | `<eval-name>.json` | Spans, structured logs, and the per-eval status |
 
-`evidence/judge/` is the directory CI uploads. A local run can pass `--evidence-dir` to put it somewhere else. Bundles refuse to store a resource ARN.
+`evidence/judge/` is the directory CI uploads. A local run can pass `--evidence-dir` to put it somewhere else. A bundle that contains a resource ARN is redacted and the verdict is rewritten to `FAIL`. The judge does not raise and leave the file unwritten.
 
-Exit codes: `0` for `PASS`, `PASS+NOTES`, and `SKIPPED`. `1` for `FAIL`. `SKIPPED` is not a ship verdict. It means the real Runtime settings were missing, so the judge did not claim a pass.
+Exit codes: `0` for `PASS` and `PASS+NOTES`. `1` for `FAIL` and for `SKIPPED`. `SKIPPED` means the real Runtime settings were missing. The JSON says `SKIPPED`. The process still exits 1, because a missing surface is not a ship verdict. `--allow-runtime-skip` exits 0 for a local dry run. The Runtime workflow does not pass that flag.
 
 ## Mock / bootstrap path (no AWS credentials)
 
@@ -44,7 +44,7 @@ verdict: evidence/judge/verdict.json
 eval: minimal-agent.golden-turn PASS evidence/judge/minimal-agent.golden-turn.json
 ```
 
-What this proves: two turns on one session return `pong:ping` and `pong:again`; `agent.turn` has cost attributes and a hashed session id; `model.invoke` is a child span; the JSON log has session, actor, version, and request id; the process itself ran `start`, `invoke`, `capture_traces`, and `tear_down`.
+What this proves: two turns on one session return `pong:ping` and `pong:again`; `agent.turn` has a hashed session id and `cost.source=length-heuristic` at zero USD (the deterministic pong path, not model-reported usage); `model.invoke` is a child span; the JSON log has the hashed session id, actor, version, and request id; the process itself ran `start`, `invoke`, `capture_traces`, and `tear_down`.
 
 What this does not prove: a deployed AgentCore Runtime microVM, CloudWatch spans, or IAM. Do not auto-merge on this result alone.
 
@@ -52,7 +52,7 @@ CI runs the same command in `.github/workflows/ci.yml` and uploads `evidence/jud
 
 ## Real AgentCore Runtime path
 
-Same eval, same judge process, harness `runtime`. That harness calls `InvokeAgentRuntime` and then `CloudWatchAgentSpanCollector` (Logs Insights on the configured log group and `aws/spans`). It does not call the Evaluate API. `OnDemandEvaluationDatasetRunner` stays a later adapter.
+Same eval, same judge process, harness `runtime`. That harness calls `InvokeAgentRuntime` with the actor on `X-Amzn-Bedrock-AgentCore-Runtime-Custom-Actor-Id`, collects ADOT spans (`attributes.session.id` is the raw session id) and `agentcore.turn` logs (`runtimeSessionId` is the hash), then `tear_down` calls `StopRuntimeSession`. It does not call the Evaluate API. `OnDemandEvaluationDatasetRunner` stays a later adapter. The golden cost check on this path is still the length heuristic at zero USD. It is not a DESIGN §1.4 billing proof.
 
 ```bash
 PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge \
@@ -64,23 +64,27 @@ Required environment (names only; values stay out of git — see `.env.example`)
 
 | Name | Role |
 | --- | --- |
-| `AWS_ACCESS_KEY_ID` | Dev-account credential. `AWS_SECRET_ACCESS_KEY` goes with it. |
-| `AWS_REGION` | Region of that same account. |
-| `AGENTCORE_RUNTIME_ARN` | Deployed runtime identifier. Not committed. |
-| `AGENTCORE_SPAN_LOG_GROUP` | CloudWatch log group name for span collection. Not an ARN in git. |
+| `AWS_REGION` | Region of the dev account. Required. |
+| `AGENTCORE_RUNTIME_ARN` | Deployed runtime identifier. Required. Not committed. |
+| `AGENTCORE_SPAN_LOG_GROUP` | CloudWatch log group name for span collection. Required. Not an ARN in git. |
+| `AGENTCORE_APP_LOG_GROUP` | Optional application-log group for turn logs. Defaults to the span log group. |
+| `AWS_ACCESS_KEY_ID` | Optional. Required only when `AWS_SECRET_ACCESS_KEY` is set, and the reverse. A role needs neither. |
 | `AGENTCORE_RUNTIME_QUALIFIER` | Optional endpoint qualifier. |
+
+`from_env` and `missing_runtime_settings` use this same set.
 
 IAM in the dev account, scoped to that runtime and those log groups:
 
 - `bedrock-agentcore:InvokeAgentRuntime`
+- `bedrock-agentcore:StopRuntimeSession`
 - `logs:StartQuery`
 - `logs:GetQueryResults`
 
 Isolate with agent version, namespace, and IAM path. Do not use a second account (DESIGN §7).
 
-When any required name is unset, the command prints `status: SKIPPED`, writes `verdict.json` with `"status": "SKIPPED"` and `missing_settings`, and exits 0. It does not write a golden-eval evidence file and it does not print `PASS`. `.github/workflows/runtime-evals.yml` uses the same gate.
+When any required name is unset, the command prints `status: SKIPPED`, writes `verdict.json` with `"status": "SKIPPED"` and `missing_settings`, and exits 1. It does not write a golden-eval evidence file and it does not print `PASS`. `.github/workflows/runtime-evals.yml` runs this command and fails closed. A red check without those secrets is the gate, not a skipped success.
 
-A real Runtime PASS is `status: PASS` or `status: PASS+NOTES` from `--harness runtime`, with `minimal-agent.golden-turn.json` full of service spans. That file is the evidence a later judge retains. This repository does not contain that PASS until those credentials exist.
+A real Runtime PASS is `status: PASS` or `status: PASS+NOTES` from `--harness runtime`, with `minimal-agent.golden-turn.json` full of service spans. That file is the evidence a later judge retains. This repository does not contain that PASS.
 
 ## Who re-runs
 

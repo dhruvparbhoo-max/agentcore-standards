@@ -4,8 +4,8 @@ from collections.abc import Mapping
 from typing import Any
 
 import pytest
-from agentcore_eval import PatternGuard, assert_guardrail, load_guardrail_fixtures
-from agentcore_eval.guardrails import GuardDecision
+from agentcore_eval import assert_guardrail, load_guardrail_fixtures
+from agentcore_eval.guardrails import GuardDecision, PatternGuard
 
 
 class _AllowAll:

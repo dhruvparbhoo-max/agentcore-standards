@@ -3,8 +3,9 @@
 The author test and this module are different entrypoints. A judge re-runs the
 suite in its own process, records ``start`` / ``invoke`` / ``capture_traces`` /
 ``tear_down``, and writes evidence. PASS and PASS+NOTES are the only ship
-verdicts. SKIPPED means the real Runtime settings were absent, so no verdict
-was claimed.
+verdicts. SKIPPED means the real Runtime settings were absent. The JSON says
+SKIPPED. The process exits 1, because a missing surface is not a ship verdict.
+``--allow-runtime-skip`` is a local opt-out and is not the merge gate.
 """
 
 from __future__ import annotations
@@ -22,13 +23,13 @@ from agentcore_eval.harness import (
     RuntimeHarness,
     SessionHandle,
     TraceBundle,
-    assert_no_resource_arn,
+    redact_resource_arns,
 )
 from agentcore_eval.runner import run_suite
 from agentcore_eval.runtime_client import missing_runtime_settings
 from agentcore_eval.verdict import Report, VerdictStatus
 
-PASS_STATUSES = frozenset({VerdictStatus.PASS.value, VerdictStatus.PASS_NOTES.value, "SKIPPED"})
+SHIP_STATUSES = frozenset({VerdictStatus.PASS.value, VerdictStatus.PASS_NOTES.value})
 
 
 class JudgeOutcome:
@@ -128,6 +129,9 @@ def judge_suite(
             "suite": str(suite),
         },
     )
+    written = json.loads(summary_path.read_text(encoding="utf-8"))
+    if isinstance(written, dict) and isinstance(written.get("status"), str):
+        status = written["status"]
     return JudgeOutcome(
         status=status,
         harness_name=harness_name,
@@ -202,26 +206,32 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--allow-runtime-skip",
         action="store_true",
-        help="When harness-name is runtime and settings are missing, write SKIPPED and exit 0.",
+        help=(
+            "When harness-name is runtime and settings are missing, write SKIPPED and exit 0. "
+            "Local only. The Runtime merge gate does not pass this flag."
+        ),
     )
     args = parser.parse_args(list(argv) if argv is not None else None)
-    if args.harness_name == "runtime" and args.allow_runtime_skip and missing_runtime_settings():
+    if args.harness_name == "runtime" and missing_runtime_settings():
         outcome = skip_unconfigured_runtime(
             evidence_dir=args.evidence_dir,
             suite=args.suite,
             agent_version=args.agent_version,
         )
-    else:
-        factory = load_harness_factory(args.harness_factory)
-        outcome = judge_suite(
-            suite=args.suite,
-            agent_version=args.agent_version,
-            harness_factory=factory,
-            evidence_dir=args.evidence_dir,
-            harness_name=args.harness_name,
-        )
+        print(format_outcome(outcome))
+        if args.allow_runtime_skip:
+            return 0
+        return 1
+    factory = load_harness_factory(args.harness_factory)
+    outcome = judge_suite(
+        suite=args.suite,
+        agent_version=args.agent_version,
+        harness_factory=factory,
+        evidence_dir=args.evidence_dir,
+        harness_name=args.harness_name,
+    )
     print(format_outcome(outcome))
-    if outcome.status in PASS_STATUSES:
+    if outcome.status in SHIP_STATUSES:
         return 0
     return 1
 
@@ -235,10 +245,18 @@ def _rollup(report: Report) -> str:
     return VerdictStatus.PASS.value
 
 
-def _write_summary(directory: Path, body: Mapping[str, Any]) -> Path:
+def _write_summary(directory: Path, body: dict[str, Any]) -> Path:
     directory.mkdir(parents=True, exist_ok=True)
-    text = json.dumps(body, indent=2, sort_keys=True) + "\n"
-    assert_no_resource_arn(text)
+    text, redacted = redact_resource_arns(json.dumps(body, indent=2, sort_keys=True) + "\n")
+    if redacted:
+        body["status"] = VerdictStatus.FAIL.value
+        note = "evidence contained a resource ARN and was redacted"
+        failures = body.get("failures")
+        if isinstance(failures, list):
+            failures.append(note)
+        else:
+            body["note"] = note
+        text, _again = redact_resource_arns(json.dumps(body, indent=2, sort_keys=True) + "\n")
     path = directory / "verdict.json"
     path.write_text(text, encoding="utf-8")
     return path

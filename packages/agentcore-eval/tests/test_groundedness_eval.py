@@ -1,7 +1,8 @@
 """Lexical groundedness scores and the assert hook."""
 
 import pytest
-from agentcore_eval import LexicalGroundednessScorer, assert_groundedness, load_groundedness_pack
+from agentcore_eval import assert_groundedness, load_groundedness_pack
+from agentcore_eval.groundedness import LexicalGroundednessScorer
 
 
 def test_each_case_matches_its_label() -> None:

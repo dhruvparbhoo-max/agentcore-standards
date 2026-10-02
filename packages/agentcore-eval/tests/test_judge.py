@@ -114,14 +114,50 @@ def _cli(suite: Path, evidence: Path) -> int:
 
 
 def test_runtime_skip_does_not_claim_pass(tmp_path: Path, monkeypatch: Any) -> None:
-    for name in ("AWS_ACCESS_KEY_ID", "AWS_REGION", "AGENTCORE_RUNTIME_ARN", "AGENTCORE_SPAN_LOG_GROUP"):
+    for name in (
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_REGION",
+        "AGENTCORE_RUNTIME_ARN",
+        "AGENTCORE_SPAN_LOG_GROUP",
+    ):
         monkeypatch.delenv(name, raising=False)
     outcome = skip_unconfigured_runtime(evidence_dir=tmp_path / "evidence", suite=tmp_path, agent_version="0.1.0")
     summary = json.loads(outcome.summary_path.read_text(encoding="utf-8"))
     assert outcome.status == "SKIPPED"
     assert summary["status"] == "SKIPPED"
-    assert "AWS_ACCESS_KEY_ID" in summary["missing_settings"]
+    assert "AWS_REGION" in summary["missing_settings"]
+    assert "AGENTCORE_SPAN_LOG_GROUP" in summary["missing_settings"]
+    assert "AWS_ACCESS_KEY_ID" not in summary["missing_settings"]
     assert summary["evals"] == []
+
+
+def test_runtime_cli_exits_when_settings_are_missing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    for name in (
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_REGION",
+        "AGENTCORE_RUNTIME_ARN",
+        "AGENTCORE_SPAN_LOG_GROUP",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    evidence = tmp_path / "evidence"
+    argv = [
+        "--suite",
+        str(tmp_path),
+        "--agent-version",
+        "0.1.0",
+        "--harness-factory",
+        "demo_factory:factory",
+        "--harness-name",
+        "runtime",
+        "--evidence-dir",
+        str(evidence),
+    ]
+    assert main(argv) == 1
+    summary = json.loads((evidence / "verdict.json").read_text(encoding="utf-8"))
+    assert summary["status"] == "SKIPPED"
+    assert main([*argv, "--allow-runtime-skip"]) == 0
 
 
 def test_load_harness_factory_rejects_a_bad_spec() -> None:

@@ -1,9 +1,11 @@
 """Span shape, cost attributes, and structured logs."""
 
 from agentcore_tracing import (
+    ATTR_COST_SOURCE,
     ATTR_COST_TOKENS,
     ATTR_COST_USD_ESTIMATE,
     ATTR_RUNTIME_SESSION_ID,
+    ATTR_SESSION_ID,
     SPAN_AGENT_TURN,
     SPAN_MODEL_INVOKE,
     CostEstimate,
@@ -67,6 +69,8 @@ def test_turn_span_is_parent_of_model_invoke_and_carries_cost() -> None:
     assert missing_required_attributes(dict(turn.attributes or {})) == ()
     assert turn.attributes is not None
     assert turn.attributes[ATTR_RUNTIME_SESSION_ID] == hash_session_id(session_id)
+    assert turn.attributes[ATTR_SESSION_ID] == session_id
+    assert turn.attributes[ATTR_COST_SOURCE] == "length-heuristic"
     tokens = turn.attributes[ATTR_COST_TOKENS]
     assert isinstance(tokens, int) and tokens >= 1
 
@@ -91,7 +95,8 @@ def test_turn_log_fields() -> None:
             error_class=None,
         )
     )
-    assert payload["runtimeSessionId"] == "sess-1"
+    assert payload["runtimeSessionId"] == hash_session_id("sess-1")
+    assert payload["runtimeSessionId"] != "sess-1"
     assert payload["actorId"] == "actor-1"
     assert payload["agentVersion"] == "0.1.0"
     assert payload["requestId"] == "req-1"

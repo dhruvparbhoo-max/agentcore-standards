@@ -1,5 +1,6 @@
 """Verdicts, evidence, suite loading, and the dataset-runner adapter."""
 
+import json
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -8,7 +9,6 @@ import pytest
 from agentcore_eval import (
     Eval,
     HarnessAgentInvoker,
-    HarnessError,
     InMemoryRuntimeHarness,
     RuntimeHarness,
     SessionClosed,
@@ -158,9 +158,9 @@ def test_on_demand_runner_symbol_is_importable() -> None:
     assert callable(runner.run)
 
 
-def test_evidence_refuses_resource_arns(tmp_path: Path) -> None:
+def test_evidence_redacts_resource_arns_and_records_fail(tmp_path: Path) -> None:
     verdict = Verdict(
-        status=VerdictStatus.FAIL,
+        status=VerdictStatus.PASS,
         eval_name="unit.arn",
         agent_version="0.1.0",
         notes=(),
@@ -169,5 +169,11 @@ def test_evidence_refuses_resource_arns(tmp_path: Path) -> None:
     )
     secret = "arn:" + "aws:iam:::role/example"
     bundle = TraceBundle(session_id="sess", spans=(), logs=({"note": secret},))
-    with pytest.raises(HarnessError):
-        write_evidence(tmp_path, verdict, bundle)
+    path = write_evidence(tmp_path, verdict, bundle)
+    text = path.read_text(encoding="utf-8")
+    assert secret not in text
+    assert "[redacted-arn]" in text
+    body = json.loads(text)
+    assert body["status"] == "FAIL"
+    assert "evidence contained a resource ARN and was redacted" in body["failures"]
+    assert verdict.status is VerdictStatus.FAIL

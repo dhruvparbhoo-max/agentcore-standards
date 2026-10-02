@@ -20,16 +20,16 @@ In-process eval driver: `MinimalAgentHarness()`. Service driver: `MinimalAgentHa
 
 Judge process, from the repo root: `PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge --evidence-dir evidence/judge`. Add `--harness runtime` for the service. Evidence is `evidence/judge/verdict.json` and `evidence/judge/minimal-agent.golden-turn.json`. The PASS path is [docs/eval-pass-path.md](../eval-pass-path.md).
 
-Actor id on the in-process path is request header `x-agentcore-actor-id`, set by `handle_turn`. The session package will own actor identity later. Until then a hosted Runtime call that does not send the header logs `actorId` as `unknown`.
+Actor id on the in-process path is request header `x-agentcore-actor-id`, set by `handle_turn`. `AgentCoreRuntimeHarness` sends `X-Amzn-Bedrock-AgentCore-Runtime-Custom-Actor-Id`. The hosted app reads that header after it is lowercased. A call that sends neither logs `actorId` as `unknown`.
 
 ## Observable
 
 Eval `minimal-agent.golden-turn`:
 
-- Turn 1 result is `pong:ping`. Turn 2 result is `pong:again`. Same `runtimeSessionId`.
+- Turn 1 result is `pong:ping`. Turn 2 result is `pong:again`.
 - Spans: `agent.turn` parent, `model.invoke` child, shared trace id.
-- Attributes on the turn: `agent.version`, hashed `runtime.session_id`, `cost.tokens` ≥ 1, `cost.usd_estimate` present (0 until a priced model client exists).
-- Log line includes `runtimeSessionId`, `actorId`, `agentVersion`, `requestId`, `latencyMs`, `errorClass: null`.
+- Attributes on the turn: `agent.version`, hashed `runtime.session_id`, raw `session.id` (CloudWatch filter key), `cost.tokens` ≥ 1, `cost.usd_estimate` 0, `cost.source` `length-heuristic`. That cost label is the pong path, not a billing check.
+- Log line includes hashed `runtimeSessionId` (not the raw id), `actorId`, `agentVersion`, `requestId`, `latencyMs`, `errorClass: null`.
 
 ## Not on this template
 

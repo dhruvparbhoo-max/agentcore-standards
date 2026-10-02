@@ -7,6 +7,7 @@ Identifiers and the Lambda function identifier come from the environment.
 
 from __future__ import annotations
 
+import json
 import os
 from collections.abc import Mapping, Sequence
 from typing import Any, Protocol
@@ -111,8 +112,13 @@ class AgentCoreGatewayClient:
         """Create the Lambda target and the Cedar statements for ``agent_version``.
 
         An empty allowlist still creates the target and creates no permit.
-        Cedar's default is deny. A conflict on create is treated as the resource
-        already existing; other control-plane failures raise ``GatewayConfigError``
+        Cedar's default is deny. A conflict on the target is success only when
+        ``get_gateway_target`` returns the same inline tool schema. A conflict
+        without that read, or with a different schema, raises
+        ``GatewayConfigError``. A policy conflict is the same statement: the
+        client token is a hash of the Cedar text. Cedar statements do not name
+        the agent version; the policy name does. Use one policy engine per
+        version. Other control-plane failures raise ``GatewayConfigError``
         without including the request body.
         """
         binding = registry.binding
@@ -136,6 +142,7 @@ class AgentCoreGatewayClient:
                 targetConfiguration=_as_mapping(request["targetConfiguration"]),
                 credentialProviderConfigurations=_credentials(request["credentialProviderConfigurations"]),
             ),
+            conflict=lambda: self._existing_target(request),
         )
         actions = {name: target.visible_name(name) for name in target.tool_names}
         statements = binding.policy.cedar_statements(
@@ -165,7 +172,27 @@ class AgentCoreGatewayClient:
                 definition=definition,
                 clientToken=str(policy_request["clientToken"]),
             ),
+            conflict=lambda: {"statement": "matched", "status": "EXISTS"},
         )
+
+    def _existing_target(self, request: Mapping[str, Any]) -> Mapping[str, Any]:
+        getter = getattr(self._control, "get_gateway_target", None)
+        if not callable(getter):
+            raise GatewayConfigError("create_gateway_target already exists and the live schema was not read")
+        try:
+            live = getter(gatewayIdentifier=str(request["gatewayIdentifier"]), name=str(request["name"]))
+        except Exception as exc:
+            raise GatewayConfigError("create_gateway_target already exists and the live schema was not read") from exc
+        if not isinstance(live, Mapping):
+            raise GatewayConfigError("create_gateway_target already exists and the live schema was not read")
+        live_config = live.get("targetConfiguration", live)
+        if not isinstance(live_config, Mapping):
+            raise GatewayConfigError("create_gateway_target already exists and the live schema was not read")
+        wanted = _inline_payload(_as_mapping(request["targetConfiguration"]))
+        found = _inline_payload(live_config)
+        if json.dumps(wanted, sort_keys=True) != json.dumps(found, sort_keys=True):
+            raise GatewayConfigError("create_gateway_target already exists with a different schema")
+        return {"schema": "matched", "status": "EXISTS"}
 
 
 def _require_lambda_arn(value: str) -> str:
@@ -176,12 +203,15 @@ def _require_lambda_arn(value: str) -> str:
     return value
 
 
-def _call(operation: str, fn: Any) -> Mapping[str, Any]:
+def _call(operation: str, fn: Any, *, conflict: Any) -> Mapping[str, Any]:
     try:
         response = fn()
     except Exception as exc:
         if _is_conflict(exc):
-            return {"status": "EXISTS"}
+            resolved = conflict()
+            if not isinstance(resolved, Mapping):
+                raise GatewayConfigError(f"{operation} failed") from None
+            return resolved
         raise GatewayConfigError(f"{operation} failed") from exc
     if not isinstance(response, Mapping):
         raise GatewayConfigError(f"{operation} returned an unexpected response")
@@ -203,6 +233,22 @@ def _as_mapping(value: object) -> Mapping[str, Any]:
     if isinstance(value, Mapping):
         return value
     raise GatewayConfigError("create_gateway_target failed")
+
+
+def _inline_payload(config: Mapping[str, Any]) -> list[Any]:
+    mcp = config.get("mcp")
+    if not isinstance(mcp, Mapping):
+        return []
+    lambda_target = mcp.get("lambda")
+    if not isinstance(lambda_target, Mapping):
+        return []
+    schema = lambda_target.get("toolSchema")
+    if not isinstance(schema, Mapping):
+        return []
+    payload = schema.get("inlinePayload")
+    if not isinstance(payload, list):
+        return []
+    return payload
 
 
 def _credentials(value: object) -> list[dict[str, str]]:

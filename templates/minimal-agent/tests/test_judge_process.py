@@ -49,8 +49,10 @@ def test_runtime_judge_process_skips_without_credentials(tmp_path: Path) -> None
         env[name] = ""
     evidence = tmp_path / "judge"
     completed = _run_judge(evidence, "--harness", "runtime", env=env)
-    assert completed.returncode == 0, completed.stderr
+    assert completed.returncode == 1, completed.stdout + completed.stderr
     summary = json.loads((evidence / "verdict.json").read_text(encoding="utf-8"))
     assert summary["status"] == "SKIPPED"
     assert summary["evals"] == []
     assert "PASS" not in summary["status"]
+    allowed = _run_judge(tmp_path / "allowed", "--harness", "runtime", "--allow-runtime-skip", env=env)
+    assert allowed.returncode == 0, allowed.stderr

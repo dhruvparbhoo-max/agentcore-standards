@@ -5,8 +5,9 @@ Run this in a process that did not author the change:
     PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge
 
 ``--harness memory`` calls the entrypoint in-process (no AWS credentials).
-``--harness runtime`` calls AgentCore Runtime and writes SKIPPED, not PASS,
-when the runtime settings are unset.
+``--harness runtime`` calls AgentCore Runtime. Missing settings write
+``SKIPPED`` and exit 1. That is not a PASS. ``--allow-runtime-skip`` exits 0
+for a local dry run and is not the merge gate.
 """
 
 from __future__ import annotations
@@ -22,7 +23,7 @@ from minimal_agent.entrypoint import AGENT_VERSION
 from minimal_agent.harness import MinimalAgentHarness
 
 _SUITE = Path(__file__).resolve().parents[2] / "evals"
-_PASS = frozenset({"PASS", "PASS+NOTES", "SKIPPED"})
+_SHIP = frozenset({"PASS", "PASS+NOTES"})
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -34,6 +35,11 @@ def main(argv: list[str] | None = None) -> int:
         default=Path("evidence/judge"),
         help="Directory for verdict.json and per-eval evidence. Created if needed.",
     )
+    parser.add_argument(
+        "--allow-runtime-skip",
+        action="store_true",
+        help="Exit 0 when runtime settings are missing. Local only. The Runtime gate does not pass this flag.",
+    )
     args = parser.parse_args(argv)
     if args.harness == "runtime" and missing_runtime_settings():
         outcome = skip_unconfigured_runtime(
@@ -41,17 +47,20 @@ def main(argv: list[str] | None = None) -> int:
             suite=_SUITE,
             agent_version=AGENT_VERSION,
         )
-    else:
-        factory = MinimalAgentHarness.for_agentcore_runtime if args.harness == "runtime" else MinimalAgentHarness
-        outcome = judge_suite(
-            suite=_SUITE,
-            agent_version=AGENT_VERSION,
-            harness_factory=factory,
-            evidence_dir=args.evidence_dir,
-            harness_name=args.harness,
-        )
+        print(format_outcome(outcome))
+        if args.allow_runtime_skip:
+            return 0
+        return 1
+    factory = MinimalAgentHarness.for_agentcore_runtime if args.harness == "runtime" else MinimalAgentHarness
+    outcome = judge_suite(
+        suite=_SUITE,
+        agent_version=AGENT_VERSION,
+        harness_factory=factory,
+        evidence_dir=args.evidence_dir,
+        harness_name=args.harness,
+    )
     print(format_outcome(outcome))
-    if outcome.status in _PASS:
+    if outcome.status in _SHIP:
         return 0
     return 1
 

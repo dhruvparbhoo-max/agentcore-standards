@@ -6,6 +6,7 @@ on:
 
 jobs:
   agentcore-runtime:
+    name: Runtime judge gate (SKIPPED is not PASS)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,9 +25,15 @@ jobs:
           AGENTCORE_RUNTIME_ARN: ${{ secrets.AGENTCORE_RUNTIME_ARN }}
           AGENTCORE_RUNTIME_QUALIFIER: ${{ secrets.AGENTCORE_RUNTIME_QUALIFIER }}
           AGENTCORE_SPAN_LOG_GROUP: ${{ secrets.AGENTCORE_SPAN_LOG_GROUP }}
+          AGENTCORE_APP_LOG_GROUP: ${{ secrets.AGENTCORE_APP_LOG_GROUP }}
         run: |
-          if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_REGION" ] || [ -z "$AGENTCORE_RUNTIME_ARN" ] || [ -z "$AGENTCORE_SPAN_LOG_GROUP" ]; then
-            echo "Skipping real AgentCore Runtime evals. Set AWS_ACCESS_KEY_ID, AWS_REGION, AGENTCORE_RUNTIME_ARN, and AGENTCORE_SPAN_LOG_GROUP to run them."
-            exit 0
-          fi
-          uv run pytest -m runtime
+          PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge \
+            --harness runtime \
+            --evidence-dir evidence/judge
+      - name: Upload Runtime judge evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-judge-evidence
+          path: evidence/judge
+          if-no-files-found: error

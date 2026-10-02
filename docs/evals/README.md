@@ -68,7 +68,8 @@ The same suite from Python:
 ```bash
 uv run python - <<'PY'
 from pathlib import Path
-from agentcore_eval import business_harness, pack_suite_dir, run_suite
+from agentcore_eval import pack_suite_dir, run_suite
+from agentcore_eval.stub_agent import business_harness
 
 report = run_suite(
     pack_suite_dir(),
@@ -80,7 +81,9 @@ print([(item.eval_name, item.status.value) for item in report.verdicts])
 PY
 ```
 
-`evidence/` is gitignored. Each eval writes `<eval-name>.json`. Those files refuse a resource identifier, same as the rest of the harness.
+`evidence/` is gitignored. Each eval writes `<eval-name>.json`. A resource identifier in that file is redacted and the verdict becomes `FAIL`.
+
+`PatternGuard`, `BusinessStub`, `LexicalGroundednessScorer`, and `InMemoryHitlGate` are offline stand-ins. Import them from `agentcore_eval.guardrails`, `agentcore_eval.stub_agent`, `agentcore_eval.groundedness`, and `agentcore_eval.hitl`. The package root raises `ImportError` for those names. They are not `agentcore-guardrails`, the memory client, or `templates/human-in-the-loop`. `business_harness` lives in `agentcore_eval.stub_agent`. `InMemoryRuntimeHarness` lives in `agentcore_eval.in_memory`. The product memory package stays the stub under `packages/agentcore-memory`.
 
 `pytest -m "not runtime"` is the default CI slice. The one test that constructs the real Evaluators runner is marked `runtime` and skips unless `AWS_ACCESS_KEY_ID`, `AWS_REGION`, `AGENTCORE_RUNTIME_ARN`, and `AGENTCORE_SPAN_LOG_GROUP` are set. That test does not call Evaluate.
 

@@ -2,6 +2,9 @@
 
 This stands in for AgentCore Runtime during local and unit evals. It still calls
 the product entrypoint. It does not stub that function's behavior.
+
+The product Memory package is ``packages/agentcore-memory`` and is still a
+stub. This module is not that client.
 """
 
 import inspect

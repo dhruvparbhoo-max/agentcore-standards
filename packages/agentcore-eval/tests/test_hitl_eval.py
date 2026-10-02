@@ -5,11 +5,11 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from agentcore_eval import (
     ApprovalStatus,
-    InMemoryHitlGate,
     assert_approval_expired,
     assert_blocked_without_approval,
     assert_proceeds_with_approval,
 )
+from agentcore_eval.hitl import InMemoryHitlGate
 
 
 def _at(hour: int, minute: int = 0) -> datetime:

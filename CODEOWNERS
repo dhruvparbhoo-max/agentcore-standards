@@ -1,7 +1,8 @@
 # Lease map (DESIGN §8). One ownership path per line.
-# @agentcore/platform is the standing platform owner. GitHub enforces these
-# teams only after they exist in the org. Until then the coordinator still
-# grants one writer per path. Do not put two agents on the same path.
+# @agentcore/platform is a placeholder label. It is not a GitHub team in this
+# org, so this file does not grant review or merge. The coordinator still
+# grants one writer per path. A CODEOWNERS approval is not the ship gate.
+# Do not put two agents on the same path.
 #
 # /pyproject.toml and /uv.lock are serialized to platform. A package lease
 # does not include them unless the coordinator adds that lease explicitly.

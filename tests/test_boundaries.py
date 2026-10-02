@@ -33,6 +33,30 @@ def test_templates_cannot_copy_package_source(tmp_path: Path) -> None:
     assert any("copies package source" in item for item in violations)
 
 
+def test_four_line_copy_is_rejected(tmp_path: Path) -> None:
+    package = tmp_path / "packages" / "widget"
+    template = tmp_path / "templates" / "demo"
+    package.mkdir(parents=True)
+    template.mkdir(parents=True)
+    body = "\n".join(f"value_{index} = 'abcdefghijklmnopqrstuvwxyz-{index}'" for index in range(4)) + "\n"
+    (package / "impl.py").write_text(body, encoding="utf-8")
+    (template / "impl.py").write_text(body, encoding="utf-8")
+    violations = check_boundaries.find_violations(tmp_path)
+    assert any("copies package source" in item for item in violations)
+
+
+def test_three_line_overlap_is_not_a_copy(tmp_path: Path) -> None:
+    package = tmp_path / "packages" / "widget"
+    template = tmp_path / "templates" / "demo"
+    package.mkdir(parents=True)
+    template.mkdir(parents=True)
+    body = "\n".join(f"value_{index} = 'abcdefghijklmnopqrstuvwxyz-{index}'" for index in range(3)) + "\n"
+    (package / "impl.py").write_text(body, encoding="utf-8")
+    (template / "impl.py").write_text(body, encoding="utf-8")
+    violations = check_boundaries.find_violations(tmp_path)
+    assert violations == []
+
+
 def test_resource_arns_are_rejected(tmp_path: Path) -> None:
     note = tmp_path / "README.md"
     marker = "arn:" + "aws:"

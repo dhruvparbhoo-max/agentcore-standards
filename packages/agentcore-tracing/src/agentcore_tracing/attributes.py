@@ -4,8 +4,11 @@ from collections.abc import Mapping
 
 ATTR_AGENT_VERSION = "agent.version"
 ATTR_RUNTIME_SESSION_ID = "runtime.session_id"
+# Raw id. CloudWatchAgentSpanCollector filters ``attributes.session.id``.
+ATTR_SESSION_ID = "session.id"
 ATTR_COST_TOKENS = "cost.tokens"
 ATTR_COST_USD_ESTIMATE = "cost.usd_estimate"
+ATTR_COST_SOURCE = "cost.source"
 
 REQUIRED_TURN_ATTRIBUTES: tuple[str, ...] = (
     ATTR_AGENT_VERSION,

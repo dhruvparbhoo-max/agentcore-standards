@@ -77,15 +77,15 @@ PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge --ev
 
 Evidence lands in `evidence/judge/verdict.json` and `evidence/judge/minimal-agent.golden-turn.json`. `status: PASS` here proves the in-process entrypoint. It does not prove AgentCore Runtime.
 
-Real Runtime (same command, different harness). Skips cleanly when credentials are absent (`status: SKIPPED`, exit 0, not a PASS):
+Real Runtime (same command, different harness). Missing settings write `status: SKIPPED` and exit 1. That is not a PASS:
 
 ```bash
 PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge --harness runtime --evidence-dir evidence/judge
 ```
 
-Set `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AGENTCORE_RUNTIME_ARN`, and `AGENTCORE_SPAN_LOG_GROUP` in the environment. The dev account is the eval account. IAM needs `bedrock-agentcore:InvokeAgentRuntime`, `logs:StartQuery`, and `logs:GetQueryResults`. Names are listed in `.env.example`. Do not commit values.
+Set `AWS_REGION`, `AGENTCORE_RUNTIME_ARN`, and `AGENTCORE_SPAN_LOG_GROUP`. An access key and its secret are a pair; a role needs neither. The dev account is the eval account. IAM needs `bedrock-agentcore:InvokeAgentRuntime`, `bedrock-agentcore:StopRuntimeSession`, `logs:StartQuery`, and `logs:GetQueryResults`. Names are listed in `.env.example`. Do not commit values.
 
-`.github/workflows/ci.yml` runs the mock judge and uploads `evidence/judge`. `.github/workflows/runtime-evals.yml` runs the runtime harness only when those settings exist.
+`.github/workflows/ci.yml` runs the mock judge and uploads `evidence/judge`. `.github/workflows/runtime-evals.yml` runs the runtime judge and fails when settings are absent. This repository does not contain a live Runtime PASS.
 
 Author pytest is still useful, and it is not the ship verdict:
 

@@ -25,7 +25,7 @@ You did not write the PR. The author marked it ready and named an eval plus an e
 uv run pytest -m runtime
 ```
 
-The command needs `AWS_ACCESS_KEY_ID`, `AWS_REGION`, `AGENTCORE_RUNTIME_ARN`, and `AGENTCORE_SPAN_LOG_GROUP`. If any is missing, pytest skips and the workflow exits 0. Report that as missing evidence, which blocks merge. Do not treat the skip as `PASS`.
+The command needs `AWS_REGION`, `AGENTCORE_RUNTIME_ARN`, and `AGENTCORE_SPAN_LOG_GROUP`. If any is missing, the judge writes `SKIPPED` and exits 1. The `runtime-evals` workflow does the same. Report that as missing evidence, which blocks merge. Do not treat the skip as `PASS`.
 
 4. Read the new evidence JSON. Match it to the observable named in the eval. Keep resource ARNs, account ids, and secrets out of the retained artifact.
 5. Emit one status, with the eval name, evidence path, and head SHA:

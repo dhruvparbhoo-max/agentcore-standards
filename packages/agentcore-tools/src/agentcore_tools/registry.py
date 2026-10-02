@@ -12,7 +12,6 @@ import threading
 import time
 import uuid
 from collections.abc import Callable, Mapping, Sequence
-from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from agentcore_tracing import (
@@ -38,7 +37,7 @@ from agentcore_tools.errors import (
     retryable_result,
 )
 from agentcore_tools.gateway import GatewayBinding, LambdaTarget, McpServerTarget
-from agentcore_tools.idempotency import IdempotencyConflict, IdempotencyStore, args_hash
+from agentcore_tools.idempotency import IdempotencyClaim, IdempotencyConflict, IdempotencyStore, args_hash
 from agentcore_tools.naming import (
     InvalidNameError,
     require_agent_version,
@@ -233,11 +232,14 @@ class ToolRegistry:
         actor_id: str = "actor-default",
         runtime_session_id: str = "session-local",
         request_id: str | None = None,
+        idempotency_key: str | None = None,
     ) -> ToolResult:
         """Run a tool the way the Lambda target does: schema and handler, no policy check.
 
         Gateway Policy is the authorization boundary. Do not call this from the
-        agent. Use ``invoke_tool``.
+        agent. Use ``invoke_tool``. Without ``idempotency_key`` this method does
+        not consult the idempotency cache. Gateway's default Lambda event is the
+        tool arguments only, so the durable guard stays inside the handler.
         """
         version = require_agent_version(agent_version)
         actor = require_log_field(actor_id, "actor id")
@@ -251,8 +253,7 @@ class ToolRegistry:
             span.set_attribute(ATTR_RUNTIME_SESSION_ID, hash_session_id(session))
             span.set_attribute("tool.name", span_tool)
             try:
-                with get_tracer().start_as_current_span(SPAN_GATEWAY_CALL):
-                    result = self._dispatch(name, args)
+                result = self._dispatch(name, args, idempotency_key=idempotency_key)
             finally:
                 if result is not None:
                     _annotate(span, result)
@@ -302,18 +303,13 @@ class ToolRegistry:
             return key_error
         if key is not None and spec.idempotent:
             try:
-                cached = self._store.lookup(tool_name, key, args_hash(normalized))
+                return self._run_claimed(spec, tool_name, normalized, key)
             except IdempotencyConflict:
                 return fatal_result("idempotency_conflict", "idempotency key was reused with different arguments")
-            if cached is not None:
-                return cached
-        with get_tracer().start_as_current_span(SPAN_GATEWAY_CALL):
-            result = self._execute(spec, normalized)
-        if key is not None and spec.idempotent:
-            self._store.remember(tool_name, key, args_hash(normalized), result)
+        result, _late = self._execute(spec, normalized)
         return result
 
-    def _dispatch(self, name: str, args: Mapping[str, Any]) -> ToolResult:
+    def _dispatch(self, name: str, args: Mapping[str, Any], *, idempotency_key: str | None = None) -> ToolResult:
         try:
             tool_name = require_tool_name(name)
         except InvalidNameError:
@@ -327,24 +323,80 @@ class ToolRegistry:
         normalized = _normalize_args(args)
         if normalized is None:
             return fatal_result("schema_rejected", "arguments must be an object")
-        return self._execute(spec, normalized)
+        key = _optional_idempotency_key(idempotency_key)
+        if key is None and idempotency_key:
+            return fatal_result("idempotency_key_invalid", "idempotency key is invalid")
+        if key is not None and spec.idempotent:
+            try:
+                return self._run_claimed(spec, tool_name, normalized, key)
+            except IdempotencyConflict:
+                return fatal_result("idempotency_conflict", "idempotency key was reused with different arguments")
+        result, _late = self._execute(spec, normalized)
+        return result
 
-    def _execute(self, spec: _Tool, args: dict[str, Any]) -> ToolResult:
-        executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="agentcore-tool")
-        future = executor.submit(spec.handler, args)
-        try:
-            output: object = future.result(timeout=spec.timeout_ms / 1000)
-        except TimeoutError:
-            return retryable_result("timeout", "tool timed out", _DEFAULT_BACKOFF_MS)
-        except RetryableToolError as exc:
-            return retryable_result(exc.code, str(exc) or exc.code, exc.backoff_ms)
-        except FatalToolError as exc:
-            return fatal_result(exc.code, str(exc) or exc.code)
-        except Exception:
-            return fatal_result("unexpected", "unexpected tool failure")
-        finally:
-            executor.shutdown(wait=False, cancel_futures=True)
-        return _result_from_output(output)
+    def _run_claimed(self, spec: _Tool, tool_name: str, args: dict[str, Any], key: str) -> ToolResult:
+        begun = self._store.begin(tool_name, key, args_hash(args))
+        if not isinstance(begun, IdempotencyClaim):
+            return begun
+        result, late = self._execute(spec, args)
+        if late is None:
+            self._store.finish(begun, result)
+            return result
+
+        def complete(final: ToolResult, claim: IdempotencyClaim = begun) -> None:
+            self._store.finish(claim, final)
+
+        late(complete)
+        return result
+
+    def _execute(
+        self,
+        spec: _Tool,
+        args: dict[str, Any],
+    ) -> tuple[ToolResult, Callable[[Callable[[ToolResult], None]], None] | None]:
+        """Run ``spec.handler``. A deadline does not stop the handler thread.
+
+        The second value is set only on deadline. Call it with a callback to
+        receive the handler's eventual result. Python cannot cancel the thread.
+        The gateway span covers this attempt, including a deadline that returns
+        before the thread ends.
+        """
+        with get_tracer().start_as_current_span(SPAN_GATEWAY_CALL):
+            return self._execute_handler(spec, args)
+
+    def _execute_handler(
+        self,
+        spec: _Tool,
+        args: dict[str, Any],
+    ) -> tuple[ToolResult, Callable[[Callable[[ToolResult], None]], None] | None]:
+        done = threading.Event()
+        box: dict[str, ToolResult] = {}
+
+        def run() -> None:
+            try:
+                box["result"] = _result_from_output(spec.handler(args))
+            except RetryableToolError as exc:
+                box["result"] = retryable_result(exc.code, str(exc) or exc.code, exc.backoff_ms)
+            except FatalToolError as exc:
+                box["result"] = fatal_result(exc.code, str(exc) or exc.code)
+            except Exception:
+                box["result"] = fatal_result("unexpected", "unexpected tool failure")
+            finally:
+                done.set()
+
+        thread = threading.Thread(target=run, name="agentcore-tool", daemon=True)
+        thread.start()
+        if done.wait(spec.timeout_ms / 1000):
+            return box["result"], None
+
+        def late(callback: Callable[[ToolResult], None]) -> None:
+            def watch() -> None:
+                done.wait()
+                callback(box["result"])
+
+            threading.Thread(target=watch, name="agentcore-tool-late", daemon=True).start()
+
+        return retryable_result("timeout", "tool timed out", _DEFAULT_BACKOFF_MS), late
 
     def _spec(self, name: str) -> _Tool | None:
         with self._lock:
@@ -429,6 +481,20 @@ def _normalize_args(args: Mapping[str, Any]) -> dict[str, Any] | None:
     return normalized
 
 
+def _optional_idempotency_key(key: str | None) -> str | None:
+    """Return a valid key, or ``None`` when the caller omitted it.
+
+    An invalid non-empty key returns ``None`` and the caller treats that as
+    ``idempotency_key_invalid`` when the original value was set.
+    """
+    if not key:
+        return None
+    try:
+        return require_idempotency_key(key)
+    except InvalidNameError:
+        return None
+
+
 def _idempotency_key(spec: _Tool, key: str | None) -> tuple[str | None, ToolResult | None]:
     if spec.side_effecting and not key:
         return None, fatal_result("idempotency_key_required", "side-effecting tools require an idempotency key")
@@ -495,7 +561,7 @@ def _log(
     error_class = None if result.error is None else result.error.error_class.value
     emit_turn_log(
         TurnLog(
-            runtime_session_id=hash_session_id(runtime_session_id),
+            runtime_session_id=runtime_session_id,
             actor_id=actor_id,
             agent_version=agent_version,
             request_id=request_id,

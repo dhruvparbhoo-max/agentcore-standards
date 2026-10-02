@@ -123,3 +123,17 @@ def assert_no_resource_arn(text: str) -> None:
     """Refuse to persist an ARN in an evidence bundle."""
     if _ARN_MARKER in text:
         raise HarnessError("refusing to write an evidence bundle that contains a resource ARN")
+
+
+def redact_resource_arns(text: str) -> tuple[str, bool]:
+    """Replace resource ARN text with a fixed token.
+
+    Evidence writers use this so a real span can be stored as ``FAIL`` instead
+    of crashing the suite. The token is not an ARN.
+    """
+    if _ARN_MARKER not in text:
+        return text, False
+    import re
+
+    pattern = re.compile(re.escape(_ARN_MARKER) + r"[A-Za-z0-9:/+=_.@-]*")
+    return pattern.sub("[redacted-arn]", text), True

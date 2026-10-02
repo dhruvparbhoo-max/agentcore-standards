@@ -21,6 +21,10 @@ tear_down(session)
 | `load_on_demand_runner` | Imports that SDK runner. |
 | `OnDemandEvaluatorsAdapter` | Optional call to `OnDemandEvaluationDatasetRunner.run`. Returns the SDK result, not a `Verdict`. |
 
-`OnDemandEvaluationDatasetRunner` is the service-side path (invoke, wait for CloudWatch, call Evaluate). It does not replace `run_eval` / `run_suite`. The eval pack — business goldens, guardrail fixtures, groundedness, and HITL — is documented in [docs/evals/README.md](../../docs/evals/README.md). Offline runs use `business_harness()` and `pack_suite_dir()`.
+`OnDemandEvaluationDatasetRunner` is the service-side path (invoke, wait for CloudWatch, call Evaluate). It does not replace `run_eval` / `run_suite`. The eval pack — business goldens, guardrail fixtures, groundedness, and HITL — is documented in [docs/evals/README.md](../../docs/evals/README.md). Offline runs use `business_harness()` from `agentcore_eval.stub_agent` and `pack_suite_dir()`. Those stand-ins are not exported from the package root.
 
-Evidence files refuse to persist a resource ARN.
+`InMemoryRuntimeHarness` is the in-process eval client in `agentcore_eval.in_memory`. It is not the product memory package.
+
+Evidence that contains a resource ARN is redacted and recorded as `FAIL`.
+
+A runtime judge with missing settings writes `SKIPPED` and exits 1. `PASS` and `PASS+NOTES` are the only exit-0 statuses.
