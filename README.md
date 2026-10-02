@@ -4,7 +4,7 @@ Standards library for coding agents and humans building on [Amazon Bedrock Agent
 
 Normative rules live in [docs/DESIGN.md](docs/DESIGN.md). Path leases for parallel agents live in [AGENTS.md](AGENTS.md) (DESIGN §8). Playbooks for eval cases, tools, recovery, and production misses are indexed in [docs/README.md](docs/README.md). Those pages restate selected rules from Bojie Li's *AI Agent* skill pack for AgentCore; the credit matrix is [docs/attribution/bojieli-ai-agent-book.md](docs/attribution/bojieli-ai-agent-book.md).
 
-Lane A is the root of every later stack: `agentcore-tracing`, `agentcore-eval`, and `templates/minimal-agent`, with one golden eval. `agentcore-tools` is implemented. Session, memory, and guardrails are path stubs only.
+Lane A is the root of every later stack: `agentcore-tracing`, `agentcore-eval`, and `templates/minimal-agent`, with one golden eval. The shared shelf and `templates/agent-with-tools` are implemented offline. Neither is a live Runtime PASS. `agentcore-session` stays a stub.
 
 ## Layout
 
@@ -21,8 +21,8 @@ packages/agentcore-approvals/   single-use approval tokens
 packages/agentcore-context/     prompt assembly and the state bar
 packages/agentcore-recovery/    retry budget, circuit breaker, in-flight cap
 packages/agentcore-completion/  completion check; proposer is not the verifier
-packages/agentcore-langchain/   LangChain create_agent over the tool registry
-templates/agent-with-tools/     stub
+packages/agentcore-langchain/   LangChain create_agent over the tool registry, plus graph helpers
+templates/agent-with-tools/     invoice desk; imports the shelf; offline judge; no live Runtime PASS
 templates/agent-with-memory/    stub
 templates/multi-agent/          stub
 templates/human-in-the-loop/    stub
@@ -119,4 +119,4 @@ Read [AGENTS.md](AGENTS.md) before editing. Short version:
 
 ## Not in this lane
 
-`agentcore-session`, `agentcore-memory`, and `agentcore-guardrails` are README stubs so later agents have stable paths. Do not implement them here. `agentcore-tools` lives in `packages/agentcore-tools`. Memory-via-Gateway is still an open decision (DESIGN §7).
+`agentcore-session` is still a stub. Memory, guardrails, approvals, context, and recovery live on the shelf. The invoice desk imports them. Memory-via-Gateway is still an open decision (DESIGN §7). There is no live Runtime PASS in this tree.
