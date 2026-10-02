@@ -89,10 +89,16 @@ Suggested package layout:
 
 ```
 packages/
-  agentcore-session/      # Runtime session lifecycle
-  agentcore-tools/        # Tool registry + Gateway wiring
-  agentcore-memory/       # STM/LTM adapters + guardrail hooks
-  agentcore-guardrails/   # Bedrock Guardrails + policy helpers
+  agentcore-session/      # Runtime session lifecycle (stub; headers live in identity)
+  agentcore-identity/     # Actor and session headers
+  agentcore-tools/        # Tool registry, Gateway, compact, retrieve, catalog
+  agentcore-guardrails/   # Input/output/memory-write checks
+  agentcore-memory/       # STM/LTM; writes call the guard first
+  agentcore-approvals/    # Single-use HITL tokens
+  agentcore-context/      # Prompt assembly and the state bar
+  agentcore-recovery/     # Retry budget, circuit breaker, in-flight cap
+  agentcore-completion/   # Loop/done verifier; proposer is not the verifier
+  agentcore-langchain/    # create_agent bound to the tool registry
   agentcore-tracing/      # OTEL + cost attributes
   agentcore-eval/         # Eval harness, verdicts, evidence upload
 templates/
@@ -220,6 +226,26 @@ Once Runtime and tracing are hooked up, a harness change follows the rhythm in [
 `uv run python -m agentcore_eval.hillclimb steps` prints that command sequence. `compare` diffs two evidence directories and blocks when a previously passing case fails or a case disappears. That diff is a structure check. It is not an independent Runtime verdict, and writing the rhythm down is not a claim that a production climb has been run. The ship gate stays §4.2.7.
 
 ---
+
+## 2.8 Shelf (shared libraries agents copy)
+
+These packages are the official set. Domain templates import them. They do not reimplement them. None of these packages is an independent Runtime PASS.
+
+| Shelf | Package | What an agent copies |
+| --- | --- | --- |
+| Guardrails | `agentcore-guardrails` | `Guard.apply_input`, `apply_output`, `screen_memory_write`. Local policy version `1.0.0`. A required Bedrock backend that is missing or failing returns a block. |
+| Memory | `agentcore-memory` | `MemoryClient.create_event` stores sanitized text or raises. `promote` is the long-term step. `retrieve` is lexical and actor-scoped. Gateway-versus-SDK (decision 5) is still open; this client is the contract. |
+| Identity | `agentcore-identity` | `require_actor_id` reads the custom Runtime actor header, then `x-agentcore-actor-id`. The workload user header is not the actor. |
+| Approvals | `agentcore-approvals` | `ApprovalGate.issue`, `decide`, `consume`. The actor cannot approve their own call. Tokens are single-use and expire. |
+| Context | `agentcore-context` | `assemble_context` plus `StateBar`. Tool text is dropped before the state bar, the system text, or the user turn. Memory lines must already be screened. Token counts are the length heuristic, not a bill. |
+| Recovery | `agentcore-recovery` | `run_with_recovery`: capped exponential backoff with jitter, a circuit breaker, an attempt cap, an elapsed cap, and an in-flight cap. Fatal results are not retried. An open circuit does not call the operation. |
+| Completion | `agentcore-completion` | `CompletionVerifier.check` sees a claim and evidence only. The verifier id must differ from the proposer id. |
+| Tools: compact, cite, catalog | `agentcore-tools` | `compact_tool_output` keeps head and tail. `Corpus.retrieve` returns citations or nothing. `ToolCatalog.index` has no schema; `load` fetches one schema and does not permit the tool. |
+| LangChain adapter | `agentcore-langchain` | `registry_callables` call `invoke_tool`. `create_runtime_agent` passes those callables to `langchain.agents.create_agent`. `turn_from_headers` uses the identity helpers. |
+
+Order when composing a turn: identity, guard the input, assemble context (state bar included), disclose tools from the catalog, call tools through the registry (recovery around retryable calls, approval consume inside a gated handler), guard the output, write memory only through `MemoryClient`. A completion claim goes to a verifier with a different id.
+
+MCP server targets still fail `McpServerTarget.to_configuration`. The catalog above is the Lambda disclosure path. An MCP server target stays a named gap until that method returns a real configuration.
 
 ## 3. Starter templates
 
@@ -362,9 +388,15 @@ Partition by **ownership path**, not by “feature story.” Stories that span p
 |------|-----------------|-------------------|---------------------------|
 | A — Foundation | `packages/agentcore-tracing`, `packages/agentcore-eval` | OTEL conventions + thin RuntimeHarness + one golden Runtime eval | — (root of every stack) |
 | B — Session | `packages/agentcore-session` | Session lifecycle + sticky/cold evals | A |
-| C — Tools | `packages/agentcore-tools` | Registry + Gateway allow/deny + idempotency wrapper | A (and B if session-bound invoke helpers) |
-| D — Guardrails | `packages/agentcore-guardrails` | Guard apply_input/output + pin config | A |
-| E — Memory | `packages/agentcore-memory` | STM/LTM adapters + write-gate hook | A + D (guard before write) |
+| C — Tools | `packages/agentcore-tools` | Registry + Gateway allow/deny + idempotency + compact, cite, catalog | A |
+| D — Guardrails | `packages/agentcore-guardrails` | Guard apply_input/output + pin + memory screen | A |
+| E — Memory | `packages/agentcore-memory` | STM/LTM + write-gate hook | D |
+| H — Identity | `packages/agentcore-identity` | Runtime actor and session headers | — |
+| I — Approvals | `packages/agentcore-approvals` | Single-use HITL tokens | — |
+| J — Context | `packages/agentcore-context` | Assembly + state bar | — |
+| K — Recovery | `packages/agentcore-recovery` | Retry, circuit, in-flight cap | — |
+| L — Completion | `packages/agentcore-completion` | Proposer ≠ verifier | — |
+| M — LangChain | `packages/agentcore-langchain` | create_agent over the tool registry | C, H, J |
 | F — Templates | `templates/<name>/` only | Wire pinned primitives; template-local eval suite | Matching primitive lanes green |
 | G — Meta | `docs/`, `skills/`, capability maps, CI path bans | Encode a miss; no product API change | May run parallel to A–F as scout+doc PRs |
 

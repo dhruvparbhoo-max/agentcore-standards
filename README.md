@@ -12,10 +12,16 @@ Lane A is the root of every later stack: `agentcore-tracing`, `agentcore-eval`, 
 packages/agentcore-tracing/     OTEL span names, hashed session id, cost attributes, JSON turn logs
 packages/agentcore-eval/        RuntimeHarness, verdicts, suite runner, in-memory harness, Runtime client
 templates/minimal-agent/        BedrockAgentCoreApp entrypoint plus a harness binding (an app, not a PyPI lib)
-packages/agentcore-session/     stub (lane B)
-packages/agentcore-tools/       registry, Gateway Lambda targets, idempotency (lane C)
-packages/agentcore-guardrails/  stub (lane D)
-packages/agentcore-memory/      stub (lane E)
+packages/agentcore-session/     stub (lane B); actor headers are agentcore-identity
+packages/agentcore-tools/       registry, Gateway Lambda targets, idempotency, compact, cite, catalog
+packages/agentcore-guardrails/  input, output, and memory-write checks
+packages/agentcore-memory/      short-term events and long-term records, after the guard
+packages/agentcore-identity/    Runtime actor and session headers
+packages/agentcore-approvals/   single-use approval tokens
+packages/agentcore-context/     prompt assembly and the state bar
+packages/agentcore-recovery/    retry budget, circuit breaker, in-flight cap
+packages/agentcore-completion/  completion check; proposer is not the verifier
+packages/agentcore-langchain/   LangChain create_agent over the tool registry
 templates/agent-with-tools/     stub
 templates/agent-with-memory/    stub
 templates/multi-agent/          stub

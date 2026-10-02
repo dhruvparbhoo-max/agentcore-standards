@@ -1,0 +1,17 @@
+[project]
+name = "agentcore-approvals"
+version = "0.1.0"
+description = "Single-use approval tokens for high-risk tool calls."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentcore_approvals"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src" = ""

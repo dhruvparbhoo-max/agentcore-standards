@@ -21,10 +21,16 @@ One writer per path prefix. Scouts may read anything. Writers need a lease.
 | `packages/agentcore-tracing/` | A | implemented |
 | `packages/agentcore-eval/` | A | implemented |
 | `templates/minimal-agent/` | A | implemented |
-| `packages/agentcore-session/` | B | stub, do not implement without a lease |
-| `packages/agentcore-tools/` | C | implemented |
-| `packages/agentcore-guardrails/` | D | stub |
-| `packages/agentcore-memory/` | E | stub, after guardrails |
+| `packages/agentcore-session/` | B | stub; actor headers are `agentcore-identity` |
+| `packages/agentcore-tools/` | C | implemented (registry, compact, cite, catalog) |
+| `packages/agentcore-guardrails/` | D | implemented; no Runtime PASS |
+| `packages/agentcore-memory/` | E | implemented on the guard; no Runtime PASS |
+| `packages/agentcore-identity/` | H | implemented |
+| `packages/agentcore-approvals/` | I | implemented |
+| `packages/agentcore-context/` | J | implemented |
+| `packages/agentcore-recovery/` | K | implemented |
+| `packages/agentcore-completion/` | L | implemented |
+| `packages/agentcore-langchain/` | M | implemented; model providers stay outside |
 | `templates/agent-with-tools/` | F | stub |
 | `templates/agent-with-memory/` | F | stub |
 | `templates/multi-agent/` | F | stub |
@@ -70,7 +76,7 @@ Real Runtime: add `--harness runtime` after `AWS_REGION`, `AGENTCORE_RUNTIME_ARN
 
 Do not start a writer on `agentcore-session`, `agentcore-guardrails`, `agentcore-memory`, or an unfinished template until a coordinator leases a free path **and** a separate process records `PASS` or `PASS+NOTES` for `minimal-agent.golden-turn` on `AgentCoreRuntimeHarness`. Scouts may write under `docs/capability-maps/` only.
 
-If your task needs `agentcore-session` and `agentcore-tools` in one PR, split it. Memory waits on guardrails (guard before write).
+If your task needs `agentcore-session` and `agentcore-tools` in one PR, split it. Memory writes go through guardrails. The shelf in DESIGN §2.8 is not an independent Runtime PASS. Domain templates stay stubs until they import that shelf.
 
 ## Hill-climbing
 
