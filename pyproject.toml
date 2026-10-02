@@ -78,11 +78,9 @@ mypy_path = "templates/minimal-agent/src"
 [[tool.mypy.overrides]]
 module = [
   "boto3",
-  "botocore",
   "botocore.*",
   "langchain.*",
   "langchain_aws",
-  "langchain_aws.*",
   "langchain_core.*",
   "langgraph.*",
   "langgraph_checkpoint_aws",
