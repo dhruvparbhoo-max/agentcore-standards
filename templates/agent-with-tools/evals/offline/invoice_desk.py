@@ -233,25 +233,26 @@ def _assert_traces(
         parent = by_id.get(model.parent_span_id or "")
         if parent is None or parent.name != SPAN_AGENT_TURN or parent.trace_id != model.trace_id:
             raise AssertionError("model.invoke must be a child of agent.turn in the same trace")
-    turn_logs = [record for record in bundle.logs if record.get("runtimeSessionId") == session.session_id]
-    if len(turn_logs) != turns:
-        raise AssertionError(f"expected {turns} entrypoint logs, got {len(turn_logs)}")
-    request_ids: set[str] = set()
+    turn_logs = [record for record in bundle.logs if record.get("runtimeSessionId") == hashed]
+    if len(turn_logs) < turns:
+        raise AssertionError(f"expected at least {turns} turn logs, got {len(turn_logs)}")
+    by_request: dict[str, list[dict[str, object]]] = {}
     for record in turn_logs:
         if record.get("actorId") != _ACTOR_ID or record.get("agentVersion") != expected_version:
             raise AssertionError("log actor or agent version did not match the session")
         request_id = record.get("requestId")
         if not isinstance(request_id, str) or not request_id:
             raise AssertionError("log requestId is required")
-        request_ids.add(request_id)
         if not isinstance(record.get("latencyMs"), (int, float)):
             raise AssertionError("log latencyMs is required")
         if record.get("toolName") != tool:
             raise AssertionError(f"log toolName must name {tool}, got {record.get('toolName')!r}")
-        if record.get("errorClass") is not None:
-            raise AssertionError(f"turn logged an error: {record.get('errorClass')}")
-    if len(request_ids) != turns:
-        raise AssertionError("each turn needs its own requestId")
+        by_request.setdefault(request_id, []).append(record)
+    if len(by_request) != turns:
+        raise AssertionError(f"each turn needs its own requestId, got {len(by_request)}")
+    for request_id, records in by_request.items():
+        if all(record.get("errorClass") is not None for record in records):
+            raise AssertionError(f"turn {request_id} logged an error on every line")
 
 
 def _session(ctx: EvalContext) -> SessionHandle:

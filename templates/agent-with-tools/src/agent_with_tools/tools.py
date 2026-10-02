@@ -7,6 +7,7 @@ A fatal result is JSON and is not retried.
 """
 
 import json
+from contextvars import ContextVar, Token
 from typing import Any
 
 from agentcore_langchain.turn import current_turn
@@ -17,6 +18,18 @@ from agent_with_tools.approvals import consume_write
 from agent_with_tools.billing import FETCH_INVOICE, SUBMIT_INVOICE_NOTE, get_desk
 from agent_with_tools.context import CallerContext
 from agent_with_tools.recovered import invoke_with_recovery
+
+_request_id: ContextVar[str | None] = ContextVar("agent_with_tools_request_id", default=None)
+
+
+def bind_request_id(request_id: str) -> Token[str | None]:
+    """Share the entrypoint request id with registry tool logs for this turn."""
+    return _request_id.set(request_id)
+
+
+def reset_request_id(token: Token[str | None]) -> None:
+    """Restore the previous request id."""
+    _request_id.reset(token)
 
 
 class RetryableToolError(Exception):
@@ -48,6 +61,7 @@ def fetch_invoice(invoice_id: str, runtime: ToolRuntime[CallerContext]) -> str:
         agent_version=binding.agent_version,
         actor_id=caller.user_id,
         runtime_session_id=binding.session_id,
+        request_id=_request_id.get(),
     )
     return _encode(result, invoice_id=invoice_id, tenant_id=caller.tenant_id)
 
@@ -90,6 +104,7 @@ def submit_invoice_note(
         idempotency_key=idempotency_key,
         actor_id=caller.user_id,
         runtime_session_id=binding.session_id,
+        request_id=_request_id.get(),
     )
     return _encode(result, invoice_id=invoice_id, tenant_id=caller.tenant_id)
 

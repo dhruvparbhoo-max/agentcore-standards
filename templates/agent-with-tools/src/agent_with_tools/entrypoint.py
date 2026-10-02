@@ -43,6 +43,7 @@ from agent_with_tools.agent import hosted_agent
 from agent_with_tools.approvals import issue_for_interrupt, settle
 from agent_with_tools.context import CallerContext
 from agent_with_tools.shelf import remember_turn, screen_input, screen_output
+from agent_with_tools.tools import bind_request_id, reset_request_id
 from agent_with_tools.version import AGENT_VERSION
 
 TENANT_HEADER = "x-agentcore-tenant-id"
@@ -97,6 +98,7 @@ def invoke(payload: dict[str, Any], context: RequestContext) -> dict[str, Any]:
     started = time.perf_counter()
     error_class: str | None = None
     tool_name: str | None = None
+    request_token = bind_request_id(request_id)
     try:
         with bind_turn(binding):
             rejected = reject_non_string_prompt(payload)
@@ -147,15 +149,17 @@ def invoke(payload: dict[str, Any], context: RequestContext) -> dict[str, Any]:
         error_class = type(exc).__name__
         raise
     finally:
+        reset_request_id(request_token)
+        elapsed_ms = (time.perf_counter() - started) * 1000
         emit_turn_log(
             TurnLog(
-                runtime_session_id=session_id,
                 actor_id=actor_id,
                 agent_version=version,
-                request_id=request_id,
-                latency_ms=(time.perf_counter() - started) * 1000,
-                tool_name=tool_name,
                 error_class=error_class,
+                latency_ms=elapsed_ms,
+                request_id=request_id,
+                runtime_session_id=session_id,
+                tool_name=tool_name,
             )
         )
 
