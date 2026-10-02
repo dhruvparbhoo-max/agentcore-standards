@@ -46,9 +46,7 @@ def __getattr__(name: str) -> Any:
     module = _DEMO_EXPORTS.get(name)
     if module is None:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-    raise ImportError(
-        f"{name} is the offline demo in {module}, not the tool registry API. Import it from that module."
-    )
+    raise ImportError(f"{name} is the offline demo in {module}, not the tool registry API. Import it from that module.")
 
 
 __all__ = [

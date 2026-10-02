@@ -250,11 +250,7 @@ class MatchingConflictControl(RecordingControl):
 class DifferentSchemaControl(ConflictControl):
     def get_gateway_target(self, *, gatewayIdentifier: str, name: str) -> dict[str, Any]:
         del gatewayIdentifier, name
-        return {
-            "targetConfiguration": {
-                "mcp": {"lambda": {"toolSchema": {"inlinePayload": [{"name": "other"}]}}}
-            }
-        }
+        return {"targetConfiguration": {"mcp": {"lambda": {"toolSchema": {"inlinePayload": [{"name": "other"}]}}}}}
 
 
 def _synced_demo() -> Any:
