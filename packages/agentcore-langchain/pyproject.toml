@@ -8,7 +8,8 @@ dependencies = [
   "agentcore-context",
   "agentcore-identity",
   "agentcore-tools",
-  "langchain>=1.0,<2",
+  "langchain>=1.3.3,<2",
+  "langgraph>=1.0,<2",
 ]
 
 [tool.uv.sources]

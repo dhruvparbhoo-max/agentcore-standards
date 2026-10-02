@@ -241,7 +241,7 @@ These packages are the official set. Domain templates import them. They do not r
 | Recovery | `agentcore-recovery` | `run_with_recovery`: capped exponential backoff with jitter, a circuit breaker, an attempt cap, an elapsed cap, and an in-flight cap. Fatal results are not retried. An open circuit does not call the operation. |
 | Completion | `agentcore-completion` | `CompletionVerifier.check` sees a claim and evidence only. The verifier id must differ from the proposer id. |
 | Tools: compact, cite, catalog | `agentcore-tools` | `compact_tool_output` keeps head and tail. `Corpus.retrieve` returns citations or nothing. `ToolCatalog.index` has no schema; `load` fetches one schema and does not permit the tool. |
-| LangChain adapter | `agentcore-langchain` | `registry_callables` call `invoke_tool`. `create_runtime_agent` passes those callables to `langchain.agents.create_agent`. `turn_from_headers` uses the identity helpers. |
+| LangChain adapter | `agentcore-langchain` | `registry_callables` call `invoke_tool`. `create_runtime_agent` and `build_langchain_agent` both call `langchain.agents.create_agent`. Approval middleware is the outer gate. `turn_from_headers` uses the identity helpers. The LangGraph checkpointer is not `MemoryClient`. |
 
 Order when composing a turn: identity, guard the input, assemble context (state bar included), disclose tools from the catalog, call tools through the registry (recovery around retryable calls, approval consume inside a gated handler), guard the output, write memory only through `MemoryClient`. A completion claim goes to a verifier with a different id.
 

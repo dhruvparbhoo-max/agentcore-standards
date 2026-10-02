@@ -74,6 +74,7 @@ dependencies = [
     { name = "agentcore-identity" },
     { name = "agentcore-tools" },
     { name = "langchain" },
+    { name = "langgraph" },
 ]
 
 [package.metadata]
@@ -81,7 +82,8 @@ requires-dist = [
     { name = "agentcore-context", editable = "packages/agentcore-context" },
     { name = "agentcore-identity", editable = "packages/agentcore-identity" },
     { name = "agentcore-tools", editable = "packages/agentcore-tools" },
-    { name = "langchain", specifier = ">=1.0,<2" },
+    { name = "langchain", specifier = ">=1.3.3,<2" },
+    { name = "langgraph", specifier = ">=1.0,<2" },
 ]
 
 [[package]]
