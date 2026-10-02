@@ -18,6 +18,12 @@
 /packages/agentcore-tools/              @agentcore/platform
 /packages/agentcore-memory/             @agentcore/platform
 /packages/agentcore-guardrails/         @agentcore/platform
+/packages/agentcore-identity/           @agentcore/platform
+/packages/agentcore-approvals/          @agentcore/platform
+/packages/agentcore-context/            @agentcore/platform
+/packages/agentcore-recovery/           @agentcore/platform
+/packages/agentcore-completion/         @agentcore/platform
+/packages/agentcore-langchain/          @agentcore/platform
 
 /templates/minimal-agent/               @agentcore/platform
 /templates/agent-with-tools/            @agentcore/platform

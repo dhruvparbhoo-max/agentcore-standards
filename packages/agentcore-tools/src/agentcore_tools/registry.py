@@ -177,6 +177,39 @@ class ToolRegistry:
             )
         return tuple(definitions)
 
+    def list_tools(self) -> tuple[dict[str, Any], ...]:
+        """Name, description, and flags for every tool. Schemas are not included."""
+        with self._lock:
+            specs = tuple(self._tools.values())
+        return tuple(
+            {
+                "description": spec.description,
+                "idempotent": spec.idempotent,
+                "name": spec.name,
+                "side_effecting": spec.side_effecting,
+            }
+            for spec in specs
+        )
+
+    def load_tool(self, name: str) -> dict[str, Any]:
+        """Copy one tool's schema. This does not permit or invoke the tool."""
+        checked = require_tool_name(name)
+        with self._lock:
+            spec = self._tools.get(checked)
+        if spec is None:
+            raise ToolConfigurationError("unknown tool")
+        schema = json.loads(json.dumps(spec.schema))
+        if not isinstance(schema, dict):
+            raise ToolConfigurationError("tool schema is not an object")
+        return {
+            "description": spec.description,
+            "idempotent": spec.idempotent,
+            "inputSchema": schema,
+            "name": spec.name,
+            "schemaVersion": spec.schema_version,
+            "sideEffecting": spec.side_effecting,
+        }
+
     def invoke_tool(
         self,
         name: str,

@@ -1,9 +1,7 @@
 # agentcore-memory
 
-Stub for lane E. Not implemented.
+Short-term events and long-term records (DESIGN §2.3, §2.8). Version 0.1.0.
 
-Owns short-term events and long-term records, `actorId` / namespace isolation, and the guardrail check before write (DESIGN §2.3). Stacks on lane A and lane D. Do not implement in parallel with guardrails unless the guard interface is already on the default branch with a judge PASS.
+`MemoryClient` takes a `Guard`. `create_event` stores the sanitized text or raises `MemoryWriteDenied` and stores nothing. `promote` copies one short-term event to long-term after a second screen. `list_session_events` is short-term, one session, one actor. `retrieve` is lexical (`method` is `lexical`) and does not return another actor's records.
 
-Open decision (DESIGN §7): Memory connector via Gateway for all writes, or the Memory SDK for short-term only. Do not pick that inside a template.
-
-Lease path: `packages/agentcore-memory/`.
+The namespace is `{agent_version}/{environment}`. DESIGN §7 is still open on Gateway versus the Memory SDK. This client is the contract. It does not call the service.

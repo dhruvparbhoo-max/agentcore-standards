@@ -76,3 +76,7 @@ Environment names for the real control plane (values stay in the environment, ne
 `pytest -m runtime` calls `sync` on the real control plane when the variables above are set, and skips when they are not. That test creates the target and the Cedar permit. Live invocation through the Gateway MCP endpoint is outside this marker.
 
 This package does not emit an independent ship verdict. CI green on the unit tests is not PASS. A separate judge still has to run the Gateway path in the dev account.
+
+## Compact, cite, and disclose
+
+`compact_tool_output` keeps the head and the tail of a tool result and records how many characters were omitted. `Corpus.retrieve` returns citations with `method` `lexical`, or an empty tuple when the query shares no tokens. `ToolCatalog.index` lists name and summary only. `load` returns one schema. Neither call permits the tool. `McpServerTarget.to_configuration` still raises.

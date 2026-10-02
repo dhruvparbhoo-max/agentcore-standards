@@ -6,6 +6,8 @@ The demo (``DemoTools``, ``RecordStore``, ``put_record``) lives in
 
 from typing import Any
 
+from agentcore_tools.compact import CompactedToolOutput, compact_tool_output
+from agentcore_tools.discovery import ToolCard, ToolCatalog
 from agentcore_tools.errors import (
     ErrorClass,
     FatalToolError,
@@ -24,6 +26,7 @@ from agentcore_tools.lambda_target import LambdaContext, make_lambda_handler
 from agentcore_tools.naming import gateway_tool_name, strip_gateway_tool_name
 from agentcore_tools.policy import Policy, PolicyDecision
 from agentcore_tools.registry import ToolRegistry
+from agentcore_tools.retrieve import Citation, Corpus, Passage
 from agentcore_tools.runtime_client import AgentCoreGatewayClient, GatewaySyncResult
 from agentcore_tools.schema import assert_schema_evolution, validate_instance
 
@@ -43,13 +46,14 @@ def __getattr__(name: str) -> Any:
     module = _DEMO_EXPORTS.get(name)
     if module is None:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-    raise ImportError(
-        f"{name} is the offline demo in {module}, not the tool registry API. Import it from that module."
-    )
+    raise ImportError(f"{name} is the offline demo in {module}, not the tool registry API. Import it from that module.")
 
 
 __all__ = [
     "AgentCoreGatewayClient",
+    "Citation",
+    "CompactedToolOutput",
+    "Corpus",
     "ErrorClass",
     "FatalToolError",
     "GatewayBinding",
@@ -59,17 +63,21 @@ __all__ = [
     "LambdaContext",
     "LambdaTarget",
     "McpServerTarget",
+    "Passage",
     "Policy",
     "PolicyDecision",
     "RetryableToolError",
     "SchemaError",
     "SchemaVersionError",
+    "ToolCard",
+    "ToolCatalog",
     "ToolConfigurationError",
     "ToolError",
     "ToolRegistry",
     "ToolResult",
     "ToolTimeout",
     "assert_schema_evolution",
+    "compact_tool_output",
     "gateway_tool_name",
     "make_lambda_handler",
     "strip_gateway_tool_name",

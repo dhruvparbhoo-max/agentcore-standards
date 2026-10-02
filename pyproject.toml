@@ -18,6 +18,14 @@ members = [
   "packages/agentcore-tracing",
   "packages/agentcore-eval",
   "packages/agentcore-tools",
+  "packages/agentcore-guardrails",
+  "packages/agentcore-memory",
+  "packages/agentcore-identity",
+  "packages/agentcore-approvals",
+  "packages/agentcore-context",
+  "packages/agentcore-recovery",
+  "packages/agentcore-completion",
+  "packages/agentcore-langchain",
   "templates/minimal-agent",
 ]
 
@@ -54,13 +62,29 @@ files = [
   "packages/agentcore-tracing/src",
   "packages/agentcore-eval/src",
   "packages/agentcore-tools/src",
+  "packages/agentcore-guardrails/src",
+  "packages/agentcore-memory/src",
+  "packages/agentcore-identity/src",
+  "packages/agentcore-approvals/src",
+  "packages/agentcore-context/src",
+  "packages/agentcore-recovery/src",
+  "packages/agentcore-completion/src",
+  "packages/agentcore-langchain/src",
   "templates/minimal-agent/src",
   "scripts/check_boundaries.py",
 ]
 mypy_path = "templates/minimal-agent/src"
 
 [[tool.mypy.overrides]]
-module = ["boto3"]
+module = [
+  "boto3",
+  "botocore.*",
+  "langchain.*",
+  "langchain_aws",
+  "langchain_core.*",
+  "langgraph.*",
+  "langgraph_checkpoint_aws",
+]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
@@ -68,6 +92,14 @@ testpaths = [
   "packages/agentcore-tracing/tests",
   "packages/agentcore-eval/tests",
   "packages/agentcore-tools/tests",
+  "packages/agentcore-guardrails/tests",
+  "packages/agentcore-memory/tests",
+  "packages/agentcore-identity/tests",
+  "packages/agentcore-approvals/tests",
+  "packages/agentcore-context/tests",
+  "packages/agentcore-recovery/tests",
+  "packages/agentcore-completion/tests",
+  "packages/agentcore-langchain/tests",
   "templates/minimal-agent/tests",
   "tests",
 ]
