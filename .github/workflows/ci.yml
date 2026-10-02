@@ -33,3 +33,11 @@ jobs:
           name: minimal-agent-judge-evidence
           path: evidence/judge
           if-no-files-found: error
+      - name: Judge invoice desk offline
+        run: PYTHONPATH=templates/agent-with-tools/src uv run python -m agent_with_tools.judge --evidence-dir evidence/judge-tools
+      - name: Upload invoice desk evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-with-tools-judge-evidence
+          path: evidence/judge-tools
+          if-no-files-found: error

@@ -8,6 +8,7 @@ resolution-markers = [
 
 [manifest]
 members = [
+    "agent-with-tools",
     "agentcore-approvals",
     "agentcore-completion",
     "agentcore-context",
@@ -21,6 +22,41 @@ members = [
     "agentcore-tools",
     "agentcore-tracing",
     "minimal-agent",
+]
+
+[[package]]
+name = "agent-with-tools"
+version = "0.1.0"
+source = { virtual = "templates/agent-with-tools" }
+dependencies = [
+    { name = "agentcore-approvals" },
+    { name = "agentcore-context" },
+    { name = "agentcore-eval" },
+    { name = "agentcore-guardrails" },
+    { name = "agentcore-identity" },
+    { name = "agentcore-langchain" },
+    { name = "agentcore-memory" },
+    { name = "agentcore-recovery" },
+    { name = "agentcore-tools" },
+    { name = "agentcore-tracing" },
+    { name = "bedrock-agentcore" },
+    { name = "langchain" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "agentcore-approvals", editable = "packages/agentcore-approvals" },
+    { name = "agentcore-context", editable = "packages/agentcore-context" },
+    { name = "agentcore-eval", editable = "packages/agentcore-eval" },
+    { name = "agentcore-guardrails", editable = "packages/agentcore-guardrails" },
+    { name = "agentcore-identity", editable = "packages/agentcore-identity" },
+    { name = "agentcore-langchain", editable = "packages/agentcore-langchain" },
+    { name = "agentcore-memory", editable = "packages/agentcore-memory" },
+    { name = "agentcore-recovery", editable = "packages/agentcore-recovery" },
+    { name = "agentcore-tools", editable = "packages/agentcore-tools" },
+    { name = "agentcore-tracing", editable = "packages/agentcore-tracing" },
+    { name = "bedrock-agentcore", specifier = ">=1.24" },
+    { name = "langchain", specifier = ">=1.3.3" },
 ]
 
 [[package]]

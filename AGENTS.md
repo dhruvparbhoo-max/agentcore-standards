@@ -31,7 +31,7 @@ One writer per path prefix. Scouts may read anything. Writers need a lease.
 | `packages/agentcore-recovery/` | K | implemented |
 | `packages/agentcore-completion/` | L | implemented |
 | `packages/agentcore-langchain/` | M | implemented; model providers stay outside |
-| `templates/agent-with-tools/` | F | stub |
+| `templates/agent-with-tools/` | F | invoice desk offline; imports the shelf; no Runtime PASS |
 | `templates/agent-with-memory/` | F | stub |
 | `templates/multi-agent/` | F | stub |
 | `templates/human-in-the-loop/` | F | stub |
@@ -76,7 +76,7 @@ Real Runtime: add `--harness runtime` after `AWS_REGION`, `AGENTCORE_RUNTIME_ARN
 
 Do not start a writer on `agentcore-session`, `agentcore-guardrails`, `agentcore-memory`, or an unfinished template until a coordinator leases a free path **and** a separate process records `PASS` or `PASS+NOTES` for `minimal-agent.golden-turn` on `AgentCoreRuntimeHarness`. Scouts may write under `docs/capability-maps/` only.
 
-If your task needs `agentcore-session` and `agentcore-tools` in one PR, split it. Memory writes go through guardrails. The shelf in DESIGN §2.8 is not an independent Runtime PASS. Domain templates stay stubs until they import that shelf.
+If your task needs `agentcore-session` and `agentcore-tools` in one PR, split it. Memory writes go through guardrails. The shelf in DESIGN §2.8 is not an independent Runtime PASS. `templates/agent-with-tools` imports that shelf. The other domain templates stay stubs.
 
 ## Hill-climbing
 

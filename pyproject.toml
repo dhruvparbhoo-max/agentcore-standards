@@ -27,6 +27,7 @@ members = [
   "packages/agentcore-completion",
   "packages/agentcore-langchain",
   "templates/minimal-agent",
+  "templates/agent-with-tools",
 ]
 
 [tool.uv.sources]
@@ -71,9 +72,10 @@ files = [
   "packages/agentcore-completion/src",
   "packages/agentcore-langchain/src",
   "templates/minimal-agent/src",
+  "templates/agent-with-tools/src",
   "scripts/check_boundaries.py",
 ]
-mypy_path = "templates/minimal-agent/src"
+mypy_path = "templates/minimal-agent/src:templates/agent-with-tools/src"
 
 [[tool.mypy.overrides]]
 module = [
@@ -101,10 +103,12 @@ testpaths = [
   "packages/agentcore-completion/tests",
   "packages/agentcore-langchain/tests",
   "templates/minimal-agent/tests",
+  "templates/agent-with-tools/tests",
   "tests",
 ]
 pythonpath = [
   "templates/minimal-agent/src",
+  "templates/agent-with-tools/src",
   "packages/agentcore-tools/tests",
 ]
 addopts = "--strict-markers"

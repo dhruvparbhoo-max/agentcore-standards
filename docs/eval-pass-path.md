@@ -96,6 +96,18 @@ PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge --ev
 
 A second machine or a second cloud agent runs that command again. Matching `PASS` / `PASS+NOTES` plus the evidence files is the independent verdict. `FAIL` or a missing evidence file blocks merge. `SKIPPED` blocks merge too: the real surface was not exercised.
 
+## Invoice desk
+
+Separate evidence directory so a tools run does not overwrite the minimal-agent bundle.
+
+```bash
+PYTHONPATH=templates/agent-with-tools/src uv run python -m agent_with_tools.judge --evidence-dir evidence/judge-tools
+```
+
+`--harness memory` installs the scripted invoice model and must exit 0 on PASS. `--harness runtime` with missing settings writes `SKIPPED` and exits 1. That exit code is the fail-closed gate in `.github/workflows/runtime-evals.yml` job `agent-with-tools-runtime`. The minimal-agent job in the same workflow also exits 1 on `SKIPPED`.
+
+Runtime smoke eval name: `agent-with-tools.runtime-smoke`. It checks a completed or interrupted turn, non-empty text, and `agent.turn` cost attributes. It does not grade the hosted model's prose. A PASS from `--harness runtime` is the ship verdict for this template. This repository does not contain that PASS until the dev-account settings exist. Gateway sync names are in `.env.example` and are not required for the judge to leave `SKIPPED`.
+
 Generic form, if the harness factory is not the minimal agent:
 
 ```bash
