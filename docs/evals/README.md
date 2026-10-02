@@ -4,6 +4,12 @@ This is the shared eval pack for agentcore-standards. It lives in `packages/agen
 
 A passing offline run shows the dataset, the assert hooks, and the stub agent agree. It is not an independent AgentCore Runtime verdict. DESIGN §1.1 and §4.2 still require a different process to re-run the real Runtime path before merge.
 
+## Dataset design
+
+[dataset-design.md](dataset-design.md) is how to shape one case before it lands in this pack: a ticket, caller behavior, a reset initial state, and success criteria the harness can re-check. It also covers anti-cheat (including the check that must stay true) and the path from a production miss to a regression case.
+
+The author checklist is `skills/agentcore-eval-dataset/`. A green offline run of the pack is still not an independent Runtime verdict.
+
 ## Hill-climbing
 
 [hill-climbing.md](hill-climbing.md) is the operating rhythm for a harness change after Runtime and tracing are hooked up.
@@ -36,6 +42,8 @@ The offline agent behind the business scenarios is `BusinessStub`. It is a fixed
 
 ```text
 docs/evals/README.md                         this file
+docs/evals/dataset-design.md                 four-part tasks, anti-cheat, prod misses
+docs/evals/hill-climbing.md                  optimization versus holdout
 packages/agentcore-eval/src/agentcore_eval/
   datasets/business.json                     9 predefined scenarios
   datasets/guardrails.json                   allow/block fixtures
