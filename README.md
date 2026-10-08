@@ -1,124 +1,94 @@
 # agentcore-standards
 
-Standards library for coding agents and humans building on [Amazon Bedrock AgentCore](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/what-is-bedrock-agentcore.html). This repository holds versioned Python primitives, runnable agent templates, and the eval harness those templates share. It is not a hosted platform.
+This repo is a library of tested agent patterns for Amazon Bedrock AgentCore that you can copy and use. The patterns share the same building blocks, so our team can build and ship safe agents faster.
 
-Normative rules live in [docs/DESIGN.md](docs/DESIGN.md). Path leases for parallel agents live in [AGENTS.md](AGENTS.md) (DESIGN §8). Playbooks for eval cases, tools, recovery, and production misses are indexed in [docs/README.md](docs/README.md). Those pages restate selected rules from Bojie Li's *AI Agent* skill pack for AgentCore; the credit matrix is [docs/attribution/bojieli-ai-agent-book.md](docs/attribution/bojieli-ai-agent-book.md).
+An **agent** is a program that uses an AI model to carry out a task. It can look things up, call tools and take actions. **AgentCore** is the AWS service that runs our agents and gives them memory, tools and sign-in.
 
-Lane A is the root of every later stack: `agentcore-tracing`, `agentcore-eval`, and `templates/minimal-agent`, with one golden eval. The shared shelf and `templates/agent-with-tools` are implemented offline. Neither is a live Runtime PASS. `agentcore-session` stays a stub.
+## How it's organised
 
-## Layout
+- **`primitives/`** holds the building blocks. Each one is written once, tested once and shared by every agent. Examples are tracing (a record of each step the agent took, how long it took and what it cost), evals (the agent's exam), approvals (asking a person before a risky action), memory and guardrails (safety checks on what goes in and out).
+- **`patterns/`** holds the agents. Each pattern is a small, complete example you can copy and deploy on its own. It contains only the parts that make it different.
+- **`primitives/gateway-tools/`** holds the tools agents can use, like "look up an invoice" or "send a Slack message". It contains one tool list that shows every tool, what it does and which agents use it. It also has a starter tool in `_template/` that you copy when you add a new one.
+- **`primitives/agent/`** holds the agent's main loop, which decides the next step. It uses LangChain's `create_agent` by default. Setting `framework: strands` in `pattern.yaml` switches to Strands, Amazon's agent framework. Tools, prompts, memory, tracing and approvals sit outside the loop, so they work the same either way.
+- **`primitives/knowledge/`** holds a searchable library of documents, built on a Bedrock Knowledge Base. An agent can look up the right passage and quote it rather than relying on what the model remembers.
+- **`infra/constructs/`** holds the cloud setup for each building block. Patterns use it to deploy themselves.
+- **`docs/`** holds the design notes and the catalogue for picking a pattern.
 
-Shared libraries live under `primitives/<name>/`. Folder names are short. Python distribution names (`agentcore-tracing`) and import names (`agentcore_tracing`) are unchanged. `patterns/` (self-contained deployable examples) arrives in later PRs. `templates/` and `experiments/` stay where they are until those later steps retire them.
+Every pattern comes with the same kit:
 
-```
-primitives/tracing/             OTEL span names, hashed session id, cost attributes, JSON turn logs
-primitives/eval/                RuntimeHarness, verdicts, suite runner, in-memory harness, Runtime client
-primitives/session/             stub (lane B); actor headers are agentcore-identity
-primitives/tools/               registry, Gateway Lambda targets, idempotency, compact, cite, catalog
-primitives/guardrails/          input, output, and memory-write checks
-primitives/memory/              short-term events and long-term records, after the guard
-primitives/identity/            Runtime actor and session headers
-primitives/approvals/           single-use approval tokens
-primitives/context/             prompt assembly and the state bar
-primitives/recovery/            retry budget, circuit breaker, in-flight cap
-primitives/completion/          completion check; proposer is not the verifier
-primitives/langchain/           LangChain create_agent over the tool registry, plus graph helpers
-templates/minimal-agent/        BedrockAgentCoreApp entrypoint plus a harness binding (an app, not a PyPI lib)
-templates/agent-with-tools/     invoice desk; imports the shelf; offline judge; no live Runtime PASS
-templates/agent-with-memory/    stub
-templates/multi-agent/          stub
-templates/human-in-the-loop/    stub
-experiments/                    messy drafts allowed; templates and primitives must not import them
-docs/DESIGN.md                  team standards
-docs/README.md                  index of playbooks (evals, tools, runtime, ops)
-docs/capability-maps/           how to drive a template and what observable proves it
-docs/evals/                     eval pack index, dataset design, hill-climbing
-docs/skills/pstack-vs-agentcore.md   pstack skill to run, and the AgentCore skill if one exists
-docs/attribution/               credit for distilled playbooks
-skills/                         verify, judge, lease, encode-miss, capability map, eval-dataset, tool-register, loop-verifier, experience-to-gate
-```
+- a README
+- a `pattern.yaml` settings file that says what starts the agent, which tools and model it uses, what it remembers and which actions need a person's approval
+- prompts kept in their own files
+- tracing turned on
+- tests
+- an exam made of real tasks
+- sample inputs so you can run it quickly
+- safety checks
+- limits on cost and time
+- one command to deploy it and one to remove it
 
-## Two different things named like a harness
+The aim is that automatic checks fail any agent that has no tracing, no exam, no limits on its tools, or no approval step for risky actions. That check is not in the repo yet.
 
-| Name | What it is |
-| --- | --- |
-| `BedrockAgentCoreApp` | The server process AgentCore Runtime hosts. `@app.entrypoint` is `POST /invocations`. |
-| `RuntimeHarness` | The eval client: `start`, `invoke`, `capture_traces`, `tear_down`. |
-| `InMemoryRuntimeHarness` | Calls the entrypoint in-process and keeps its spans. Default for the golden eval. |
-| `AgentCoreRuntimeHarness` | Calls the Runtime **service** (`InvokeAgentRuntime`) when environment credentials exist. |
+## How to pick and run a pattern
 
-Evals stay on `RuntimeHarness`. Replacing the hosted container later re-wraps the entrypoint. It does not rewrite the eval.
+1. Open `docs/catalog.md`. Find the problem you're trying to solve and see which pattern it points to.
+2. Read that pattern's README and `docs/design.md` to see what it does, what it can't do and when another pattern would suit you better.
+3. Run it on your laptop with the sample inputs in its `events/` folder. You don't need AWS for this.
+4. Copy the pattern folder, change the prompts, tools and exam to fit your job, and deploy it with its one deploy command.
 
-## Install
+Patterns being built first are a company-policy question-and-answer agent (it answers questions from policy documents, quotes the section and source, and says so when it can't find the answer), a human approval agent (four ways to ask a person before acting) and an ambient agent (one that reacts to events on its own). For now, the shared building blocks are in place and the patterns are still to come. These paths named above are not in the repo yet: `patterns/`, `primitives/gateway-tools/` (including `_template/`), `primitives/agent/`, `primitives/knowledge/`, `infra/constructs/`, `docs/catalog.md`, and `docs/design.md`. Tools that are here today live in `primitives/tools/`. The LangChain loop that is here today lives in `primitives/langchain/`. There is no `pattern.yaml` and no switch to Strands. None of this has been tested on a live AWS account yet.
 
-Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
+## How changes are tested
 
-```bash
-uv sync --all-packages
-```
+- **On every pull request**, quick checks run and need no AWS: tool tests, format checks, and a check that examples do not paste in copies of the shared building blocks. They do not check that cloud setup builds, because that folder is not in the repo yet.
+- **On merge, every night and before each release** there is no deploy. No pattern is sent to an AWS account, and nothing is removed afterwards because nothing was started.
 
-The root project depends on `agentcore-tracing` and `agentcore-eval` explicitly. `templates/minimal-agent` is an application workspace member (`package = false`), and it declares those same packages itself. Do not copy package source into a template.
+## How to add a tool
 
-## Unit tests
+1. Copy `primitives/gateway-tools/_template/` to a new folder named after your tool. That folder is not in the repo yet.
+2. Fill in the parts that come with it: what the tool does and what goes in and out of it, the code that does the work, a rule saying which agents may use it, a test of the tool itself, a test that checks what goes in and comes out, and a short README.
+3. Add the tool to the tool list.
+4. List the tool in the `pattern.yaml` of each agent that needs it. The agent then picks it up from the tool list, so nobody copies code around.
 
-```bash
-uv run ruff check .
-uv run ruff format --check .
-uv run mypy
-uv run pytest -m "not runtime"
-uv run python scripts/check_boundaries.py
-```
+## Come back to later
 
-`pytest` without the marker also skips the real Runtime test when credentials are absent. CI runs the commands above.
+These are known gaps. None of them is being built yet. Research and sources are in [docs/research/](docs/research/).
 
-## Evals and the independent judge
+**Pick these up first**
 
-The shared eval pack (business goldens, guardrail fixtures, groundedness, HITL, and the optional Evaluators adapter) is documented in [docs/evals/README.md](docs/evals/README.md). Offline, `run_suite` drives those cases through `InMemoryRuntimeHarness`. That pass is not a Runtime verdict.
+1. **Agent identity.** When an agent acts for a person, it uses a short-lived pass tied to that person, so it can never do more than they could.
+2. **Checkpoint and resume.** The agent saves its progress after each step, so it can pick up where it stopped when AgentCore ends a session (after 15 idle minutes or 8 hours in total).
+3. **Shared model access.** Every agent calls the AI model the same way. If the model is busy it waits and tries again, it can switch to a backup model, it keeps data in UK or EU regions, and it has usage limits.
+4. **Kill switch and runbooks.** We can stop one agent, one tool or every agent within minutes, and short written guides say what to do when an agent misbehaves.
+5. **Privacy and audit trail.** Personal details get hidden, we decide where data lives and how long we keep it, and a permanent record shows who asked for what, what the agent did and who approved it.
 
-The full PASS path is [docs/eval-pass-path.md](docs/eval-pass-path.md). Short version: a **separate process** re-runs `minimal-agent.golden-turn` through `start`, `invoke`, `capture_traces`, and `tear_down`, then writes evidence.
+**Also parked**
 
-The template golden eval is `minimal-agent.golden-turn` in `templates/minimal-agent/evals/golden_turn.py`. It sends two turns on one session and checks the deterministic `pong:` completion, the `agent.turn` / `model.invoke` span tree, cost attributes, and structured logs.
+6. **Prompt caching.** The model can reuse the part of a prompt that stays the same, which makes each request cheaper and faster. Tools always go in the same order, and anything that changes, like dates and IDs, goes at the end. Tracing will show the real cost, and an automatic check will confirm caching works.
+7. **Model testing.** Strands Evals gives a quick check on every change. AgentCore Evaluations grades the deployed agents every night and keeps watching them once they're live. Each `pattern.yaml` sets which graders to use and the pass mark.
 
-Mock / bootstrap (no AWS credentials). This is runnable now:
+**After that, in this order**
 
-```bash
-PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge --evidence-dir evidence/judge
-```
+8. **Context window management.** We'll set rules for clearing out or summarising old material, so the agent's working memory doesn't fill up and get worse.
+9. **Check the output before acting.** Anything the model produces gets checked against the expected format and our business rules before the agent acts on it.
+10. **Check facts before saving them to memory.** Before a fact goes into long-term memory, it gets checked and labelled with where it came from, so one wrong or planted fact can't mislead the agent later.
+11. **Release everything together.** An agent's prompts, model, tools and rules go out together as one numbered version, so we can roll back if something breaks.
+12. **Dev, staging and prod accounts.** Each agent is tried in separate test accounts and only reaches the live account after it passes its exam and a person signs off.
+13. **Targets and alerts.** Each pattern has targets for success rate, speed and cost, and we get an alert when it misses them.
+14. **Cost tags and budgets.** Spending is tracked per agent, and a budget sends a warning first and then stops it.
+15. **Progress updates.** Long tasks show what the agent is doing right now, so people don't assume it's stuck and start it again.
+16. **Safe tools.** We only use approved and pinned tool versions, and someone reviews any change to a tool's description.
+17. **Versioned tools.** Each tool has a version number, so changing one doesn't quietly break the agents that use it.
+18. **Containing failures between agents.** When agents work as a team, one failing agent gets cut off before it can drag the others down.
+19. **Clear approval screens.** Approval requests show plainly what will happen and how risky it is, so people read them rather than clicking yes out of habit.
+20. **Attack tests and threat model.** Each pattern faces a set of known attack prompts on every change, and gets a written list of how it could be attacked.
+21. **Owner and risk level.** Every agent has a named owner, a note of how much it can do without a person, and a risk level.
+22. **Learn from feedback.** Thumbs down and rejected approvals become new exam questions.
+23. **Several teams sharing.** If other teams or customers use this, each one's data and usage stays separate from the others.
+24. **Agent list and model retirement.** We keep one list of every live agent and get a warning before a model it uses is switched off.
+25. **Smaller items.** Keep knowledge sources up to date. Run any code the agent writes in a sealed-off box. Have backups and a recovery plan. Make screens usable for everyone (the WCAG 2.2 accessibility standard). Add a "do you even need an agent?" question to the catalogue.
+26. **Teams and Slack.** People can talk to agents and approve their actions from inside Microsoft Teams or Slack, through one shared connector with a Teams version and a Slack version.
 
-Evidence lands in `evidence/judge/verdict.json` and `evidence/judge/minimal-agent.golden-turn.json`. `status: PASS` here proves the in-process entrypoint. It does not prove AgentCore Runtime.
+## For developers
 
-Real Runtime (same command, different harness). Missing settings write `status: SKIPPED` and exit 1. That is not a PASS:
-
-```bash
-PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge --harness runtime --evidence-dir evidence/judge
-```
-
-Set `AWS_REGION`, `AGENTCORE_RUNTIME_ARN`, and `AGENTCORE_SPAN_LOG_GROUP`. An access key and its secret are a pair; a role needs neither. The dev account is the eval account. IAM needs `bedrock-agentcore:InvokeAgentRuntime`, `bedrock-agentcore:StopRuntimeSession`, `logs:StartQuery`, and `logs:GetQueryResults`. Names are listed in `.env.example`. Do not commit values.
-
-`.github/workflows/ci.yml` runs the mock judge and uploads `evidence/judge`. `.github/workflows/runtime-evals.yml` runs the runtime judge and fails when settings are absent. This repository does not contain a live Runtime PASS.
-
-Author pytest is still useful, and it is not the ship verdict:
-
-```bash
-uv run pytest templates/minimal-agent/tests/test_golden_eval.py -m "not runtime"
-uv run pytest -m runtime
-```
-
-Serve the entrypoint the way Runtime hosts it (port 8080):
-
-```bash
-PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent
-```
-
-## Ownership
-
-Read [AGENTS.md](AGENTS.md) before editing. Short version:
-
-- One writer lease per `primitives/<name>/` or `templates/<name>/`.
-- `pyproject.toml` and `uv.lock` are serialized to the platform lease (`CODEOWNERS`). Do not edit them from a package lease unless the coordinator includes that path.
-- Branch shape: `agent/<id>/<package-or-template>/<slug>`.
-- Author agent and judge agent are different processes. CI green is not a merge verdict.
-
-## Not in this lane
-
-`agentcore-session` is still a stub. Memory, guardrails, approvals, context, and recovery live on the shelf. The invoice desk imports them. Memory-via-Gateway is still an open decision (DESIGN §7). There is no live Runtime PASS in this tree.
+Setup, test commands and team rules are in [docs/developer-guide.md](docs/developer-guide.md) and [AGENTS.md](AGENTS.md).
