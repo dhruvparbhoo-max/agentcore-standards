@@ -8,7 +8,7 @@ description: >
 
 # One path per PR
 
-Run **principle-separate-before-serializing-shared-state** first, so two writers do not share a worktree. This skill is the path prefix in [AGENTS.md](../../AGENTS.md) and DESIGN §8.
+Run **principle-separate-before-serializing-shared-state** first, so two writers do not share a worktree. This skill is the path prefix in [AGENTS.md](../../AGENTS.md). The shared choices are in [the library design](../../docs/design/library.md).
 
 ## When
 

@@ -1,6 +1,6 @@
 # agentcore-langchain
 
-`create_agent` over the AgentCore tool registry (DESIGN §2.8). Version 0.1.0.
+`create_agent` over the AgentCore tool registry. See [the library design](../../docs/design/library.md). Version 0.1.0.
 
 `registry_callables` builds one function per registered tool. Each function parses a JSON object and calls `ToolRegistry.invoke_tool`, then `compact_tool_output` on the string returned to the model. Call them inside `bind_turn`. `turn_from_headers` uses `agentcore-identity`.
 

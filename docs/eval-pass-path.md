@@ -1,6 +1,6 @@
 # Independent PASS path
 
-A ship verdict is `PASS` or `PASS+NOTES` from a **separate process** that re-runs the eval (DESIGN §§1.1, 2.6, 8.6). The author's pytest run is not that verdict. CI green is not that verdict. This page is how to produce one.
+A ship verdict is `PASS` or `PASS+NOTES` from a **separate process** that re-runs the eval. The author's pytest run is not that verdict. CI green is not that verdict. This page is how to produce one. The rule lives in [the library design](design/library.md).
 
 The judge calls `RuntimeHarness` in this order:
 
@@ -52,7 +52,7 @@ CI runs the same command in `.github/workflows/ci.yml` and uploads `evidence/jud
 
 ## Real AgentCore Runtime path
 
-Same eval, same judge process, harness `runtime`. That harness calls `InvokeAgentRuntime` with the actor on `X-Amzn-Bedrock-AgentCore-Runtime-Custom-Actor-Id`, collects ADOT spans (`attributes.session.id` is the raw session id) and `agentcore.turn` logs (`runtimeSessionId` is the hash), then `tear_down` calls `StopRuntimeSession`. It does not call the Evaluate API. `OnDemandEvaluationDatasetRunner` stays a later adapter. The golden cost check on this path is still the length heuristic at zero USD. It is not a DESIGN §1.4 billing proof.
+Same eval, same judge process, harness `runtime`. That harness calls `InvokeAgentRuntime` with the actor on `X-Amzn-Bedrock-AgentCore-Runtime-Custom-Actor-Id`, collects ADOT spans (`attributes.session.id` is the raw session id) and `agentcore.turn` logs (`runtimeSessionId` is the hash), then `tear_down` calls `StopRuntimeSession`. It does not call the Evaluate API. `OnDemandEvaluationDatasetRunner` stays a later adapter. The golden cost check on this path is still the length heuristic at zero USD. It is not a billing proof. See [the library design](design/library.md).
 
 ```bash
 PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge \
@@ -80,7 +80,7 @@ IAM in the dev account, scoped to that runtime and those log groups:
 - `logs:StartQuery`
 - `logs:GetQueryResults`
 
-Isolate with agent version, namespace, and IAM path. Do not use a second account (DESIGN §7).
+Isolate with agent version, namespace, and IAM path. Do not use a second account. See [the library design](design/library.md).
 
 When any required name is unset, the command prints `status: SKIPPED`, writes `verdict.json` with `"status": "SKIPPED"` and `missing_settings`, and exits 1. It does not write a golden-eval evidence file and it does not print `PASS`. `.github/workflows/runtime-evals.yml` runs this command and fails closed. A red check without those secrets is the gate, not a skipped success.
 

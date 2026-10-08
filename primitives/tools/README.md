@@ -1,6 +1,6 @@
 # agentcore-tools
 
-Tool registry and Gateway wiring for AgentCore (DESIGN §2.2). Version 0.1.0.
+Tool registry and Gateway wiring for AgentCore. See [the library design](../../docs/design/library.md). Version 0.1.0.
 
 Agents call `invoke_tool`. Gateway fronts every tool. The policy starts empty, so a call is denied until that agent version is permitted. A forbid wins over a permit. Cedar on the real Gateway uses the same posture: no matching permit is a deny, and a forbid overrides a permit.
 

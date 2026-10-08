@@ -12,7 +12,7 @@ Saving a trace is not learning. Learning starts when someone judges the trace, w
 
 **Offline.** Group traces, name the first bad step, and propose a change in a PR. A one-off success, or a hostile input, does not edit the agent that is serving traffic.
 
-The two loops meet in the eval suite and, later, in versioned docs and skills. DESIGN §1.3 is the same order: reproduce, add the failing eval or CI gate, then fix.
+The two loops meet in the eval suite and, later, in versioned docs and skills. The [library design](../design/library.md) uses the same order: reproduce, add the failing eval or CI gate, then fix.
 
 ## Where the lesson goes
 
@@ -20,7 +20,7 @@ The two loops meet in the eval suite and, later, in versioned docs and skills. D
 | --- | --- |
 | A check a program can run (status, balance, span, banned import, secret marker) | The eval or `scripts/check_boundaries.py` |
 | A judgment a person can state, and the gate cannot hold alone | A short doc or a thin skill, after the gate exists |
-| A fact about one user | The future memory shelf, after guardrails. See [memory overview](../memory/overview.md). |
+| A fact about one user | Agent memory, after the guard. Job state stays in the job row. See [the library design](../design/library.md). |
 | A weight update, a DPO pair, a reward function, a LoRA | Out of scope. `post-training-strategy`, `reward-design`, and `bad-case-to-dpo` are on the skip list. |
 
 Prefer the row that a machine can fail in CI. A skill as the only control leaves the miss open.

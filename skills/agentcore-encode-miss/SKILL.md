@@ -13,7 +13,7 @@ Run **principle-encode-lessons-in-structure** first and pick the strongest mecha
 
 ## When
 
-The same miss has happened again, or DESIGN §1.3 applies.
+The same miss has happened again, or the encode-miss order in [the library design](../../docs/design/library.md) applies.
 
 ## Steps
 

@@ -33,7 +33,7 @@ The command needs `AWS_REGION`, `AGENTCORE_RUNTIME_ARN`, and `AGENTCORE_SPAN_LOG
    - `PASS+NOTES` (land is allowed; the notes become a follow-up issue or skill, not a silent waiver)
    - `FAIL` (author reworks on the same lease)
 
-`InMemoryRuntimeHarness`, `ruff`, `mypy`, and a green unit-test job do not count. No further human approval sits on top of `PASS` or `PASS+NOTES` (DESIGN §4.2, §8.4).
+`InMemoryRuntimeHarness`, `ruff`, `mypy`, and a green unit-test job do not count. No further human approval sits on top of `PASS` or `PASS+NOTES`. See [the library design](../../docs/design/library.md).
 
 ## Do not
 

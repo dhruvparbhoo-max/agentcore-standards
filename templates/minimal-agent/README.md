@@ -41,6 +41,6 @@ uv run pytest templates/minimal-agent/tests/test_golden_eval.py -m "not runtime"
 
 The runtime test is skipped when any of those values is missing. Names are listed in the repo `.env.example`. Values stay out of git.
 
-A green in-memory run is the local check. It is not the independent Runtime verdict required to merge (DESIGN §4.2, §8).
+A green in-memory run is the local check. It is not the independent Runtime verdict required to merge. See [the library design](../../docs/design/library.md) and [AGENTS.md](../../AGENTS.md).
 
 Capability map: [docs/capability-maps/minimal-agent.md](../../docs/capability-maps/minimal-agent.md).

@@ -40,7 +40,7 @@ A harness climb that targets this behavior follows [hill-climbing.md](../evals/h
 
 Set a turn cap, a token or cost cap, and a wall-clock cap on the loop. Cost attributes already exist on spans (`cost.tokens`, `cost.usd_estimate`). A loop without a cap and a loop with no verifier fail in opposite directions: one never stops, the other stops while claiming success.
 
-Parallel workers settle on the first **verified** success. Claim the winner with an idempotent lock, then cancel the rest. Two near-simultaneous successes must not both commit. DESIGN §3.4 names the cost roll-up across agents; the template is still a stub. The new-evidence test for adding an agent is [multi-agent](../orchestration/multi-agent.md).
+Parallel workers settle on the first **verified** success. Claim the winner with an idempotent lock, then cancel the rest. Two near-simultaneous successes must not both commit. Cost rolls up across agents. The template is still a stub. The new-evidence test for adding an agent is in [the library design](../design/library.md).
 
 ## What the author attaches
 
