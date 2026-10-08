@@ -14,6 +14,8 @@ An **agent** is a program that uses an AI model to carry out a task. It can look
 - **`infra/constructs/`** holds the cloud setup for each building block. Patterns use it to deploy themselves.
 - **`docs/`** holds the design notes and the catalogue for picking a pattern.
 
+A planned front door (not built yet) will handle verified login, a kill switch, shared model access, cost budgets, and an audit trail.
+
 Every pattern comes with the same kit:
 
 - a README
@@ -56,38 +58,33 @@ These are known gaps. None of them is being built yet. Research and sources are 
 
 **Pick these up first**
 
-1. **Agent identity.** When an agent acts for a person, it uses a short-lived pass tied to that person, so it can never do more than they could.
-2. **Checkpoint and resume.** The agent saves its progress after each step, so it can pick up where it stopped when AgentCore ends a session (after 15 idle minutes or 8 hours in total).
-3. **Shared model access.** Every agent calls the AI model the same way. If the model is busy it waits and tries again, it can switch to a backup model, it keeps data in UK or EU regions, and it has usage limits.
-4. **Kill switch and runbooks.** We can stop one agent, one tool or every agent within minutes, and short written guides say what to do when an agent misbehaves.
-5. **Privacy and audit trail.** Personal details get hidden, we decide where data lives and how long we keep it, and a permanent record shows who asked for what, what the agent did and who approved it.
+1. **Checkpoint and resume.** The agent saves its progress after each step, so it can pick up where it stopped when AgentCore ends a session (after 15 idle minutes or 8 hours in total).
 
 **Also parked**
 
-6. **Prompt caching.** The model can reuse the part of a prompt that stays the same, which makes each request cheaper and faster. Tools always go in the same order, and anything that changes, like dates and IDs, goes at the end. Tracing will show the real cost, and an automatic check will confirm caching works.
-7. **Model testing.** Strands Evals gives a quick check on every change. AgentCore Evaluations grades the deployed agents every night and keeps watching them once they're live. Each `pattern.yaml` sets which graders to use and the pass mark.
+2. **Prompt caching.** The model can reuse the part of a prompt that stays the same, which makes each request cheaper and faster. Tools always go in the same order, and anything that changes, like dates and IDs, goes at the end. Tracing will show the real cost, and an automatic check will confirm caching works.
+3. **Model testing.** Strands Evals gives a quick check on every change. AgentCore Evaluations grades the deployed agents every night and keeps watching them once they're live. Each `pattern.yaml` sets which graders to use and the pass mark.
 
 **After that, in this order**
 
-8. **Context window management.** We'll set rules for clearing out or summarising old material, so the agent's working memory doesn't fill up and get worse.
-9. **Check the output before acting.** Anything the model produces gets checked against the expected format and our business rules before the agent acts on it.
-10. **Check facts before saving them to memory.** Before a fact goes into long-term memory, it gets checked and labelled with where it came from, so one wrong or planted fact can't mislead the agent later.
-11. **Release everything together.** An agent's prompts, model, tools and rules go out together as one numbered version, so we can roll back if something breaks.
-12. **Dev, staging and prod accounts.** Each agent is tried in separate test accounts and only reaches the live account after it passes its exam and a person signs off.
-13. **Targets and alerts.** Each pattern has targets for success rate, speed and cost, and we get an alert when it misses them.
-14. **Cost tags and budgets.** Spending is tracked per agent, and a budget sends a warning first and then stops it.
-15. **Progress updates.** Long tasks show what the agent is doing right now, so people don't assume it's stuck and start it again.
-16. **Safe tools.** We only use approved and pinned tool versions, and someone reviews any change to a tool's description.
-17. **Versioned tools.** Each tool has a version number, so changing one doesn't quietly break the agents that use it.
-18. **Containing failures between agents.** When agents work as a team, one failing agent gets cut off before it can drag the others down.
-19. **Clear approval screens.** Approval requests show plainly what will happen and how risky it is, so people read them rather than clicking yes out of habit.
-20. **Attack tests and threat model.** Each pattern faces a set of known attack prompts on every change, and gets a written list of how it could be attacked.
-21. **Owner and risk level.** Every agent has a named owner, a note of how much it can do without a person, and a risk level.
-22. **Learn from feedback.** Thumbs down and rejected approvals become new exam questions.
-23. **Several teams sharing.** If other teams or customers use this, each one's data and usage stays separate from the others.
-24. **Agent list and model retirement.** We keep one list of every live agent and get a warning before a model it uses is switched off.
-25. **Smaller items.** Keep knowledge sources up to date. Run any code the agent writes in a sealed-off box. Have backups and a recovery plan. Make screens usable for everyone (the WCAG 2.2 accessibility standard). Add a "do you even need an agent?" question to the catalogue.
-26. **Teams and Slack.** People can talk to agents and approve their actions from inside Microsoft Teams or Slack, through one shared connector with a Teams version and a Slack version.
+4. **Context window management.** We'll set rules for clearing out or summarising old material, so the agent's working memory doesn't fill up and get worse.
+5. **Check the output before acting.** Anything the model produces gets checked against the expected format and our business rules before the agent acts on it.
+6. **Check facts before saving them to memory.** Before a fact goes into long-term memory, it gets checked and labelled with where it came from, so one wrong or planted fact can't mislead the agent later.
+7. **Release everything together.** An agent's prompts, model, tools and rules go out together as one numbered version, so we can roll back if something breaks.
+8. **Dev, staging and prod accounts.** Each agent is tried in separate test accounts and only reaches the live account after it passes its exam and a person signs off.
+9. **Targets and alerts.** Each pattern has targets for success rate, speed and cost, and we get an alert when it misses them.
+10. **Progress updates.** Long tasks show what the agent is doing right now, so people don't assume it's stuck and start it again.
+11. **Safe tools.** We only use approved and pinned tool versions, and someone reviews any change to a tool's description.
+12. **Versioned tools.** Each tool has a version number, so changing one doesn't quietly break the agents that use it.
+13. **Containing failures between agents.** When agents work as a team, one failing agent gets cut off before it can drag the others down.
+14. **Clear approval screens.** Approval requests show plainly what will happen and how risky it is, so people read them rather than clicking yes out of habit.
+15. **Attack tests and threat model.** Each pattern faces a set of known attack prompts on every change, and gets a written list of how it could be attacked.
+16. **Owner and risk level.** Every agent has a named owner, a note of how much it can do without a person, and a risk level.
+17. **Learn from feedback.** Thumbs down and rejected approvals become new exam questions.
+18. **Several teams sharing.** If other teams or customers use this, each one's data and usage stays separate from the others.
+19. **Agent list and model retirement.** We keep one list of every live agent and get a warning before a model it uses is switched off.
+20. **Smaller items.** Keep knowledge sources up to date. Run any code the agent writes in a sealed-off box. Have backups and a recovery plan. Make screens usable for everyone (the WCAG 2.2 accessibility standard). Add a "do you even need an agent?" question to the catalogue.
+21. **Teams and Slack.** People can talk to agents and approve their actions from inside Microsoft Teams or Slack, through one shared connector with a Teams version and a Slack version.
 
 ## For developers
 
