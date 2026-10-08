@@ -1,6 +1,6 @@
 # Memory overview
 
-`packages/agentcore-memory/` is a path stub (lane E). Build it after guardrails, on its own lease. This page is the acceptance bar for that lease. It does not add API, and it does not store anything.
+`primitives/memory/` is a path stub (lane E). Build it after guardrails, on its own lease. This page is the acceptance bar for that lease. It does not add API, and it does not store anything.
 
 Concepts distilled from `memory-system` in [bojieli/ai-agent-book](https://github.com/bojieli/ai-agent-book/tree/main/skills/memory-system). Credit: [attribution](../attribution/bojieli-ai-agent-book.md). The normative sketch is DESIGN §2.3. Whether writes go through Gateway or the Memory SDK directly is still open (DESIGN §7).
 

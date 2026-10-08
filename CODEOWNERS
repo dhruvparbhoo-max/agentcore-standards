@@ -12,18 +12,18 @@
 /.github/                               @agentcore/platform
 /scripts/                               @agentcore/platform
 
-/packages/agentcore-tracing/            @agentcore/platform
-/packages/agentcore-eval/               @agentcore/platform
-/packages/agentcore-session/            @agentcore/platform
-/packages/agentcore-tools/              @agentcore/platform
-/packages/agentcore-memory/             @agentcore/platform
-/packages/agentcore-guardrails/         @agentcore/platform
-/packages/agentcore-identity/           @agentcore/platform
-/packages/agentcore-approvals/          @agentcore/platform
-/packages/agentcore-context/            @agentcore/platform
-/packages/agentcore-recovery/           @agentcore/platform
-/packages/agentcore-completion/         @agentcore/platform
-/packages/agentcore-langchain/          @agentcore/platform
+/primitives/tracing/            @agentcore/platform
+/primitives/eval/               @agentcore/platform
+/primitives/session/            @agentcore/platform
+/primitives/tools/              @agentcore/platform
+/primitives/memory/             @agentcore/platform
+/primitives/guardrails/         @agentcore/platform
+/primitives/identity/           @agentcore/platform
+/primitives/approvals/          @agentcore/platform
+/primitives/context/            @agentcore/platform
+/primitives/recovery/           @agentcore/platform
+/primitives/completion/         @agentcore/platform
+/primitives/langchain/          @agentcore/platform
 
 /templates/minimal-agent/               @agentcore/platform
 /templates/agent-with-tools/            @agentcore/platform

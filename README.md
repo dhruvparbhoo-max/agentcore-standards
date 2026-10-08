@@ -8,25 +8,27 @@ Lane A is the root of every later stack: `agentcore-tracing`, `agentcore-eval`, 
 
 ## Layout
 
+Shared libraries live under `primitives/<name>/`. Folder names are short. Python distribution names (`agentcore-tracing`) and import names (`agentcore_tracing`) are unchanged. `patterns/` (self-contained deployable examples) arrives in later PRs. `templates/` and `experiments/` stay where they are until those later steps retire them.
+
 ```
-packages/agentcore-tracing/     OTEL span names, hashed session id, cost attributes, JSON turn logs
-packages/agentcore-eval/        RuntimeHarness, verdicts, suite runner, in-memory harness, Runtime client
+primitives/tracing/             OTEL span names, hashed session id, cost attributes, JSON turn logs
+primitives/eval/                RuntimeHarness, verdicts, suite runner, in-memory harness, Runtime client
+primitives/session/             stub (lane B); actor headers are agentcore-identity
+primitives/tools/               registry, Gateway Lambda targets, idempotency, compact, cite, catalog
+primitives/guardrails/          input, output, and memory-write checks
+primitives/memory/              short-term events and long-term records, after the guard
+primitives/identity/            Runtime actor and session headers
+primitives/approvals/           single-use approval tokens
+primitives/context/             prompt assembly and the state bar
+primitives/recovery/            retry budget, circuit breaker, in-flight cap
+primitives/completion/          completion check; proposer is not the verifier
+primitives/langchain/           LangChain create_agent over the tool registry, plus graph helpers
 templates/minimal-agent/        BedrockAgentCoreApp entrypoint plus a harness binding (an app, not a PyPI lib)
-packages/agentcore-session/     stub (lane B); actor headers are agentcore-identity
-packages/agentcore-tools/       registry, Gateway Lambda targets, idempotency, compact, cite, catalog
-packages/agentcore-guardrails/  input, output, and memory-write checks
-packages/agentcore-memory/      short-term events and long-term records, after the guard
-packages/agentcore-identity/    Runtime actor and session headers
-packages/agentcore-approvals/   single-use approval tokens
-packages/agentcore-context/     prompt assembly and the state bar
-packages/agentcore-recovery/    retry budget, circuit breaker, in-flight cap
-packages/agentcore-completion/  completion check; proposer is not the verifier
-packages/agentcore-langchain/   LangChain create_agent over the tool registry, plus graph helpers
 templates/agent-with-tools/     invoice desk; imports the shelf; offline judge; no live Runtime PASS
 templates/agent-with-memory/    stub
 templates/multi-agent/          stub
 templates/human-in-the-loop/    stub
-experiments/                    messy drafts allowed; templates and packages must not import them
+experiments/                    messy drafts allowed; templates and primitives must not import them
 docs/DESIGN.md                  team standards
 docs/README.md                  index of playbooks (evals, tools, runtime, ops)
 docs/capability-maps/           how to drive a template and what observable proves it
@@ -112,7 +114,7 @@ PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent
 
 Read [AGENTS.md](AGENTS.md) before editing. Short version:
 
-- One writer lease per `packages/<name>/` or `templates/<name>/`.
+- One writer lease per `primitives/<name>/` or `templates/<name>/`.
 - `pyproject.toml` and `uv.lock` are serialized to the platform lease (`CODEOWNERS`). Do not edit them from a package lease unless the coordinator includes that path.
 - Branch shape: `agent/<id>/<package-or-template>/<slug>`.
 - Author agent and judge agent are different processes. CI green is not a merge verdict.

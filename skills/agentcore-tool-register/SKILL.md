@@ -8,7 +8,7 @@ description: >
 
 # Register a Gateway tool
 
-Read [docs/tools/design.md](../../docs/tools/design.md) and `packages/agentcore-tools/README.md`. Idempotent retries are DESIGN §1.6. This skill is the registration checklist around that rule.
+Read [docs/tools/design.md](../../docs/tools/design.md) and `primitives/tools/README.md`. Idempotent retries are DESIGN §1.6. This skill is the registration checklist around that rule.
 
 ## When
 

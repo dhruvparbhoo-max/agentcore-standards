@@ -12,25 +12,29 @@ This repo is **agentcore-standards**: a Python standards library for Amazon Bedr
 - **`BedrockAgentCoreApp`** (`bedrock-agentcore` ≥ 1.24) is the process that service hosts. Decorate the turn function with `@app.entrypoint`. Do not use `bedrock-agentcore-starter-toolkit`.
 - **`RuntimeHarness`** is our eval client: `start`, `invoke`, `capture_traces`, `tear_down`. `InMemoryRuntimeHarness` calls the entrypoint in-process. `AgentCoreRuntimeHarness` calls the service. Evals target the protocol, not a particular host.
 
+## Layout
+
+Shared libraries live under `primitives/<name>/` (for example `primitives/tracing`). Distribution names (`agentcore-tracing`) and import names (`agentcore_tracing`) stay stable. `patterns/` arrives in later PRs. `templates/` and `experiments/` stay in place until then.
+
 ## Leases
 
 One writer per path prefix. Scouts may read anything. Writers need a lease.
 
 | Path | Lane | Status |
 | --- | --- | --- |
-| `packages/agentcore-tracing/` | A | implemented |
-| `packages/agentcore-eval/` | A | implemented |
+| `primitives/tracing/` | A | implemented |
+| `primitives/eval/` | A | implemented |
 | `templates/minimal-agent/` | A | implemented |
-| `packages/agentcore-session/` | B | stub; actor headers are `agentcore-identity` |
-| `packages/agentcore-tools/` | C | implemented (registry, compact, cite, catalog) |
-| `packages/agentcore-guardrails/` | D | implemented; no Runtime PASS |
-| `packages/agentcore-memory/` | E | implemented on the guard; no Runtime PASS |
-| `packages/agentcore-identity/` | H | implemented |
-| `packages/agentcore-approvals/` | I | implemented |
-| `packages/agentcore-context/` | J | implemented |
-| `packages/agentcore-recovery/` | K | implemented |
-| `packages/agentcore-completion/` | L | implemented |
-| `packages/agentcore-langchain/` | M | implemented; model providers stay outside |
+| `primitives/session/` | B | stub; actor headers are `agentcore-identity` |
+| `primitives/tools/` | C | implemented (registry, compact, cite, catalog) |
+| `primitives/guardrails/` | D | implemented; no Runtime PASS |
+| `primitives/memory/` | E | implemented on the guard; no Runtime PASS |
+| `primitives/identity/` | H | implemented |
+| `primitives/approvals/` | I | implemented |
+| `primitives/context/` | J | implemented |
+| `primitives/recovery/` | K | implemented |
+| `primitives/completion/` | L | implemented |
+| `primitives/langchain/` | M | implemented; model providers stay outside |
 | `templates/agent-with-tools/` | F | invoice desk offline; imports the shelf; no Runtime PASS |
 | `templates/agent-with-memory/` | F | stub |
 | `templates/multi-agent/` | F | stub |
@@ -46,7 +50,7 @@ Rules:
 2. Do not edit another lease. If you need a new package API, stop and report the blocker.
 3. Do not edit `pyproject.toml` or `uv.lock` unless your lease includes the platform manifest. Adding a workspace member is a platform change. Declare every workspace dependency explicitly in the member that imports it.
 4. Templates import packages. They do not copy package source. `scripts/check_boundaries.py` fails the build when they do.
-5. `experiments/` may be messy. Nothing under `templates/` or `packages/` may import it. The same script fails the build when they do.
+5. `experiments/` may be messy. Nothing under `templates/` or `primitives/` may import it. The same script fails the build when they do.
 6. No resource ARNs, account ids, or secrets in git. `.env.example` is names only.
 7. Do not declare done from `ruff` / `mypy` / unit tests. Those are necessary. A ship verdict is PASS or PASS+NOTES from a **different** process that re-runs the Runtime eval. CI green is not that verdict. No extra human approval on top of a PASS / PASS+NOTES. FAIL or missing evidence blocks merge.
 8. Evals run in the same AWS account as dev. Isolate with agent versions, namespaces, and IAM paths.

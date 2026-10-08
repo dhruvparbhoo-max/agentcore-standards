@@ -2,7 +2,7 @@
 
 A tool is a goal the agent can finish in one call, with a schema the registry can reject. Wrapping every API route as its own tool forces the model to orchestrate the endpoint list.
 
-Concepts distilled from `tool-design` in [bojieli/ai-agent-book](https://github.com/bojieli/ai-agent-book/tree/main/skills/tool-design). Credit: [attribution](../attribution/bojieli-ai-agent-book.md). The implementation shelf is `packages/agentcore-tools` (DESIGN §2.2). Registration steps: [agentcore-tool-register](../../skills/agentcore-tool-register/SKILL.md).
+Concepts distilled from `tool-design` in [bojieli/ai-agent-book](https://github.com/bojieli/ai-agent-book/tree/main/skills/tool-design). Credit: [attribution](../attribution/bojieli-ai-agent-book.md). The implementation shelf is `primitives/tools` (DESIGN §2.2). Registration steps: [agentcore-tool-register](../../skills/agentcore-tool-register/SKILL.md).
 
 ## Shape
 

@@ -22,7 +22,7 @@ def test_templates_cannot_import_experiments(tmp_path: Path) -> None:
 
 
 def test_templates_cannot_copy_package_source(tmp_path: Path) -> None:
-    package = tmp_path / "packages" / "widget"
+    package = tmp_path / "primitives" / "widget"
     template = tmp_path / "templates" / "demo"
     package.mkdir(parents=True)
     template.mkdir(parents=True)
@@ -34,7 +34,7 @@ def test_templates_cannot_copy_package_source(tmp_path: Path) -> None:
 
 
 def test_four_line_copy_is_rejected(tmp_path: Path) -> None:
-    package = tmp_path / "packages" / "widget"
+    package = tmp_path / "primitives" / "widget"
     template = tmp_path / "templates" / "demo"
     package.mkdir(parents=True)
     template.mkdir(parents=True)
@@ -46,7 +46,7 @@ def test_four_line_copy_is_rejected(tmp_path: Path) -> None:
 
 
 def test_three_line_overlap_is_not_a_copy(tmp_path: Path) -> None:
-    package = tmp_path / "packages" / "widget"
+    package = tmp_path / "primitives" / "widget"
     template = tmp_path / "templates" / "demo"
     package.mkdir(parents=True)
     template.mkdir(parents=True)

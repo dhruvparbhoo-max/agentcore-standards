@@ -19,11 +19,11 @@ This environment has no `uv`, so the suite was read and not re-executed here. Th
 
 ## Strengths
 
-- **The two harnesses are named apart.** `BedrockAgentCoreApp` is the hosted process. `RuntimeHarness` is the eval client (`start` / `invoke` / `capture_traces` / `tear_down`). README, `AGENTS.md`, and `packages/agentcore-eval/src/agentcore_eval/__init__.py` say this the same way. That split is the part worth stealing.
-- **Stubs say they are stubs.** `packages/agentcore-session/README.md`, `agentcore-guardrails`, `agentcore-memory`, and the four template READMEs under `templates/` refuse implementation and name the lease. The root README matches that.
+- **The two harnesses are named apart.** `BedrockAgentCoreApp` is the hosted process. `RuntimeHarness` is the eval client (`start` / `invoke` / `capture_traces` / `tear_down`). README, `AGENTS.md`, and `primitives/eval/src/agentcore_eval/__init__.py` say this the same way. That split is the part worth stealing.
+- **Stubs say they are stubs.** `primitives/session/README.md`, `agentcore-guardrails`, `agentcore-memory`, and the four template READMEs under `templates/` refuse implementation and name the lease. The root README matches that.
 - **Boundaries are a script, not a paragraph.** `scripts/check_boundaries.py` fails the build on `experiments` imports, a 6-line copy of package source into a template, and committed ARN / private-key shapes. The ARN regex is split in source so the scanner does not flag itself. CI runs it (`.github/workflows/ci.yml`).
-- **Workspace deps are explicit.** Root and `templates/minimal-agent` both declare `agentcore-tracing` and `agentcore-eval`. Templates are `package = false`. Hatchling packages stay under `packages/`.
-- **Tool errors are operational.** `ToolResult` is either output or a classified error. Retryable carries `backoff_ms`; fatal does not (`packages/agentcore-tools/src/agentcore_tools/errors.py`). Schema failures name the path and omit the rejected value (`schema.py`). Deny-by-default is the empty `Policy`, and a forbid wins (`policy.py`). The demo handler is put-if-absent on `record_id` (`demo.py`).
+- **Workspace deps are explicit.** Root and `templates/minimal-agent` both declare `agentcore-tracing` and `agentcore-eval`. Templates are `package = false`. Hatchling packages stay under `primitives/`.
+- **Tool errors are operational.** `ToolResult` is either output or a classified error. Retryable carries `backoff_ms`; fatal does not (`primitives/tools/src/agentcore_tools/errors.py`). Schema failures name the path and omit the rejected value (`schema.py`). Deny-by-default is the empty `Policy`, and a forbid wins (`policy.py`). The demo handler is put-if-absent on `record_id` (`demo.py`).
 - **The judge vocabulary is honest on the mock path.** `evidence/judge/verdict.json` can say `SKIPPED` with `missing_settings`. `docs/eval-pass-path.md` says that exit 0 on `SKIPPED` is still a blocked merge. The in-process golden eval checks a real entrypoint (`templates/minimal-agent/src/minimal_agent/entrypoint.py`), a hashed session id on the span, parent/child span shape, and two structured logs (`templates/minimal-agent/evals/golden_turn.py`).
 - **Prose is consistent.** Docstrings say what the function does. Design, READMEs, and module text share one register. There is little decorative abstraction.
 
@@ -33,7 +33,7 @@ This environment has no `uv`, so the suite was read and not re-executed here. Th
 
 `templates/minimal-agent/evals/golden_turn.py` requires two structured logs whose `runtimeSessionId` equals the raw session id and whose `actorId` equals `actor-golden`. `AgentCoreRuntimeHarness.capture_traces` always returns `logs=()`:
 
-```155:161:packages/agentcore-eval/src/agentcore_eval/runtime_client.py
+```155:161:primitives/eval/src/agentcore_eval/runtime_client.py
     def capture_traces(self, session: SessionHandle) -> TraceBundle:
         state = self._require_known(session)
         if self._span_collector is None:
@@ -47,7 +47,7 @@ This environment has no `uv`, so the suite was read and not re-executed here. Th
 
 `start` and `tear_down` only flip a local flag. They do not create or end a Runtime session. A second `invoke` after `tear_down` fails in this process. The microVM session is untouched.
 
-`packages/agentcore-eval/tests/test_harness.py` checks the boto call shape against a fake collector. It does not run `minimal-agent.golden-turn`. `templates/minimal-agent/tests/test_golden_eval.py` would call the real suite when credentials exist, and that suite fails on the empty log list before it ever looks at CloudWatch span shape.
+`primitives/eval/tests/test_harness.py` checks the boto call shape against a fake collector. It does not run `minimal-agent.golden-turn`. `templates/minimal-agent/tests/test_golden_eval.py` would call the real suite when credentials exist, and that suite fails on the empty log list before it ever looks at CloudWatch span shape.
 
 `docs/eval-pass-path.md` still describes this command as the real Runtime PASS path. With credentials set, the honest result is `FAIL`. Without them, the result is `SKIPPED` and process exit 0.
 
@@ -55,7 +55,7 @@ This environment has no `uv`, so the suite was read and not re-executed here. Th
 
 `.github/workflows/runtime-evals.yml` prints a skip line and `exit 0` when `AWS_ACCESS_KEY_ID`, `AWS_REGION`, `AGENTCORE_RUNTIME_ARN`, or `AGENTCORE_SPAN_LOG_GROUP` is empty. It never writes `verdict.json`. It runs `pytest -m runtime`, not `python -m minimal_agent.judge --harness runtime`. `AGENTS.md` calls that workflow "the same gate" as the judge.
 
-`packages/agentcore-eval/src/agentcore_eval/judge.py` puts `"SKIPPED"` in `PASS_STATUSES`, so the judge process also exits 0. The JSON status is the word `SKIPPED`, which is the right word. The GitHub check is still success. DESIGN §4.2.7 says missing evidence blocks merge. An agent that copies this workflow will treat a green check as the Lauren gate.
+`primitives/eval/src/agentcore_eval/judge.py` puts `"SKIPPED"` in `PASS_STATUSES`, so the judge process also exits 0. The JSON status is the word `SKIPPED`, which is the right word. The GitHub check is still success. DESIGN §4.2.7 says missing evidence blocks merge. An agent that copies this workflow will treat a green check as the Lauren gate.
 
 `AgentCoreRuntimeHarness.from_env` only requires the runtime id and the region. `missing_runtime_settings` also requires `AWS_ACCESS_KEY_ID` and `AGENTCORE_SPAN_LOG_GROUP`. A role-based environment and the skip gate disagree about what "configured" means.
 
@@ -69,7 +69,7 @@ The eval pack makes the same move inside `agentcore-eval`: `PatternGuard`, `Busi
 
 ### Session id field means two things
 
-Spans store `hash_session_id` (`packages/agentcore-tracing/src/agentcore_tracing/turn.py`). The minimal-agent log stores the raw id, and the golden eval requires that. `ToolRegistry._log` writes the **hash** into the same JSON key `runtimeSessionId` (`packages/agentcore-tools/src/agentcore_tools/registry.py`). A consumer cannot tell which one it has. DESIGN §2.1 wants session ids kept off PII. The template log line carries the raw session id next to `actorId`.
+Spans store `hash_session_id` (`primitives/tracing/src/agentcore_tracing/turn.py`). The minimal-agent log stores the raw id, and the golden eval requires that. `ToolRegistry._log` writes the **hash** into the same JSON key `runtimeSessionId` (`primitives/tools/src/agentcore_tools/registry.py`). A consumer cannot tell which one it has. DESIGN §2.1 wants session ids kept off PII. The template log line carries the raw session id next to `actorId`.
 
 ### Idempotency is two mechanisms, and the wrapper is racy
 
@@ -83,17 +83,17 @@ Cedar statements omit the agent version (`policy.py`). The README says to keep o
 
 ### Naming and public surface
 
-`InMemoryRuntimeHarness` lives in `packages/agentcore-eval/src/agentcore_eval/memory.py`. The product Memory package is the stub at `packages/agentcore-memory/`. The file name will be copied as the memory client.
+`InMemoryRuntimeHarness` lives in `primitives/eval/src/agentcore_eval/in_memory.py`. The product Memory package is the stub at `primitives/memory/`. The file name will be copied as the memory client.
 
 `agentcore_tools.__init__` exports `DemoTools`, `RecordStore`, `PUT_RECORD`, `LAMBDA_TARGET`, and `write_double_invoke_evidence`. The demo is the sample, and it is also the library root. Callers will import the fixture.
 
-`estimate_turn_cost` is `max(1, len(text) // 4)` and a default of `$0` (`packages/agentcore-tracing/src/agentcore_tracing/cost.py`). The golden eval requires `cost.tokens >= 1`, which any non-empty prompt satisfies. The module comment is honest that this is not a billing export. The eval still treats those attributes as the DESIGN §1.4 cost check. A copied template will ship the heuristic as "cost tracking".
+`estimate_turn_cost` is `max(1, len(text) // 4)` and a default of `$0` (`primitives/tracing/src/agentcore_tracing/cost.py`). The golden eval requires `cost.tokens >= 1`, which any non-empty prompt satisfies. The module comment is honest that this is not a billing export. The eval still treats those attributes as the DESIGN §1.4 cost check. A copied template will ship the heuristic as "cost tracking".
 
 ### Eval pack proves the fixture agrees with itself
 
 `PatternGuard` blocks the substring `ignore previous instructions` and the marker `BLOCK-PII`, and allows a memory write only when `event["guarded"] is True` (`guardrails.py`). `BusinessStub` deletes `actor_id` (`stub_agent.py`). `LexicalGroundednessScorer` is a substring check. These are useful shapes for a later package. They are not Bedrock Guardrails, Gateway policy, or a faithfulness evaluator. `OnDemandEvaluatorsAdapter` is optional and does not produce a `Verdict`.
 
-`write_evidence` rejects any bundle whose JSON contains `arn:aws:` (`harness.py` `assert_no_resource_arn`). A real span that records a function id or a runtime id crashes the suite with `HarnessError` instead of a `FAIL` verdict. The runner does not catch that write.
+`write_evidence` rejects any bundle whose JSON contains the marker `"arn:" + "aws:"` (`harness.py` `assert_no_resource_arn`). A real span that records a function id or a runtime id crashes the suite with `HarnessError` instead of a `FAIL` verdict. The runner does not catch that write.
 
 Log capture in `InMemoryRuntimeHarness` attaches a handler to the process-wide `agentcore.turn` logger (`memory.py`). Overlapping invokes in one process mix lines. The tracer binding is a `ContextVar`. The log sink is not.
 
@@ -113,11 +113,11 @@ The implementation is plain and readable. The parts that are heavier than the pr
 
 `git merge-base` of #6 and `main` is `ace165c`, the scaffold. Commits on `main` that this branch does not contain include the judge (PR #1), `agentcore-tools` (PR #2), the eval pack (PR #3), hill-climbing (PR #4), and the thin skills (PR #5). The Origin base is `main`. The branch content is not.
 
-`pyproject.toml` on #6 lists workspace members `agentcore-tracing`, `agentcore-eval`, `minimal-agent`, and `langchain-create-agent`. It omits `packages/agentcore-tools`. #7 adds `deepagents-agentcore` and still omits tools. A merge will conflict in `pyproject.toml`, `uv.lock`, `README.md`, `AGENTS.md`, and `CODEOWNERS`. Resolving toward the branch drops the tools package from the workspace.
+`pyproject.toml` on #6 lists workspace members `agentcore-tracing`, `agentcore-eval`, `minimal-agent`, and `langchain-create-agent`. It omits `primitives/tools`. #7 adds `deepagents-agentcore` and still omits tools. A merge will conflict in `pyproject.toml`, `uv.lock`, `README.md`, `AGENTS.md`, and `CODEOWNERS`. Resolving toward the branch drops the tools package from the workspace.
 
 The invoice desk does not import `agentcore-tools`. It grows `tools.py`, `ledger.py`, and a process-global `_agent` / `set_agent_factory` inside the entrypoint (`templates/langchain-create-agent/src/langchain_create_agent/entrypoint.py`). Offline graders use a scripted model. `hosted_agent` builds `ChatBedrockConverse`, and the tests do not call it. Mypy sets `ignore_missing_imports` for `langchain.*`, `langchain_aws.*`, `langgraph.*`, and `langgraph_checkpoint_aws`. The framework the template exists to pin is outside the type check.
 
-#7 copies the same shape again: entrypoint (~296 lines), ledger, harness, context, scripted model. `scripts/check_boundaries.py` compares templates to `packages/`, so two templates may clone each other. DESIGN §8 says a template imports primitives. These PRs invent a second tool stack beside the package that landed on `main`, and they edit the platform manifest in the same PR as the template.
+#7 copies the same shape again: entrypoint (~296 lines), ledger, harness, context, scripted model. `scripts/check_boundaries.py` compares templates to `primitives/`, so two templates may clone each other. DESIGN §8 says a template imports primitives. These PRs invent a second tool stack beside the package that landed on `main`, and they edit the platform manifest in the same PR as the template.
 
 The PR bodies are honest that Runtime is skipped. The titles and READMEs still read as the hosted reference. Rebase onto `88bd49d` or later, one template per PR, import `agentcore-tools` for the side-effecting write, and keep the LangChain graph as the model loop only. Until that rebase, these drafts are not the kitchen.
 
@@ -125,7 +125,7 @@ The PR bodies are honest that Runtime is skipped. The titles and READMEs still r
 
 Fork point is current `main`. Attribution is in `docs/attribution/bojieli-ai-agent-book.md`. The PR says it does not copy the book's skill files and does not claim a Runtime verdict. That matches the diff: docs and four `SKILL.md` checklists, no package behavior.
 
-The same PR amends the rule it is about to exceed. `AGENTS.md` previously limited repo skills to harness, judge, lease, and gate. The diff adds eval-dataset, tool-register, loop-verifier, and experience-to-gate to that allowlist. `agentcore-tool-register` restates `packages/agentcore-tools/README.md` and DESIGN §1.6. Useful as a checklist. It is the soft layer DESIGN §1.3 already ranks under the failing gate. Land it only if the overlap map stays the check against a second pstack. Do not let the next agent add another skill that paraphrases a package README.
+The same PR amends the rule it is about to exceed. `AGENTS.md` previously limited repo skills to harness, judge, lease, and gate. The diff adds eval-dataset, tool-register, loop-verifier, and experience-to-gate to that allowlist. `agentcore-tool-register` restates `primitives/tools/README.md` and DESIGN §1.6. Useful as a checklist. It is the soft layer DESIGN §1.3 already ranks under the failing gate. Land it only if the overlap map stays the check against a second pstack. Do not let the next agent add another skill that paraphrases a package README.
 
 ### #9 — best of the drafts, and it jumps the memory lease
 
@@ -149,7 +149,7 @@ Placeholder ids in git are labeled and blocked at preflight. That is the right k
 - `runtime-evals.yml` injects `AWS_SECRET_ACCESS_KEY` and does not include it in the emptiness check. A key id without a secret still enters pytest.
 - `hash_session_id` keeps 32 hex chars of SHA-256. Say "truncated" in any security claim. The function docstring already says "prefix".
 - Default tool actor `actor-default` and session `session-local` (`registry.py`) hide a caller that forgot the real ids. Require them the way `require_log_field` already does when they are passed.
-- Hill-climbing (`packages/agentcore-eval/src/agentcore_eval/hillclimb.py`, `docs/evals/hill-climbing.md`) prints a rhythm and diffs evidence directories. The docs say no production climb has been recorded. Leave it that way until critical issue 1 is fixed.
+- Hill-climbing (`primitives/eval/src/agentcore_eval/hillclimb.py`, `docs/evals/hill-climbing.md`) prints a rhythm and diffs evidence directories. The docs say no production climb has been recorded. Leave it that way until critical issue 1 is fixed.
 - Branch names disagree. `AGENTS.md` wants `agent/<id>/<path>/<slug>`. This review branch, #8, and #9 use `cursor/...`. #6 uses `agent/cursor/...`. Pick one in the coordinator prompt.
 
 ## What a reference starter fixes first
@@ -167,7 +167,7 @@ Placeholder ids in git are labeled and blocked at preflight. That is the right k
 
 Copy:
 
-- `packages/` versus `templates/` versus `experiments/`, one lease per prefix, explicit workspace dependencies, `package = false` apps.
+- `primitives/` versus `templates/` versus `experiments/`, one lease per prefix, explicit workspace dependencies, `package = false` apps.
 - `BedrockAgentCoreApp` versus `RuntimeHarness`, verdict words `PASS` / `PASS+NOTES` / `FAIL` / `SKIPPED`, evidence files that refuse ARNs, stub READMEs that say stub.
 - Tool result shape: deny by default, schema errors without values, retryable versus fatal, put-if-absent for the side effect.
 - `scripts/check_boundaries.py` as a hard gate, then tighten the shingle once someone pastes around it.

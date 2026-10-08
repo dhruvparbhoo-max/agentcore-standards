@@ -20,7 +20,7 @@ You are adding or changing a scenario, a guardrail fixture, a groundedness case,
 2. Assert end state, required tool names, and any fact the user must be told (`expected_response`, `expected_trajectory`, `metadata.outcomes`, `result_excludes`). Include the thing that must stay true (a second invoke, an untouched balance, a denied tool that writes nothing).
 3. Do the task once by hand. Name the cheapest path that would pass without the work, and make the assert stop it.
 4. Keep identifiers fictional. Parameterize them if the case is public and a hosted model could memorize the answer. A canary belongs in the task text only to detect leakage, never as a secret or a resource ARN.
-5. Put the case in `packages/agentcore-eval` or the template suite that owns the behavior. Unknown JSON keys must fail the loader.
+5. Put the case in `primitives/eval` or the template suite that owns the behavior. Unknown JSON keys must fail the loader.
 6. Run the offline suite and read the evidence file. For a behavior you are about to call done, continue with **agentcore-verify**.
 
 A production miss follows **agentcore-encode-miss**: the new case fails on the bad trace before the fix. Tag a climb case `regression` only after that fix is in. Climb tags are in [docs/evals/hill-climbing.md](../../docs/evals/hill-climbing.md).

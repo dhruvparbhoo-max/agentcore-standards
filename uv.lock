@@ -45,16 +45,16 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agentcore-approvals", editable = "packages/agentcore-approvals" },
-    { name = "agentcore-context", editable = "packages/agentcore-context" },
-    { name = "agentcore-eval", editable = "packages/agentcore-eval" },
-    { name = "agentcore-guardrails", editable = "packages/agentcore-guardrails" },
-    { name = "agentcore-identity", editable = "packages/agentcore-identity" },
-    { name = "agentcore-langchain", editable = "packages/agentcore-langchain" },
-    { name = "agentcore-memory", editable = "packages/agentcore-memory" },
-    { name = "agentcore-recovery", editable = "packages/agentcore-recovery" },
-    { name = "agentcore-tools", editable = "packages/agentcore-tools" },
-    { name = "agentcore-tracing", editable = "packages/agentcore-tracing" },
+    { name = "agentcore-approvals", editable = "primitives/approvals" },
+    { name = "agentcore-context", editable = "primitives/context" },
+    { name = "agentcore-eval", editable = "primitives/eval" },
+    { name = "agentcore-guardrails", editable = "primitives/guardrails" },
+    { name = "agentcore-identity", editable = "primitives/identity" },
+    { name = "agentcore-langchain", editable = "primitives/langchain" },
+    { name = "agentcore-memory", editable = "primitives/memory" },
+    { name = "agentcore-recovery", editable = "primitives/recovery" },
+    { name = "agentcore-tools", editable = "primitives/tools" },
+    { name = "agentcore-tracing", editable = "primitives/tracing" },
     { name = "bedrock-agentcore", specifier = ">=1.24" },
     { name = "langchain", specifier = ">=1.3.3" },
 ]
@@ -62,22 +62,22 @@ requires-dist = [
 [[package]]
 name = "agentcore-approvals"
 version = "0.1.0"
-source = { editable = "packages/agentcore-approvals" }
+source = { editable = "primitives/approvals" }
 
 [[package]]
 name = "agentcore-completion"
 version = "0.1.0"
-source = { editable = "packages/agentcore-completion" }
+source = { editable = "primitives/completion" }
 
 [[package]]
 name = "agentcore-context"
 version = "0.1.0"
-source = { editable = "packages/agentcore-context" }
+source = { editable = "primitives/context" }
 
 [[package]]
 name = "agentcore-eval"
 version = "0.1.0"
-source = { editable = "packages/agentcore-eval" }
+source = { editable = "primitives/eval" }
 dependencies = [
     { name = "agentcore-tracing" },
     { name = "bedrock-agentcore" },
@@ -86,7 +86,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agentcore-tracing", editable = "packages/agentcore-tracing" },
+    { name = "agentcore-tracing", editable = "primitives/tracing" },
     { name = "bedrock-agentcore", specifier = ">=1.24" },
     { name = "boto3", specifier = ">=1.35" },
 ]
@@ -94,17 +94,17 @@ requires-dist = [
 [[package]]
 name = "agentcore-guardrails"
 version = "0.1.0"
-source = { editable = "packages/agentcore-guardrails" }
+source = { editable = "primitives/guardrails" }
 
 [[package]]
 name = "agentcore-identity"
 version = "0.1.0"
-source = { editable = "packages/agentcore-identity" }
+source = { editable = "primitives/identity" }
 
 [[package]]
 name = "agentcore-langchain"
 version = "0.1.0"
-source = { editable = "packages/agentcore-langchain" }
+source = { editable = "primitives/langchain" }
 dependencies = [
     { name = "agentcore-context" },
     { name = "agentcore-identity" },
@@ -115,9 +115,9 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agentcore-context", editable = "packages/agentcore-context" },
-    { name = "agentcore-identity", editable = "packages/agentcore-identity" },
-    { name = "agentcore-tools", editable = "packages/agentcore-tools" },
+    { name = "agentcore-context", editable = "primitives/context" },
+    { name = "agentcore-identity", editable = "primitives/identity" },
+    { name = "agentcore-tools", editable = "primitives/tools" },
     { name = "langchain", specifier = ">=1.3.3,<2" },
     { name = "langgraph", specifier = ">=1.0,<2" },
 ]
@@ -125,18 +125,18 @@ requires-dist = [
 [[package]]
 name = "agentcore-memory"
 version = "0.1.0"
-source = { editable = "packages/agentcore-memory" }
+source = { editable = "primitives/memory" }
 dependencies = [
     { name = "agentcore-guardrails" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "agentcore-guardrails", editable = "packages/agentcore-guardrails" }]
+requires-dist = [{ name = "agentcore-guardrails", editable = "primitives/guardrails" }]
 
 [[package]]
 name = "agentcore-recovery"
 version = "0.1.0"
-source = { editable = "packages/agentcore-recovery" }
+source = { editable = "primitives/recovery" }
 
 [[package]]
 name = "agentcore-standards"
@@ -157,8 +157,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agentcore-eval", editable = "packages/agentcore-eval" },
-    { name = "agentcore-tracing", editable = "packages/agentcore-tracing" },
+    { name = "agentcore-eval", editable = "primitives/eval" },
+    { name = "agentcore-tracing", editable = "primitives/tracing" },
 ]
 
 [package.metadata.requires-dev]
@@ -172,7 +172,7 @@ dev = [
 [[package]]
 name = "agentcore-tools"
 version = "0.1.0"
-source = { editable = "packages/agentcore-tools" }
+source = { editable = "primitives/tools" }
 dependencies = [
     { name = "agentcore-tracing" },
     { name = "boto3" },
@@ -180,14 +180,14 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agentcore-tracing", editable = "packages/agentcore-tracing" },
+    { name = "agentcore-tracing", editable = "primitives/tracing" },
     { name = "boto3", specifier = ">=1.35" },
 ]
 
 [[package]]
 name = "agentcore-tracing"
 version = "0.1.0"
-source = { editable = "packages/agentcore-tracing" }
+source = { editable = "primitives/tracing" }
 dependencies = [
     { name = "opentelemetry-api" },
     { name = "opentelemetry-sdk" },
@@ -867,8 +867,8 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agentcore-eval", editable = "packages/agentcore-eval" },
-    { name = "agentcore-tracing", editable = "packages/agentcore-tracing" },
+    { name = "agentcore-eval", editable = "primitives/eval" },
+    { name = "agentcore-tracing", editable = "primitives/tracing" },
     { name = "bedrock-agentcore", specifier = ">=1.24" },
 ]
 

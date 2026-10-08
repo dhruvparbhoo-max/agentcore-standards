@@ -1,6 +1,6 @@
 # Eval pack
 
-This is the shared eval pack for agentcore-standards. It lives in `packages/agentcore-eval` and runs on the `RuntimeHarness` already used by the minimal agent (`start`, `invoke`, `capture_traces`, `tear_down`).
+This is the shared eval pack for agentcore-standards. It lives in `primitives/eval` and runs on the `RuntimeHarness` already used by the minimal agent (`start`, `invoke`, `capture_traces`, `tear_down`).
 
 A passing offline run shows the dataset, the assert hooks, and the stub agent agree. It is not an independent AgentCore Runtime verdict. DESIGN §1.1 and §4.2 still require a different process to re-run the real Runtime path before merge.
 
@@ -44,7 +44,7 @@ The offline agent behind the business scenarios is `BusinessStub`. It is a fixed
 docs/evals/README.md                         this file
 docs/evals/dataset-design.md                 four-part tasks, anti-cheat, prod misses
 docs/evals/hill-climbing.md                  optimization versus holdout
-packages/agentcore-eval/src/agentcore_eval/
+primitives/eval/src/agentcore_eval/
   datasets/business.json                     9 predefined scenarios
   datasets/guardrails.json                   allow/block fixtures
   datasets/groundedness.json                 answer-vs-sources cases
@@ -68,7 +68,7 @@ Datasets sit inside the package so an install and a checkout load the same files
 ## Run it offline
 
 ```bash
-uv run pytest packages/agentcore-eval/tests/test_eval_pack.py -m "not runtime"
+uv run pytest primitives/eval/tests/test_eval_pack.py -m "not runtime"
 ```
 
 The same suite from Python:
@@ -91,7 +91,7 @@ PY
 
 `evidence/` is gitignored. Each eval writes `<eval-name>.json`. A resource identifier in that file is redacted and the verdict becomes `FAIL`.
 
-`PatternGuard`, `BusinessStub`, `LexicalGroundednessScorer`, and `InMemoryHitlGate` are offline stand-ins. Import them from `agentcore_eval.guardrails`, `agentcore_eval.stub_agent`, `agentcore_eval.groundedness`, and `agentcore_eval.hitl`. The package root raises `ImportError` for those names. They are not `agentcore-guardrails`, the memory client, or `templates/human-in-the-loop`. `business_harness` lives in `agentcore_eval.stub_agent`. `InMemoryRuntimeHarness` lives in `agentcore_eval.in_memory`. The product memory package stays the stub under `packages/agentcore-memory`.
+`PatternGuard`, `BusinessStub`, `LexicalGroundednessScorer`, and `InMemoryHitlGate` are offline stand-ins. Import them from `agentcore_eval.guardrails`, `agentcore_eval.stub_agent`, `agentcore_eval.groundedness`, and `agentcore_eval.hitl`. The package root raises `ImportError` for those names. They are not `agentcore-guardrails`, the memory client, or `templates/human-in-the-loop`. `business_harness` lives in `agentcore_eval.stub_agent`. `InMemoryRuntimeHarness` lives in `agentcore_eval.in_memory`. The product memory package stays the stub under `primitives/memory`.
 
 `pytest -m "not runtime"` is the default CI slice. The one test that constructs the real Evaluators runner is marked `runtime` and skips unless `AWS_ACCESS_KEY_ID`, `AWS_REGION`, `AGENTCORE_RUNTIME_ARN`, and `AGENTCORE_SPAN_LOG_GROUP` are set. That test does not call Evaluate.
 
@@ -248,4 +248,4 @@ uv run pytest -m runtime
 
 The second command calls Runtime only when `AWS_ACCESS_KEY_ID`, `AWS_REGION`, `AGENTCORE_RUNTIME_ARN`, and `AGENTCORE_SPAN_LOG_GROUP` are set. Otherwise it skips. A skip is not a `PASS`.
 
-Harness API: [packages/agentcore-eval/README.md](../../packages/agentcore-eval/README.md).
+Harness API: [primitives/eval/README.md](../../primitives/eval/README.md).

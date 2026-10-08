@@ -2,7 +2,7 @@
 
 Fails when:
 
-- ``templates/`` or ``packages/`` import ``experiments``
+- ``templates/`` or ``primitives/`` import ``experiments``
 - a template file repeats a contiguous block of package source
 - a tracked text file contains a resource ARN or a private-key marker
 
@@ -60,7 +60,7 @@ def main() -> int:
 
 def _experiment_imports(root: Path) -> list[str]:
     found: list[str] = []
-    for base in (root / "templates", root / "packages"):
+    for base in (root / "templates", root / "primitives"):
         for path in _python_files(base):
             for module in _imported_modules(path):
                 if module == "experiments" or module.startswith("experiments."):
@@ -70,7 +70,7 @@ def _experiment_imports(root: Path) -> list[str]:
 
 def _copied_package_guts(root: Path) -> list[str]:
     package_shingles: dict[tuple[str, ...], Path] = {}
-    for path in _python_files(root / "packages"):
+    for path in _python_files(root / "primitives"):
         for window in _shingles(path):
             package_shingles.setdefault(window, path)
     found: list[str] = []

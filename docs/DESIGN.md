@@ -83,24 +83,22 @@ For every tool:
 
 ## 2. Primitive catalog
 
-Each primitive is a **tested, versioned, importable Python module** under `packages/`. No copy-paste starters that drift. Language is **Python only** (resolved).
-
-Suggested package layout:
+Each primitive is a **tested, versioned, importable Python module** under `primitives/`. No copy-paste starters that drift. Language is **Python only** (resolved). Distribution names stay `agentcore-*` and import names stay `agentcore_*`.
 
 ```
-packages/
-  agentcore-session/      # Runtime session lifecycle (stub; headers live in identity)
-  agentcore-identity/     # Actor and session headers
-  agentcore-tools/        # Tool registry, Gateway, compact, retrieve, catalog
-  agentcore-guardrails/   # Input/output/memory-write checks
-  agentcore-memory/       # STM/LTM; writes call the guard first
-  agentcore-approvals/    # Single-use HITL tokens
-  agentcore-context/      # Prompt assembly and the state bar
-  agentcore-recovery/     # Retry budget, circuit breaker, in-flight cap
-  agentcore-completion/   # Loop/done verifier; proposer is not the verifier
-  agentcore-langchain/    # create_agent bound to the tool registry
-  agentcore-tracing/      # OTEL + cost attributes
-  agentcore-eval/         # Eval harness, verdicts, evidence upload
+primitives/
+  session/       # Runtime session lifecycle (stub; headers live in identity)
+  identity/      # Actor and session headers
+  tools/         # Tool registry, Gateway, compact, retrieve, catalog
+  guardrails/    # Input/output/memory-write checks
+  memory/        # STM/LTM; writes call the guard first
+  approvals/     # Single-use HITL tokens
+  context/       # Prompt assembly and the state bar
+  recovery/      # Retry budget, circuit breaker, in-flight cap
+  completion/    # Loop/done verifier; proposer is not the verifier
+  langchain/     # create_agent bound to the tool registry
+  tracing/       # OTEL + cost attributes
+  eval/          # Eval harness, verdicts, evidence upload
 templates/
   minimal-agent/
   agent-with-tools/
@@ -285,7 +283,7 @@ Each template is a **runnable AgentCore agent** plus a **attached eval suite**. 
 
 ### 4.1 Versioning
 
-- SemVer on every `packages/*` module and every template.
+- SemVer on every `primitives/*` module and every template.
 - AgentCore Runtime **agent versions** map 1:1 to a git tag / release of the template + pinned primitive versions (lockfile).
 - Breaking changes to tool schemas, Memory namespaces, or Guardrail pins = **major** bump + migration note.
 - Templates depend on packages via range pins reviewed in CODEOWNERS; no “just copy the folder.”
@@ -302,14 +300,14 @@ A PR that touches a primitive or template must include:
 6. **Idempotency:** any new side-effecting tool has double-invoke coverage.
 7. **Ship / auto-merge (resolved):** CI green alone is **not** a merge verdict. Auto-merge is allowed **only after an independent surface verdict** (a different agent/process than the author exercises the real Runtime path → PASS / PASS+NOTES). No additional human approval on top of that Lauren gate. FAIL or missing evidence blocks merge.
 
-CODEOWNERS: `packages/**` requires platform/agents owners; template majors require the same.
+CODEOWNERS: `primitives/**` requires platform/agents owners; template majors require the same.
 
 ### 4.3 Promotion path: experiment → default
 
 | Stage | Rule |
 |-------|------|
 | `experiments/` | Allowed to be messy; cannot be imported by `templates/` |
-| `packages/` candidate | Behind feature flag; eval suite must exist |
+| `primitives/` candidate | Behind feature flag; eval suite must exist |
 | Default template dependency | Only after N green CI days + owner approval + changelog |
 | Deprecation | Soft-remove with major bump; CI fails new imports of deprecated APIs |
 
@@ -386,27 +384,27 @@ Partition by **ownership path**, not by “feature story.” Stories that span p
 
 | Lane | Primary path(s) | Typical atomic PR | Depends on (stack below) |
 |------|-----------------|-------------------|---------------------------|
-| A — Foundation | `packages/agentcore-tracing`, `packages/agentcore-eval` | OTEL conventions + thin RuntimeHarness + one golden Runtime eval | — (root of every stack) |
-| B — Session | `packages/agentcore-session` | Session lifecycle + sticky/cold evals | A |
-| C — Tools | `packages/agentcore-tools` | Registry + Gateway allow/deny + idempotency + compact, cite, catalog | A |
-| D — Guardrails | `packages/agentcore-guardrails` | Guard apply_input/output + pin + memory screen | A |
-| E — Memory | `packages/agentcore-memory` | STM/LTM + write-gate hook | D |
-| H — Identity | `packages/agentcore-identity` | Runtime actor and session headers | — |
-| I — Approvals | `packages/agentcore-approvals` | Single-use HITL tokens | — |
-| J — Context | `packages/agentcore-context` | Assembly + state bar | — |
-| K — Recovery | `packages/agentcore-recovery` | Retry, circuit, in-flight cap | — |
-| L — Completion | `packages/agentcore-completion` | Proposer ≠ verifier | — |
-| M — LangChain | `packages/agentcore-langchain` | create_agent over the tool registry | C, H, J |
+| A — Foundation | `primitives/tracing`, `primitives/eval` | OTEL conventions + thin RuntimeHarness + one golden Runtime eval | — (root of every stack) |
+| B — Session | `primitives/session` | Session lifecycle + sticky/cold evals | A |
+| C — Tools | `primitives/tools` | Registry + Gateway allow/deny + idempotency + compact, cite, catalog | A |
+| D — Guardrails | `primitives/guardrails` | Guard apply_input/output + pin + memory screen | A |
+| E — Memory | `primitives/memory` | STM/LTM + write-gate hook | D |
+| H — Identity | `primitives/identity` | Runtime actor and session headers | — |
+| I — Approvals | `primitives/approvals` | Single-use HITL tokens | — |
+| J — Context | `primitives/context` | Assembly + state bar | — |
+| K — Recovery | `primitives/recovery` | Retry, circuit, in-flight cap | — |
+| L — Completion | `primitives/completion` | Proposer ≠ verifier | — |
+| M — LangChain | `primitives/langchain` | create_agent over the tool registry | C, H, J |
 | F — Templates | `templates/<name>/` only | Wire pinned primitives; template-local eval suite | Matching primitive lanes green |
 | G — Meta | `docs/`, `skills/`, capability maps, CI path bans | Encode a miss; no product API change | May run parallel to A–F as scout+doc PRs |
 
 **Fan-out rules:**
 
-1. **One lease per path prefix** under `packages/<name>/` or `templates/<name>/`. Coordinator records lease → agent → branch → PR.
+1. **One lease per path prefix** under `primitives/<name>/` or `templates/<name>/`. Coordinator records lease → agent → branch → PR.
 2. **Shared interfaces land first.** Public API sketches in DESIGN §2 freeze (or PR) before two consumers diverge. Prefer a tiny “types/protocol” commit in lane A over dual edits.
 3. **Templates never invent primitives.** Template agents import packages; if they need a new API, they file a blocker and the coordinator spawns/queues a package PR — they do not fork package guts into the template.
-4. **Eval ownership:** behavior change PR owns the new/updated eval under `packages/agentcore-eval` *or* the template’s suite for that behavior. Two agents must not edit the same eval file; split suites by package (`evals/session/`, `evals/tools/`, …).
-5. **Collisions → serialize.** If two tasks need `packages/agentcore-tools`, second waits or re-scopes to a non-overlapping subpath explicitly leased (e.g. `.../idempotency/` vs `.../gateway/`) — default is **one agent per package**.
+4. **Eval ownership:** behavior change PR owns the new/updated eval under `primitives/eval` *or* the template’s suite for that behavior. Two agents must not edit the same eval file; split suites by package (`evals/session/`, `evals/tools/`, …).
+5. **Collisions → serialize.** If two tasks need `primitives/tools`, second waits or re-scopes to a non-overlapping subpath explicitly leased (e.g. `.../idempotency/` vs `.../gateway/`) — default is **one agent per package**.
 
 ### 8.3 Branching / ownership rules
 
@@ -473,8 +471,8 @@ Also do not parallelize when: the task is a single-package spike; public API is 
 
 | Agent | Lease | Atomic goal | Done means |
 |-------|-------|-------------|------------|
-| **Coder-1** | `packages/agentcore-session` | Session.start/invoke/end + sticky reuse + cold-start metrics hooks | Runtime evals for sticky reuse + terminate-then-new; traces show session attrs; judge PASS |
-| **Coder-2** | `packages/agentcore-tools` | Tool registry + Gateway bind + one idempotent side-effecting demo tool | Allow/deny + double-invoke evals green; judge PASS |
+| **Coder-1** | `primitives/session` | Session.start/invoke/end + sticky reuse + cold-start metrics hooks | Runtime evals for sticky reuse + terminate-then-new; traces show session attrs; judge PASS |
+| **Coder-2** | `primitives/tools` | Tool registry + Gateway bind + one idempotent side-effecting demo tool | Allow/deny + double-invoke evals green; judge PASS |
 | **Scout-1** | read-only | Capability map for `templates/minimal-agent`; draft maps for tools/memory templates; list blast radius if session↔tools shared types needed | Written maps + gap list; **no** write PR (or docs-only PR under `docs/capability-maps/`) |
 
 **Hold back:** memory waits on guardrails (guard before write). Templates beyond minimal wait until their primitive dependencies have a judge PASS on Runtime. Session still waits on the lane A Runtime PASS above. Multi-agent and HITL stay later.
@@ -489,7 +487,7 @@ Also do not parallelize when: the task is a single-package spike; public API is 
 You are the agentcore coordinator. Read DESIGN.md (esp. §§1, 4, 8). Goal: <GOAL>.
 
 Rules:
-- Lease exactly one ownership path per agent (packages/<name> OR templates/<name>). Never two writers on the same package/template.
+- Lease exactly one ownership path per agent (primitives/<name> OR templates/<name>). Never two writers on the same package/template.
 - Each agent: one atomic PR, isolated worktree/branch agent/<id>/<path>/<slug>, implement + extend Runtime evals at the bedrock-agentcore boundary (harness: start/invoke/capture_traces/tear_down). Author ≠ merge authority.
 - Done for an author = PR with verdict section + evidence paths. Land only after a SEPARATE judge agent re-runs the Runtime evals → PASS or PASS+NOTES. CI green alone is not enough. No extra human approval beyond that gate.
 - Evals in the same AWS account as dev (stage/namespace/IAM isolation). Python only. No secrets in prompts/fixtures/Memory.

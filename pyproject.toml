@@ -15,17 +15,17 @@ default-groups = ["dev"]
 
 [tool.uv.workspace]
 members = [
-  "packages/agentcore-tracing",
-  "packages/agentcore-eval",
-  "packages/agentcore-tools",
-  "packages/agentcore-guardrails",
-  "packages/agentcore-memory",
-  "packages/agentcore-identity",
-  "packages/agentcore-approvals",
-  "packages/agentcore-context",
-  "packages/agentcore-recovery",
-  "packages/agentcore-completion",
-  "packages/agentcore-langchain",
+  "primitives/tracing",
+  "primitives/eval",
+  "primitives/tools",
+  "primitives/guardrails",
+  "primitives/memory",
+  "primitives/identity",
+  "primitives/approvals",
+  "primitives/context",
+  "primitives/recovery",
+  "primitives/completion",
+  "primitives/langchain",
   "templates/minimal-agent",
   "templates/agent-with-tools",
 ]
@@ -45,7 +45,7 @@ dev = [
 [tool.ruff]
 line-length = 120
 target-version = "py312"
-src = ["packages", "templates", "scripts", "tests"]
+src = ["primitives", "templates", "scripts", "tests"]
 extend-exclude = [".venv", "evidence", "uploads"]
 
 [tool.ruff.lint]
@@ -60,17 +60,17 @@ python_version = "3.12"
 strict = true
 warn_unused_configs = true
 files = [
-  "packages/agentcore-tracing/src",
-  "packages/agentcore-eval/src",
-  "packages/agentcore-tools/src",
-  "packages/agentcore-guardrails/src",
-  "packages/agentcore-memory/src",
-  "packages/agentcore-identity/src",
-  "packages/agentcore-approvals/src",
-  "packages/agentcore-context/src",
-  "packages/agentcore-recovery/src",
-  "packages/agentcore-completion/src",
-  "packages/agentcore-langchain/src",
+  "primitives/tracing/src",
+  "primitives/eval/src",
+  "primitives/tools/src",
+  "primitives/guardrails/src",
+  "primitives/memory/src",
+  "primitives/identity/src",
+  "primitives/approvals/src",
+  "primitives/context/src",
+  "primitives/recovery/src",
+  "primitives/completion/src",
+  "primitives/langchain/src",
   "templates/minimal-agent/src",
   "templates/agent-with-tools/src",
   "scripts/check_boundaries.py",
@@ -91,17 +91,17 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = [
-  "packages/agentcore-tracing/tests",
-  "packages/agentcore-eval/tests",
-  "packages/agentcore-tools/tests",
-  "packages/agentcore-guardrails/tests",
-  "packages/agentcore-memory/tests",
-  "packages/agentcore-identity/tests",
-  "packages/agentcore-approvals/tests",
-  "packages/agentcore-context/tests",
-  "packages/agentcore-recovery/tests",
-  "packages/agentcore-completion/tests",
-  "packages/agentcore-langchain/tests",
+  "primitives/tracing/tests",
+  "primitives/eval/tests",
+  "primitives/tools/tests",
+  "primitives/guardrails/tests",
+  "primitives/memory/tests",
+  "primitives/identity/tests",
+  "primitives/approvals/tests",
+  "primitives/context/tests",
+  "primitives/recovery/tests",
+  "primitives/completion/tests",
+  "primitives/langchain/tests",
   "templates/minimal-agent/tests",
   "templates/agent-with-tools/tests",
   "tests",
@@ -109,7 +109,7 @@ testpaths = [
 pythonpath = [
   "templates/minimal-agent/src",
   "templates/agent-with-tools/src",
-  "packages/agentcore-tools/tests",
+  "primitives/tools/tests",
 ]
 addopts = "--strict-markers"
 asyncio_mode = "auto"
