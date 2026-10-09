@@ -48,7 +48,7 @@ Drop navigation chrome and unused search hits. Summarizing noise still costs a m
 
 Query-aware compression (the compressor sees the task and what is already known) is the strategy the source found worth the tokens. The experiment tables and model names stay upstream. Do not treat those figures as numbers this repo measured.
 
-A specialist that returns a short conclusion isolates the bulk better than compressing after it has entered the main trajectory. The specialist's task text has to carry the goal and the constraints, because it does not see the parent's full transcript. Isolation is the multi-agent move in [orchestration](../orchestration/multi-agent.md), and only when that specialist produces evidence the parent could not see by rereading itself.
+A specialist that returns a short conclusion isolates the bulk better than compressing after it has entered the main trajectory. The specialist's task text has to carry the goal and the constraints, because it does not see the parent's full transcript. Isolation is the multi-agent move in [the library design](../design/library.md), and only when that specialist produces evidence the parent could not see by rereading itself.
 
 If compression itself fails repeatedly, stop and surface the error. That cap is the same rule as [error recovery](error-recovery.md): the recovery path does not call the model in a loop.
 

@@ -9,7 +9,7 @@ description: >
 
 # Update the capability map
 
-Run **how** when you still need the runtime picture. This skill writes that picture into `docs/capability-maps/`. DESIGN §6 maps Lauren's feature map to the template README plus these files.
+Run **how** when you still need the runtime picture. This skill writes that picture into `docs/capability-maps/`. The library design maps that feature map to the template README plus these files.
 
 Do not run **create-verification-skill** or **maintain-verification-skill**. Those maintain `.cursor/skills/verify-*/features/`, which this repo does not use.
 

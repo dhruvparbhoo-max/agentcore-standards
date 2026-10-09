@@ -1,6 +1,6 @@
 # agentcore-eval
 
-Eval harness at the AgentCore Runtime boundary (DESIGN §2.6). Version 0.1.0.
+Eval harness at the AgentCore Runtime boundary. See [the library design](../../docs/design/library.md). Version 0.1.0.
 
 ```text
 start(actor_id, agent_version, session_id?) -> SessionHandle

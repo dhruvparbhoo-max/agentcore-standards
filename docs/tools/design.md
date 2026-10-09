@@ -2,7 +2,7 @@
 
 A tool is a goal the agent can finish in one call, with a schema the registry can reject. Wrapping every API route as its own tool forces the model to orchestrate the endpoint list.
 
-Concepts distilled from `tool-design` in [bojieli/ai-agent-book](https://github.com/bojieli/ai-agent-book/tree/main/skills/tool-design). Credit: [attribution](../attribution/bojieli-ai-agent-book.md). The implementation shelf is `primitives/tools` (DESIGN §2.2). Registration steps: [agentcore-tool-register](../../skills/agentcore-tool-register/SKILL.md).
+Concepts distilled from `tool-design` in [bojieli/ai-agent-book](https://github.com/bojieli/ai-agent-book/tree/main/skills/tool-design). Credit: [attribution](../attribution/bojieli-ai-agent-book.md). The implementation shelf is `primitives/tools`. New tools register in AWS Agent Registry. See [the library design](../design/library.md). Registration steps: [agentcore-tool-register](../../skills/agentcore-tool-register/SKILL.md).
 
 ## Shape
 
@@ -55,15 +55,15 @@ Order the controls:
 4. **Sidecar or guard** on the structured tool fields only (`tool` name and arguments). Free text in the same prompt is an injection path. A burst of refusals escalates to a person. It does not retry forever.
 5. **Verify** when the result is checkable (lint after a write, balance after a payment) and return that check in the tool result.
 
-Idempotency follows DESIGN §1.6. `put_record` is put-if-absent on `record_id`, and the registry replays the first result for a repeated idempotency key. The same key with different arguments is a fatal conflict and does not run the handler. Email, phone, and outbound transfer do not become idempotent by retrying. Use a precheck, then a confirm. A failed confirm returns the error to the model for a new plan.
+Idempotency follows [the library design](../design/library.md). `put_record` is put-if-absent on `record_id`, and the registry replays the first result for a repeated idempotency key. The same key with different arguments is a fatal conflict and does not run the handler. Email, phone, and outbound transfer do not become idempotent by retrying. Use a precheck, then a confirm. A failed confirm returns the error to the model for a new plan.
 
 `tools.double-invoke` is the local evidence that one key produces one handler run and one stored row. A new side-effecting tool needs the same shape of evidence. Live Gateway invocation is outside that local check. The package README states what a local run proves.
 
-Sandbox talk belongs to untrusted code execution. A virtualenv isolates packages. It does not isolate the filesystem, the network, or processes. Runtime microVMs are scratch (DESIGN §1.5). Durable facts wait for Memory, and Memory writes wait for guardrails.
+Sandbox talk belongs to untrusted code execution. A virtualenv isolates packages. It does not isolate the filesystem, the network, or processes. Runtime microVMs are scratch. Durable facts go through Memory after the guard. See [the library design](../design/library.md).
 
 ## Collaboration tools
 
-Spawn, cancel, and message are the multi-agent template's problem, and that template is a stub. Until it exists, a handoff is a structured payload with a goal, constraints, and artifact refs. See [multi-agent](../orchestration/multi-agent.md).
+Spawn, cancel, and message are the multi-agent template's problem, and that template is a stub. Until a pattern exists, a handoff is a structured payload with a goal, constraints, and artifact refs. See [the library design](../design/library.md).
 
 A sub-agent prompt, when you write one, names the role, tags where each block came from (`FROM_MAIN_AGENT`, `FROM_USER`, `TOOL_RESULT`), states what it must refuse, and fixes the output shape. HITL timeouts have a default that fails closed. The approval, the denial, and the reason are evidence, not a chat aside.
 

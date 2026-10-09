@@ -1,6 +1,6 @@
 # agentcore-context
 
-Prompt assembly and the state bar (DESIGN §2.8). Version 0.1.0.
+Prompt assembly and the state bar. See [the library design](../../docs/design/library.md). Version 0.1.0.
 
 `StateBar.render` prints open-todo, tool, and error counts and the circuit state. Long todo lists keep the counts and record how many todos were omitted.
 

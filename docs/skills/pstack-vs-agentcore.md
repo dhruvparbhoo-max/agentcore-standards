@@ -4,7 +4,7 @@ pstack (poteto-mode, its playbooks, and the principle skills) is the general met
 
 Read this before adding a skill. If a row already says to use pstack, do not write a second copy under `skills/`.
 
-Repo skills live in `skills/<name>/SKILL.md` (DESIGN §8.5). They are not a second tree under `.cursor/skills/`.
+Repo skills live in `skills/<name>/SKILL.md`. They are not a second tree under `.cursor/skills/`. The lease rules are in [AGENTS.md](../../AGENTS.md).
 
 ## Use pstack. No AgentCore skill.
 
@@ -13,7 +13,7 @@ Repo skills live in `skills/<name>/SKILL.md` (DESIGN §8.5). They are not a seco
 | **poteto-mode** | Any non-trivial task. It picks the playbook. | None. Start here. |
 | **how** | How a subsystem runs, or which package should own a change. | If the answer changes a driveable surface, then `agentcore-capability-map`. |
 | **why** | Design rationale and past decisions. | None. |
-| **architect** | Types and module shape before code. | None. DESIGN §2 is the catalog. A sketch does not widen a lease. |
+| **architect** | Types and module shape before code. | None. [The library design](../design/library.md) is the catalog. A sketch does not widen a lease. |
 | **interrogate** | Adversarial multi-model review of a diff. | Review is not the ship gate. The ship gate is `agentcore-judge`. |
 | **arena** | Several implementations of one artifact. Keep a base, graft the rest. | None. |
 | **Eval playbook** (`poteto-mode/playbooks/eval.md`) | Blinded bakeoff of agent variants. | A different judge from the Runtime ship check. Authoring one case is `agentcore-eval-dataset`. |
@@ -25,9 +25,9 @@ Repo skills live in `skills/<name>/SKILL.md` (DESIGN §8.5). They are not a seco
 | **principle-separate-before-serializing-shared-state** | Two actors would write one worktree, branch, or file. | Then `agentcore-lease` for the path prefix. |
 | **principle-sequence-verifiable-units** | Stacking commits and PRs so each step can be checked. | Lease one path. Land with the Shipping playbook after a Runtime verdict. |
 | **principle-encode-lessons-in-structure** | The same correction is about to become another paragraph. | Then `agentcore-encode-miss` for the order: red eval or CI gate, then the fix. A production recurrence that someone wants to train away continues at `agentcore-experience-to-gate`. |
-| **principle-make-operations-idempotent** | Retries must converge. | None as a skill. A side-effecting tool still needs a double-invoke eval (DESIGN §1.6). |
+| **principle-make-operations-idempotent** | Retries must converge. | None as a skill. A side-effecting tool still needs a double-invoke eval. See [the library design](../design/library.md). |
 | **swarm** | Parallel coverage or exploration. | Workers still take one lease each. |
-| **Orchestrate playbook** | A standing coordinator and many stacked PRs. | Briefs still name one path. Spawn text is DESIGN §8.8. |
+| **Orchestrate playbook** | A standing coordinator and many stacked PRs. | Briefs still name one path. Spawn rules stay in [AGENTS.md](../../AGENTS.md). |
 | **Shipping playbook** | Landing a stack. Independent PASS / PASS+NOTES, contiguous prefix only. CI green is not a verdict. | `agentcore-judge` produces the Runtime verdict Shipping's control-ui / control-cli paths cannot. |
 | **show-me-your-work** | A decision trail for unattended work. | Hillclimb and overnight runs. A ship claim still needs the eval evidence JSON. |
 | **tdd** | Someone asked for a failing test, or the bug has a cheap local test. | A local test does not close a Runtime claim. |
@@ -55,7 +55,7 @@ When the metric is an AgentCore behavior:
 | `skills/agentcore-encode-miss/` | Reproduce, add a failing eval or CI gate, confirm red, then fix. |
 | `skills/agentcore-capability-map/` | Edit `docs/capability-maps/` when a driveable surface changes. |
 | `skills/agentcore-eval-dataset/` | Author one eval case: four-part task, deterministic checks, anti-cheat. The ship gate stays `agentcore-judge`. |
-| `skills/agentcore-tool-register/` | Register a Gateway tool: goal-shaped schema, argument fidelity, deny-by-default, double-invoke evidence. Idempotency itself stays DESIGN §1.6. |
+| `skills/agentcore-tool-register/` | Register a Gateway tool: goal-shaped schema, argument fidelity, deny-by-default, double-invoke evidence. Idempotency itself stays in [the library design](../design/library.md). |
 | `skills/agentcore-loop-verifier/` | An agent "done" claim needs evidence the model cannot edit. Budgets fail closed. |
 | `skills/agentcore-experience-to-gate/` | A repeated production miss becomes a failing eval, then a doc or skill. Weight updates stay out of this repo. |
 

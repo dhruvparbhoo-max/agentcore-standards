@@ -2,7 +2,7 @@
 
 This is the shared eval pack for agentcore-standards. It lives in `primitives/eval` and runs on the `RuntimeHarness` already used by the minimal agent (`start`, `invoke`, `capture_traces`, `tear_down`).
 
-A passing offline run shows the dataset, the assert hooks, and the stub agent agree. It is not an independent AgentCore Runtime verdict. DESIGN §1.1 and §4.2 still require a different process to re-run the real Runtime path before merge.
+A passing offline run shows the dataset, the assert hooks, and the stub agent agree. It is not an independent AgentCore Runtime verdict. The [library design](../design/library.md) still requires a different process to re-run the real Runtime path before merge.
 
 ## Dataset design
 
@@ -151,7 +151,7 @@ Books are copied per session. Two evals do not share a balance. Payments are sto
 
 ### Guardrail fixtures
 
-`GuardrailCheck` is the eval-side view of DESIGN §2.4:
+`GuardrailCheck` is the eval-side view of the guard in [the library design](../design/library.md):
 
 - `apply_input(text) -> GuardDecision`
 - `apply_output(text) -> GuardDecision`

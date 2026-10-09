@@ -92,7 +92,7 @@ More real use produces more traces. More traces produce more cases. More cases m
 ## What this page is not
 
 - Not a result. No production traces were mined here, and no harness was climbed.
-- Not a ship verdict. `PASS` / `PASS+NOTES` / `FAIL` still come from a different process that re-runs Runtime (DESIGN §1.1, §4.2, §8).
+- Not a ship verdict. `PASS` / `PASS+NOTES` / `FAIL` still come from a different process that re-runs Runtime. See [the library design](../design/library.md).
 - Not a waiver for holdout. Editing against the holdout and then reporting the holdout score is not a climb.
 - Not permission to store secrets, account ids, or resource identifiers in a case or an evidence file.
 

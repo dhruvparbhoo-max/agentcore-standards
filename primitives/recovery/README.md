@@ -1,6 +1,6 @@
 # agentcore-recovery
 
-Retry budget, circuit breaker, and in-flight cap (DESIGN §2.8). Version 0.1.0.
+Retry budget, circuit breaker, and in-flight cap. See [the library design](../../docs/design/library.md). Version 0.1.0.
 
 `run_with_recovery` calls an operation that returns `AttemptOutcome`. Retryable failures wait with capped exponential backoff. Pass a jitter function; the default is a uniform draw. Fatal outcomes return immediately and do not open the circuit.
 

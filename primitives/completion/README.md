@@ -1,6 +1,6 @@
 # agentcore-completion
 
-Independent completion check (DESIGN §2.8). Version 0.1.0.
+Independent completion check. See [the library design](../../docs/design/library.md). Version 0.1.0.
 
 `CompletionVerifier.check` takes a `Claim` and an `Evidence` value. It does not call the proposer. If `proposer_id` equals `verifier_id`, it raises `SamePartyError` instead of accepting.
 

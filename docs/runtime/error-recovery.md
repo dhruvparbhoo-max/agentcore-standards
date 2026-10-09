@@ -33,7 +33,7 @@ Every recovery path has a ceiling: consecutive failures, turns, and a session bu
 
 The death spiral is recovery that calls the model. A context overflow that triggers "summarize, then commit, then extract memory" can overflow again inside the hook. On the error path, skip model side effects. A depth counter stops a residual chain. The outer stop is the turn cap plus the session budget plus an escalation to a person.
 
-Streaming resume is not implemented on `RuntimeHarness`. When it is, record where the stream broke (reasoning, assistant text, or tool arguments). A half tool call is text until it parses again. If a tool already ran because the stream executed early, dedupe with the call fingerprint before the resume so the side effect happens once. DESIGN §1.6 still applies.
+Streaming resume is not implemented on `RuntimeHarness`. When it is, record where the stream broke (reasoning, assistant text, or tool arguments). A half tool call is text until it parses again. If a tool already ran because the stream executed early, dedupe with the call fingerprint before the resume so the side effect happens once. The idempotency rule in [the library design](../design/library.md) still applies.
 
 A live connection that sends nothing is different from a connection that drops. The idle watchdog is part of the API layer. A connect timeout does not see a stall.
 

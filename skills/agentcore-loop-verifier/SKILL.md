@@ -25,7 +25,7 @@ An entrypoint, a tool sequence, or a template can stop and say the task is finis
 6. If more than one worker can finish the task, settle on the first verified success, claim it idempotently, and cancel the rest.
 7. Hand a ship claim to **agentcore-verify**, then **agentcore-judge**.
 
-Fault classes and retry caps are [docs/runtime/error-recovery.md](../../docs/runtime/error-recovery.md). A second agent still has to pass the new-evidence test in [docs/orchestration/multi-agent.md](../../docs/orchestration/multi-agent.md).
+Fault classes and retry caps are [docs/runtime/error-recovery.md](../../docs/runtime/error-recovery.md). A second agent still has to pass the new-evidence test in [the library design](../../docs/design/library.md).
 
 ## Do not
 

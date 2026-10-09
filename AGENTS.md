@@ -1,6 +1,6 @@
 # Agent operating rules
 
-Read [docs/DESIGN.md](docs/DESIGN.md) sections 1, 4, and 8 before writing code. This file is the lease card. The design doc is the norm.
+Read [docs/design/library.md](docs/design/library.md) before writing code. This file is the lease card. The library design is the norm. Pattern design pages follow [docs/design/pattern-design-template.md](docs/design/pattern-design-template.md). What the tree already contains is [docs/design/coverage-review.md](docs/design/coverage-review.md).
 
 pstack (poteto-mode and its playbooks) is the general method. AgentCore skills under `skills/` add only the RuntimeHarness, judge, lease, gate, eval-dataset, tool-register, loop-verifier, and experience-to-gate steps. The overlap map is [docs/skills/pstack-vs-agentcore.md](docs/skills/pstack-vs-agentcore.md). Do not add a skill that restates pstack. Playbooks distilled from elsewhere live under `docs/` with attribution in [docs/attribution/bojieli-ai-agent-book.md](docs/attribution/bojieli-ai-agent-book.md). Hill-climbing stays the poteto Hillclimb playbook; the command sequence on this repo is [docs/evals/hill-climbing.md](docs/evals/hill-climbing.md). There is no `agentcore-hill-climb` skill.
 
@@ -14,7 +14,7 @@ This repo is **agentcore-standards**: a Python standards library for Amazon Bedr
 
 ## Layout
 
-Shared libraries live under `primitives/<name>/` (for example `primitives/tracing`). Distribution names (`agentcore-tracing`) and import names (`agentcore_tracing`) stay stable. `patterns/` arrives in later PRs. `templates/` and `experiments/` stay in place until then.
+Shared libraries live under `primitives/<name>/` (for example `primitives/tracing`). Distribution names (`agentcore-tracing`) and import names (`agentcore_tracing`) stay stable. `patterns/`, `primitives/front-door/`, and the container layout in the library page arrive in later PRs. `templates/` and `experiments/` stay in place until then. Do not use `bedrock-agentcore-starter-toolkit`. New deploys use the AgentCore CLI.
 
 ## Leases
 
@@ -80,7 +80,7 @@ Real Runtime: add `--harness runtime` after `AWS_REGION`, `AGENTCORE_RUNTIME_ARN
 
 Do not start a writer on `agentcore-session`, `agentcore-guardrails`, `agentcore-memory`, or an unfinished template until a coordinator leases a free path **and** a separate process records `PASS` or `PASS+NOTES` for `minimal-agent.golden-turn` on `AgentCoreRuntimeHarness`. Scouts may write under `docs/capability-maps/` only.
 
-If your task needs `agentcore-session` and `agentcore-tools` in one PR, split it. Memory writes go through guardrails. The shelf in DESIGN §2.8 is not an independent Runtime PASS. `templates/agent-with-tools` imports that shelf. The other domain templates stay stubs.
+If your task needs `agentcore-session` and `agentcore-tools` in one PR, split it. Memory writes go through guardrails. The shelf in [docs/playbooks/shared-shelf.md](docs/playbooks/shared-shelf.md) is not an independent Runtime PASS. `templates/agent-with-tools` imports that shelf. The other domain templates stay stubs.
 
 ## Hill-climbing
 

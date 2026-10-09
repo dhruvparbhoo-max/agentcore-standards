@@ -43,7 +43,7 @@ Lambda is the path that syncs. Register tools, `add_lambda_target`, `bind_gatewa
 
 ## Accounts
 
-DESIGN §7 keeps evals in the dev account and isolates them with agent versions, namespaces, and IAM paths. A separate dev, staging, and prod account layout is the unmerged CDK draft. This shelf does not add a second stack and does not create Memory in infrastructure. Memory writes go through `MemoryClient` and the guard.
+The [library design](../design/library.md) keeps evals in the dev account and isolates them with agent versions, namespaces, and IAM paths. A separate dev, staging, and prod account layout is later work. This shelf does not add a second stack and does not create Memory in infrastructure. Memory writes go through `MemoryClient` and the guard. They do not go through Gateway.
 
 ## What is not proven
 

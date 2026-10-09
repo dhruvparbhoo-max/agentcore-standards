@@ -26,9 +26,9 @@ pstack remains the general method. These pages do not restate its playbooks. The
 | [runtime/loop-and-verifiers.md](../runtime/loop-and-verifiers.md) | `loop-engineering` | ch10, `book/chapter10.md` |
 | [runtime/context-budget.md](../runtime/context-budget.md) | `context-compression`, `agent-state-bar`, `kv-cache-design` | ch2, `book/chapter2.md` |
 | [prompts/context-engineering.md](../prompts/context-engineering.md) | `context-engineering` | ch2 |
-| [orchestration/multi-agent.md](../orchestration/multi-agent.md) | `multi-agent-design` | ch10 |
+| [design/library.md](../design/library.md) (how agents call each other) | `multi-agent-design` | ch10 |
 | [ops/experience-loop.md](../ops/experience-loop.md) | `agent-evolution` | ch9, `book/chapter9.md` |
-| [memory/overview.md](../memory/overview.md) (stub only) | `memory-system` | ch3, `book/chapter3.md` |
+| [design/library.md](../design/library.md) (where state lives) | `memory-system` | ch3, `book/chapter3.md` |
 
 Upstream experiment trees (`chapter2/`, `chapter4/`, `chapter7/`, and the rest) stay in that repository. Do not copy them into `experiments/` as if they were ours.
 
@@ -42,9 +42,9 @@ These source skills are not adopted as docs pages or as skills in this repo.
 | `post-training-strategy` | Mid-training, SFT, RL, and LoRA. This repo calls hosted models through Runtime. It does not train them. |
 | `reward-design` | RL reward functions. Keep deterministic eval verifiers and policy checks. |
 | `bad-case-to-dpo` | Production failures become preference pairs. Our path is a failing eval, then a fix. See [ops/experience-loop.md](../ops/experience-loop.md). |
-| `coding-agent-harness` | IDE harness product. Acceptance, boundaries, feedback, and rollback already live in DESIGN §1 and §4. No second skill. |
+| `coding-agent-harness` | IDE harness product. Acceptance, boundaries, feedback, and rollback already live in [the library design](../design/library.md) and in [AGENTS.md](../../AGENTS.md). No second skill. |
 
-Also skipped: wholesale copies of any upstream `SKILL.md`; Mem0 or Memobase how-tos (concepts only, on the future memory shelf); self-modifying harness loops and browser-workflow compilers from `agent-evolution`.
+Also skipped: wholesale copies of any upstream `SKILL.md`; Mem0 or Memobase how-tos (the state rules are in [the library design](../design/library.md)); self-modifying harness loops and browser-workflow compilers from `agent-evolution`.
 
 ## Deferred
 
@@ -54,6 +54,6 @@ Not a skip forever. Write them when a later lease needs them.
 | --- | --- |
 | `async-event-agent` | Webhook, timer, and interrupt work on a Runtime template |
 | `rag-pipeline`, `knowledge-org` | A retrieval or knowledge-base shelf |
-| Full sleep-time evolution in `agent-evolution` | Boringly green Runtime, tools, memory, and eval templates (DESIGN §5) |
+| Full sleep-time evolution in `agent-evolution` | The first patterns are green on Runtime, with tools, memory, and evals in place |
 
 `kv-cache-design` is folded into [runtime/context-budget.md](../runtime/context-budget.md) as a short prefix rule. It does not have its own page.

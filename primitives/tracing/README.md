@@ -1,6 +1,6 @@
 # agentcore-tracing
 
-OpenTelemetry conventions for AgentCore agents (DESIGN §2.5). Version 0.1.0.
+OpenTelemetry conventions for AgentCore agents. See [the library design](../../docs/design/library.md). Version 0.1.0.
 
 | Span | Name |
 | --- | --- |
@@ -11,7 +11,7 @@ OpenTelemetry conventions for AgentCore agents (DESIGN §2.5). Version 0.1.0.
 | Gateway | `gateway.call` |
 | Guardrail | `guardrail.check` |
 
-Required attributes on `agent.turn`: `agent.version`, `runtime.session_id` (SHA-256 prefix, not the raw id), `cost.tokens`, `cost.usd_estimate`. `session.id` is also set to the raw id so CloudWatch span collection can filter on it. `cost.source` labels how the numbers were produced. The default is `length-heuristic` at zero USD. That is not model-reported usage and it is not a DESIGN §1.4 billing proof.
+Required attributes on `agent.turn`: `agent.version`, `runtime.session_id` (SHA-256 prefix, not the raw id), `cost.tokens`, `cost.usd_estimate`. `session.id` is also set to the raw id so CloudWatch span collection can filter on it. `cost.source` labels how the numbers were produced. The default is `length-heuristic` at zero USD. That is not model-reported usage and it is not a billing proof. See [the library design](../../docs/design/library.md).
 
 `missing_required_attributes` is the CI check for the four required names. A present zero counts as present. It does not require `cost.source`.
 

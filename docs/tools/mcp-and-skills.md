@@ -34,7 +34,7 @@ Review every item before the agent version is permitted to call it:
 2. **Version pin.** Refuse silent upgrades. Review again when the pin moves.
 3. **Least privilege.** One credential per server, scoped to that server's API. A poisoned description can still only do what the credential allows. Gateway uses `GATEWAY_IAM_ROLE` for the Lambda invoke, limited to that function.
 4. **Tool shadowing.** Two servers with the same or a confusable tool name can steer a call, arguments included, to the wrong one. Names in the registry are unique. A new target that collides is a review failure.
-5. **Runtime check.** Policy and any sidecar read the structured tool call, not the free-text description. DESIGN §1.5: deny by default, allowlist per agent version.
+5. **Runtime check.** Policy and any sidecar read the structured tool call, not the free-text description. Deny by default, and allow tools per release. See [the library design](../design/library.md).
 6. **Skill code.** A scanner clearing a third-party skill is not trust. Run untrusted skill code in an isolated environment, and keep secrets out of that environment. Skills in this repo are Markdown checklists for agents working on the codebase. They are not third-party executables.
 
 Cedar statements use the action `target___tool`. `sync` writes a permit or a forbid for tools the agent version names, and writes nothing for the rest, which Cedar denies. Statements do not carry the agent version. Keep one policy engine per agent version.

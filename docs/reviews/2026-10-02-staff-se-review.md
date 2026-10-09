@@ -1,4 +1,6 @@
-# Staff review — agentcore-standards
+# Staff review, agentcore-standards
+
+This note records a review on 2 October 2026. It is not the current design. Shared choices now live in [docs/design/library.md](../design/library.md). Leases stay in [AGENTS.md](../../AGENTS.md).
 
 **Date:** 2026-10-02
 **Reviewer stance:** principal / staff, code quality and style. No product code changed.
