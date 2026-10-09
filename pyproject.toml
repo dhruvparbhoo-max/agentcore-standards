@@ -27,6 +27,7 @@ members = [
   "primitives/completion",
   "primitives/langchain",
   "primitives/agent",
+  "primitives/front-door",
   "patterns/_template/agent",
   "infra/constructs",
   "templates/minimal-agent",
@@ -78,6 +79,7 @@ files = [
   "primitives/completion/src",
   "primitives/langchain/src",
   "primitives/agent/src",
+  "primitives/front-door/src",
   "patterns/_template/agent",
   "infra/constructs/src",
   "primitives/gateway-tools/_template/template_tool",
@@ -115,6 +117,7 @@ testpaths = [
   "primitives/completion/tests",
   "primitives/langchain/tests",
   "primitives/agent/tests",
+  "primitives/front-door/tests",
   "patterns/_template/tests",
   "primitives/gateway-tools/_template/tests",
   "infra/constructs/tests",
@@ -128,6 +131,7 @@ pythonpath = [
   "templates/minimal-agent/src",
   "templates/agent-with-tools/src",
   "primitives/tools/tests",
+  "primitives/front-door/tests",
 ]
 addopts = "--strict-markers"
 asyncio_mode = "auto"
