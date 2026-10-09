@@ -16,7 +16,7 @@ from agentcore_agent.agentcore_json import (
     write_generated,
 )
 from agentcore_agent.environment import load_environment
-from agentcore_agent.release import release_id
+from agentcore_agent.release import build_digest, release_id
 
 REPO = Path(__file__).resolve().parents[3]
 CLI = shutil.which("agentcore")
@@ -104,3 +104,28 @@ def test_release_id_changes_with_the_prompt(make_pattern: Callable[..., Path]) -
     assert release_id(load_pattern(folder), image_digest=DIGEST) != first
     with pytest.raises(ValueError, match="digest"):
         release_id(load_pattern(folder), image_digest="latest")
+
+
+def test_build_digest_tracks_source_and_base(make_pattern: Callable[..., Path], tmp_path: Path) -> None:
+    folder = make_pattern()
+    config = load_pattern(folder)
+    root = folder.parents[1]
+    names = [str(path.relative_to(root)) for path in folder.rglob("*") if path.is_file()]
+
+    def listed(repo_root: Path, paths: object) -> list[str]:
+        return names
+
+    first = build_digest(config, repo_root=root, base_digest=DIGEST, list_files=listed)
+    assert first.startswith("sha256:")
+    assert build_digest(config, repo_root=root, base_digest="sha256:" + "b" * 64, list_files=listed) != first
+    (folder / "agent" / "main.py").write_text("print('changed')\n", encoding="utf-8")
+    assert build_digest(config, repo_root=root, base_digest=DIGEST, list_files=listed) != first
+    with pytest.raises(ValueError, match="digest"):
+        build_digest(config, repo_root=root, base_digest="latest", list_files=listed)
+
+
+def test_build_digest_reads_git_for_the_template() -> None:
+    config = load_pattern(REPO / "patterns" / "_template")
+    assert build_digest(config, repo_root=REPO, base_digest=DIGEST) == build_digest(
+        config, repo_root=REPO, base_digest=DIGEST
+    )

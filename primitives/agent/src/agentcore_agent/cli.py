@@ -69,6 +69,11 @@ def _parser() -> argparse.ArgumentParser:
     rel.add_argument("--inputs", action="store_true", help="also print the inputs the id covers")
     rel.set_defaults(run=_release)
 
+    digest = commands.add_parser("build-digest", help="print the build-input digest the release id covers")
+    digest.add_argument("pattern", type=Path)
+    digest.add_argument("--base-digest", required=True, help="sha256 digest of the pushed base-agent image")
+    digest.set_defaults(run=_build_digest)
+
     deploy = commands.add_parser("render-deploy", help="write the deploy copy of agentcore.json outside git")
     deploy.add_argument("pattern", type=Path)
     deploy.add_argument("--env", required=True)
@@ -188,6 +193,13 @@ def _release(args: argparse.Namespace, echo: Echo) -> int:
     if args.inputs:
         for key, value in release_inputs(config, image_digest=args.image_digest).items():
             echo(f"  {key}={value}")
+    return 0
+
+
+def _build_digest(args: argparse.Namespace, echo: Echo) -> int:
+    from agentcore_agent.release import build_digest
+
+    echo(build_digest(load_pattern(args.pattern), repo_root=args.repo_root, base_digest=args.base_digest))
     return 0
 
 
