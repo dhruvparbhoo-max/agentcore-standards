@@ -20,6 +20,7 @@ from agentcore_agent.schema import MCP_SESSION_HEADER, PATTERN_SCHEMA, SESSION_H
 PATTERN_FILE = "pattern.yaml"
 CUSTOM_HEADER_PREFIX = "X-Amzn-Bedrock-AgentCore-Runtime-Custom-"
 ACTOR_HEADER = "X-Amzn-Bedrock-AgentCore-Runtime-Custom-Actor-Id"
+OBO_HEADER = "X-Amzn-Bedrock-AgentCore-Runtime-Custom-Obo-Tokens"
 CHAT_IDLE_TIMEOUT_S = 300
 CHAT_MAX_LIFETIME_S = 1800
 
@@ -201,6 +202,12 @@ def semantic_problems(raw: Mapping[str, Any], *, folder_name: str | None = None)
         "runtime.header_allowlist",
         f"must include {ACTOR_HEADER} so the agent knows who is calling",
     )
+    if raw["identity"]["acts_as"] == "user" and raw["identity"]["scopes"]:
+        require(
+            OBO_HEADER in runtime["header_allowlist"],
+            "runtime.header_allowlist",
+            f"must include {OBO_HEADER} so tools get the on-behalf-of tokens identity.scopes names",
+        )
 
     cost = raw["cost"]
     require(

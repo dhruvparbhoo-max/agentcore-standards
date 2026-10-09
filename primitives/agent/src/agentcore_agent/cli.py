@@ -91,7 +91,26 @@ def _parser() -> argparse.ArgumentParser:
     verify.add_argument("--release-id", required=True)
     verify.add_argument("--endpoint", required=True)
     verify.add_argument("--region", required=True)
+    verify.add_argument("--env", default="dev")
+    verify.add_argument("--runtime-arn", default="", help="needed in production for the resource policy check")
+    verify.add_argument("--front-door-role", default="", help="the only principal allowed to invoke in production")
     verify.set_defaults(run=_verify)
+
+    policy = commands.add_parser("front-door-policy", help="write the AgentPolicy the front door enforces")
+    policy.add_argument("pattern", type=Path)
+    policy.add_argument("--env", required=True)
+    policy.add_argument("--runtime-arn", default="")
+    policy.add_argument("--workload-name", default="")
+    policy.add_argument("--release-id", default="")
+    policy.add_argument("--output", type=Path, required=True)
+    policy.set_defaults(run=_front_door_policy)
+
+    harden = commands.add_parser("harden", help="require MMDSv2 and let only the front door invoke (needs AWS)")
+    harden.add_argument("--runtime-id", required=True)
+    harden.add_argument("--runtime-arn", required=True)
+    harden.add_argument("--region", required=True)
+    harden.add_argument("--allow-principal", action="append", required=True, help="front door role, then any judge")
+    harden.set_defaults(run=_harden)
 
     events = commands.add_parser("post-events", help="post a pattern's events/*.json to a running agent")
     events.add_argument("pattern", type=Path)
@@ -228,14 +247,62 @@ def _verify(args: argparse.Namespace, echo: Echo) -> int:
     from agentcore_agent.verify import verify_runtime
 
     config = load_pattern(args.pattern)
+    environment = load_environment(args.env, repo_root=args.repo_root)
     client = boto3.client("bedrock-agentcore-control", region_name=args.region)
     problems = verify_runtime(
         config, client, runtime_id=args.runtime_id, release_id=args.release_id, endpoint=args.endpoint
     )
+    if environment.production:
+        from agentcore_agent.hardening import hardening_problems
+
+        if not args.runtime_arn or not args.front_door_role:
+            problems.append("production verify needs --runtime-arn and --front-door-role")
+        else:
+            problems.extend(
+                hardening_problems(
+                    client,
+                    runtime_id=args.runtime_id,
+                    runtime_arn=args.runtime_arn,
+                    front_door_role=args.front_door_role,
+                )
+            )
     for problem in problems:
         echo(f"MISS {problem}")
     echo("verify failed" if problems else f"verified {config.name} release {args.release_id}")
     return 1 if problems else 0
+
+
+def _front_door_policy(args: argparse.Namespace, echo: Echo) -> int:
+    import json
+
+    from agentcore_agent.hardening import front_door_policy
+
+    config = load_pattern(args.pattern)
+    environment = load_environment(args.env, repo_root=args.repo_root)
+    document = front_door_policy(
+        config,
+        environment,
+        runtime_arn=args.runtime_arn,
+        workload_name=args.workload_name,
+        release_id=args.release_id,
+    )
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    echo(f"wrote {args.output}")
+    return 0
+
+
+def _harden(args: argparse.Namespace, echo: Echo) -> int:
+    import boto3
+
+    from agentcore_agent.hardening import harden, put_invoke_policy
+
+    client = boto3.client("bedrock-agentcore-control", region_name=args.region)
+    changed = harden(client, runtime_id=args.runtime_id)
+    echo("required MMDSv2" if changed else "MMDSv2 already required")
+    put_invoke_policy(client, args.runtime_arn, allowed_principals=args.allow_principal)
+    echo(f"only {', '.join(args.allow_principal)} may invoke the runtime")
+    return 0
 
 
 def _post_events(args: argparse.Namespace, echo: Echo) -> int:

@@ -81,6 +81,7 @@ PATTERN_SCHEMA: dict[str, Any] = _obj(
                 "idle_timeout_s": {"type": "integer", "minimum": 60, "maximum": MAX_MICROVM_SECONDS},
                 "max_lifetime_s": {"type": "integer", "minimum": 60, "maximum": MAX_MICROVM_SECONDS},
                 "resumable": {"type": "boolean"},
+                "max_turns": _POS_INT,
                 "max_steps": _POS_INT,
                 "timeout_s": _POS_INT,
                 "max_retries": {"type": "integer", "minimum": 0, "maximum": 10},
