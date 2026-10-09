@@ -1,0 +1,11 @@
+{
+  "description": "A queue event. The trigger writes a job; a duplicate of this event_id is a no-op.",
+  "source": "invoices",
+  "event_id": "evt-invoice-pack-0001",
+  "on_behalf_of": "alice",
+  "consent_ref": "consent#ambient",
+  "session_id": "local-ambient-session-0000000000000001",
+  "actor_id": "ambient-worker",
+  "payload": {"prompt": "index the new invoice pack"},
+  "expect": {"status": "completed", "contains": "queued"}
+}

@@ -79,6 +79,12 @@ The references name an AWS document or a non-AgentCore sample for these gaps. Ea
 | `patterns/human-approval/` pause and token | `primitives/approvals` plus the library page (hook / tool context / Step Functions / MCP elicitation) | One pause, one token, one expiry; the approver cannot be the actor |
 | `primitives/gateway-tools/submit_change/` | `_template` (`save_note`) | Idempotent conditional put, double-invoke test |
 
+## Step 7: ambient
+
+| This repo | Source | What was taken |
+| --- | --- | --- |
+| `patterns/ambient/agent/ambient/jobs.py` | docs/design/library.md "Job queue" and "Idempotency" | Conditional put on source plus event id; job status including `waiting_for_approval` |
+
 ## BOISE substitutions
 
 BOISE is PolyForm Noncommercial. Nothing was copied from it. Where the references point at BOISE, this repo uses the following instead:

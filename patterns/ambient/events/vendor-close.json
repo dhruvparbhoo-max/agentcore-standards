@@ -1,0 +1,11 @@
+{
+  "description": "A queue event that asks for a change. The job should pause for a person.",
+  "source": "vendors",
+  "event_id": "evt-vendor-close-0001",
+  "on_behalf_of": "alice",
+  "consent_ref": "consent#ambient",
+  "session_id": "local-ambient-session-0000000000000002",
+  "actor_id": "ambient-worker",
+  "payload": {"prompt": "please change the vendor account to closed"},
+  "expect": {"status": "paused"}
+}
