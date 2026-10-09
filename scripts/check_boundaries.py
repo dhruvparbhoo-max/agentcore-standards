@@ -2,8 +2,8 @@
 
 Fails when:
 
-- ``templates/`` or ``primitives/`` import ``experiments``
-- a template file repeats a contiguous block of package source
+- ``templates/``, ``primitives/``, ``patterns/`` or ``infra/`` import ``experiments``
+- a template or pattern file repeats a contiguous block of package source
 - a tracked text file contains a resource ARN or a private-key marker
 
 Soft wording in docs is not a control. This script is the control.
@@ -27,8 +27,10 @@ _SKIP_DIRS = {
     "evidence",
     "uploads",
 }
-_TEXT_SUFFIXES = {".py", ".md", ".toml", ".yml", ".yaml", ".txt", ".example", ".json"}
-_TEXT_NAMES = {"CODEOWNERS", "AGENTS.md", ".env.example", "uv.lock"}
+_TEXT_SUFFIXES = {".py", ".md", ".toml", ".yml", ".yaml", ".txt", ".example", ".json", ".sh", ".cedar", ".cfg"}
+_TEXT_NAMES = {"CODEOWNERS", "AGENTS.md", ".env.example", "uv.lock", "Dockerfile", "Makefile", "NOTICE"}
+_NO_EXPERIMENTS = ("templates", "primitives", "patterns", "infra")
+_NO_COPIES = ("templates", "patterns")
 _SHINGLE = 4
 _MIN_LINE = 12
 _ARN_RE = re.compile("arn:" + "aws" + r"[a-z0-9-]*:")
@@ -60,8 +62,8 @@ def main() -> int:
 
 def _experiment_imports(root: Path) -> list[str]:
     found: list[str] = []
-    for base in (root / "templates", root / "primitives"):
-        for path in _python_files(base):
+    for name in _NO_EXPERIMENTS:
+        for path in _python_files(root / name):
             for module in _imported_modules(path):
                 if module == "experiments" or module.startswith("experiments."):
                     found.append(f"{path.relative_to(root)}: imports {module}")
@@ -74,7 +76,8 @@ def _copied_package_guts(root: Path) -> list[str]:
         for window in _shingles(path):
             package_shingles.setdefault(window, path)
     found: list[str] = []
-    for path in _python_files(root / "templates"):
+    consumers = [path for name in _NO_COPIES for path in _python_files(root / name)]
+    for path in consumers:
         for window in _shingles(path):
             source = package_shingles.get(window)
             if source is not None:
