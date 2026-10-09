@@ -47,7 +47,7 @@ One writer per path prefix. Scouts may read anything. Writers need a lease.
 | `primitives/agent/` | N | implemented; no Runtime PASS |
 | `primitives/front-door/` | O | implemented; no Runtime PASS |
 | `primitives/gateway-tools/` | C | tool folder template; no Runtime PASS |
-| `patterns/` | P | `_template` only; no Runtime PASS |
+| `patterns/` | P | `_template` and `policy-qa`; no Runtime PASS |
 | `infra/`, `docker/`, `config/` | platform | foundation, front door, network, alarms, model profiles; base images; per-env config |
 | `templates/agent-with-tools/` | F | invoice desk offline; imports the shelf; no Runtime PASS |
 | `templates/multi-agent/` | F | stub |

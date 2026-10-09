@@ -15,6 +15,8 @@ Each copied file also names its source in its own header, so the credit stays wi
 | LOOM | awslabs/loom | Apache-2.0 | Keep the NOTICE and the licence |
 | SOCIAL | aws-samples/sample-social-intelligence-agents | MIT-0 | None; credited anyway |
 | AGENT-PLATFORM | aws-samples/sample-agent-platform-with-agentcore | MIT-0 | None; credited anyway |
+| EVAL-FIRST | aws-samples/sample-eval-first-building-enterprise-agents-with-agentcore | MIT-0 | None; credited anyway |
+| TENANCY | aws-samples/sample-agentcore-and-multitenancy-blog | MIT-0 | None; credited anyway |
 | CICD | aws-samples/sample-bedrock-agentcore-runtime-cicd | MIT-0 | None; credited anyway |
 | CWL-DP | aws-samples/cloudwatch-logs-data-protection-policies-with-cdk | MIT-0 | None; credited anyway |
 | DNS-FW | aws-samples/sample-route53-iac-with-cdk | MIT-0 | None; credited anyway |
@@ -62,6 +64,13 @@ The references name an AWS document or a non-AgentCore sample for these gaps. Ea
 | `.trivyignore.yaml` and the Trivy step | Trivy as the pipeline image gate. The reference was BOISE `.github/workflows/nightly.yml`, which cannot be copied (below); Trivy's own documented flags are used instead |
 | `infra/constructs/src/agentcore_constructs/model_profile.py` | Bedrock user guide, "Create an application inference profile" (`AWS::Bedrock::ApplicationInferenceProfile`, `ModelSource.CopyFrom`). Team tag in the spirit of LOOM's group tag | Per-agent model key; no AgentCore repo creates application inference profiles |
 | `infra/constructs/.../networking.py` Code Interpreter | `AWS::BedrockAgentCore::CodeInterpreterCustom` (CloudFormation); docs/design/library.md "Code the model wrote" | VPC mode with its own role, behind the DNS Firewall |
+
+## Step 5: policy Q&A
+
+| This repo | Source | What was taken |
+| --- | --- | --- |
+| `patterns/policy-qa/` (messy fixture set, source-backed score) | aws-samples/sample-eval-first-building-enterprise-agents-with-agentcore (MIT-0) | Deliberately messy policies so a wrong source fails; groundedness 0.7 |
+| `patterns/policy-qa/agent/policy_qa/knowledge.py` (tenant/role filter) | aws-samples/sample-agentcore-and-multitenancy-blog (check the sample's licence at the repo) | Filter from the verified login, not from the model |
 
 ## BOISE substitutions
 
