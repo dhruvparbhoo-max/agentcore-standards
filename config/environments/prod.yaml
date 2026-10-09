@@ -1,0 +1,25 @@
+# Production. `deployment.mode: production` turns on the production gate: a deploy refuses to
+# start while any control below is false. The platform controls are switched on as each one
+# ships (front door and quotas arrive with primitives/front-door). Replace the alarm inbox
+# before a real deploy. Shape follows sample-agentcore-enterprise-platform presets/production.yaml.
+environment: prod
+deployment:
+  mode: production
+region: eu-west-2
+endpoint: PROD
+removal: retain
+log_retention_days: 90
+secrets:
+  prefix: agentcore/prod
+  rotation_days: 30
+controls:
+  front_door: false
+  guardrails_service: false
+  audit_store: false
+  kill_switch: false
+  quotas: false
+observability:
+  alarms: true
+  alarm_email: ops@example.invalid
+network:
+  mode: VPC
