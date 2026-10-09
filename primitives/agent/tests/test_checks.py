@@ -119,6 +119,7 @@ def _fake_repo(tmp_path: Path, *, action: str) -> Path:
     tool = repo / "primitives" / "gateway-tools" / "lookup_order"
     tool.mkdir(parents=True)
     (tool / "tool.yaml").write_text(yaml.safe_dump({"name": "lookup_order", "action": action}), encoding="utf-8")
+    shutil.copytree(REPO / "docs" / "runbooks", repo / "docs" / "runbooks")
     return repo
 
 
@@ -127,3 +128,11 @@ def _permit(folder: Path, tool: str) -> None:
         f'permit(\n  principal,\n  action == AgentCore::Action::"orders___{tool}",\n'
         '  resource == AgentCore::Gateway::"{{GATEWAY_ARN}}"\n);\n'
     )
+
+
+def test_missing_runbook_fails(make_pattern: Callable[..., Path]) -> None:
+    folder = _ready(make_pattern(runbook_url="docs/runbooks/missing.md"))
+    problems = check_kit(folder, repo_root=REPO)
+    assert [str(problem) for problem in problems if problem.item == 12] == [
+        "item 12: runbook_url docs/runbooks/missing.md does not exist in the repo"
+    ]

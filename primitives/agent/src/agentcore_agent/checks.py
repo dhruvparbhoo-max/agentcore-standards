@@ -81,6 +81,9 @@ def check_kit(folder: Path, *, repo_root: Path) -> list[KitProblem]:
     problems.extend(KitProblem(10, message) for message in _uses_build_agent(config))
     problems.extend(KitProblem(12, message) for message in deploy_problems(config))
     need((folder / "docs" / "design.md").is_file(), 12, "docs/design.md is missing")
+    runbook = str(config.raw["runbook_url"])
+    if not runbook.startswith(("https://", "http://")):
+        need((repo_root / runbook).is_file(), 12, f"runbook_url {runbook} does not exist in the repo")
     return problems
 
 
