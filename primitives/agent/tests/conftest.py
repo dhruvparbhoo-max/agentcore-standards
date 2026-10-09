@@ -34,6 +34,8 @@ def make_pattern(tmp_path: Path, template_raw: dict[str, Any]) -> Callable[..., 
             else:
                 raw[key] = value
         (folder / "pattern.yaml").write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+        golden = folder / "eval" / "golden_set.json"
+        golden.write_text(golden.read_text(encoding="utf-8").replace('"_template"', f'"{name}"'), encoding="utf-8")
         return folder
 
     return make

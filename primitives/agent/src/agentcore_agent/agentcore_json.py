@@ -2,7 +2,8 @@
 
 ``agentcore/agentcore.json`` is the CLI's project file (schema
 ``https://schema.agentcore.aws.dev/v1/agentcore.json``). A harness pattern also
-gets ``harness/harness.json`` and ``harness/system-prompt.md``. The committed
+gets ``app/<harness name>/harness.json`` and ``system-prompt.md`` beside it,
+which is where the CLI looks for them. The committed
 files carry no account id, ARN, or image digest. ``render_deploy_project``
 adds those from the environment into a throwaway copy at deploy time.
 """
@@ -20,7 +21,7 @@ from agentcore_agent.environment import EnvironmentConfig
 
 SCHEMA_URL = "https://schema.agentcore.aws.dev/v1/agentcore.json"
 AGENTCORE_DIR = "agentcore"
-HARNESS_DIR = "harness"
+HARNESS_ROOT = "app"
 REPO_CONTEXT = "../.."
 RUNTIME_VERSION = "PYTHON_3_12"
 _EMPTY_SECTIONS = (
@@ -51,6 +52,14 @@ def project_name(config: PatternConfig) -> str:
     if config.name.startswith("_"):
         name = "Pattern" + name
     return name[:23]
+
+
+def harness_name(config: PatternConfig) -> str:
+    return config.runtime_name[:40]
+
+
+def harness_dir(config: PatternConfig) -> str:
+    return f"{HARNESS_ROOT}/{harness_name(config)}"
 
 
 def pattern_tags(config: PatternConfig, environment: EnvironmentConfig | None = None) -> dict[str, str]:
@@ -91,7 +100,7 @@ def render_agentcore_json(
     for section in _EMPTY_SECTIONS:
         document[section] = []
     if config.framework == "harness":
-        document["harnesses"].append({"name": config.runtime_name[:40], "path": HARNESS_DIR})
+        document["harnesses"].append({"name": harness_name(config), "path": harness_dir(config)})
     else:
         document["runtimes"].append(
             _runtime(
@@ -119,7 +128,7 @@ def render_harness_json(config: PatternConfig, *, gateway_arn: str = "") -> dict
             }
         )
     spec: dict[str, Any] = {
-        "name": config.runtime_name[:40],
+        "name": harness_name(config),
         "model": {"provider": "bedrock", "modelId": str(config.section("model")["primary"])},
         "tools": tools,
         "skills": [],
@@ -141,8 +150,8 @@ def generated_files(config: PatternConfig) -> list[GeneratedFile]:
         GeneratedFile(f"{AGENTCORE_DIR}/aws-targets.json", "[]\n"),
     ]
     if config.framework == "harness":
-        files.append(GeneratedFile(f"{HARNESS_DIR}/harness.json", _dump(render_harness_json(config))))
-        files.append(GeneratedFile(f"{HARNESS_DIR}/system-prompt.md", config.system_prompt()))
+        files.append(GeneratedFile(f"{harness_dir(config)}/harness.json", _dump(render_harness_json(config))))
+        files.append(GeneratedFile(f"{harness_dir(config)}/system-prompt.md", config.system_prompt()))
     return files
 
 
@@ -196,12 +205,12 @@ def render_deploy_project(
         build_args=build_args,
     )
     if config.framework == "harness":
-        harness_dir = destination / HARNESS_DIR
-        harness_dir.mkdir(parents=True, exist_ok=True)
-        (harness_dir / "harness.json").write_text(
+        folder = destination / harness_dir(config)
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / "harness.json").write_text(
             _dump(render_harness_json(config, gateway_arn=gateway_arn)), encoding="utf-8"
         )
-        (harness_dir / "system-prompt.md").write_text(config.system_prompt(), encoding="utf-8")
+        (folder / "system-prompt.md").write_text(config.system_prompt(), encoding="utf-8")
     else:
         document["runtimes"][0]["codeLocation"] = str((config.root / "agent").resolve()) + "/"
     (agentcore_dir / "agentcore.json").write_text(_dump(document), encoding="utf-8")
