@@ -32,7 +32,7 @@ The pack asks five questions. Each one has a file you can run today, and a later
 | Did it take the right path? | Tool names line up with `expected_trajectory`. A tool outside the allowlist is denied and writes nothing. | The business scenarios, especially `crm.write-note-denied` and `invoice.then-crm` | `agentcore-tools` (this pack does not edit it) |
 | Would a guardrail allow it? | Known sentences are allowed or blocked on input, output, and memory write. | `datasets/guardrails.json` and `assert_guardrail` | `agentcore-guardrails` |
 | Is the answer grounded? | Every claim in the answer appears in a source, or the answer abstains. A contradiction scores zero. | `datasets/groundedness.json` | Optional service evaluator `Builtin.Faithfulness` |
-| Did a person approve the risky step? | No approval means the payment stays pending. Approval before the deadline pays once. The deadline itself does not pay. | `approve.*` scenarios and `hitl.py` | `templates/human-in-the-loop` |
+| Did a person approve the risky step? | No approval means the payment stays pending. Approval before the deadline pays once. The deadline itself does not pay. | `approve.*` scenarios and `hitl.py` | `patterns/human-approval` |
 
 AgentCore Evaluators (`OnDemandEvaluationDatasetRunner`) are an optional extra. They score spans in CloudWatch. They do not decide PASS / PASS+NOTES / FAIL. That decision stays with `run_eval` / `run_suite`.
 
@@ -91,7 +91,7 @@ PY
 
 `evidence/` is gitignored. Each eval writes `<eval-name>.json`. A resource identifier in that file is redacted and the verdict becomes `FAIL`.
 
-`PatternGuard`, `BusinessStub`, `LexicalGroundednessScorer`, and `InMemoryHitlGate` are offline stand-ins. Import them from `agentcore_eval.guardrails`, `agentcore_eval.stub_agent`, `agentcore_eval.groundedness`, and `agentcore_eval.hitl`. The package root raises `ImportError` for those names. They are not `agentcore-guardrails`, the memory client, or `templates/human-in-the-loop`. `business_harness` lives in `agentcore_eval.stub_agent`. `InMemoryRuntimeHarness` lives in `agentcore_eval.in_memory`. The product memory package stays the stub under `primitives/memory`.
+`PatternGuard`, `BusinessStub`, `LexicalGroundednessScorer`, and `InMemoryHitlGate` are offline stand-ins. Import them from `agentcore_eval.guardrails`, `agentcore_eval.stub_agent`, `agentcore_eval.groundedness`, and `agentcore_eval.hitl`. The package root raises `ImportError` for those names. They are not `agentcore-guardrails`, the memory client, or `patterns/human-approval`. `business_harness` lives in `agentcore_eval.stub_agent`. `InMemoryRuntimeHarness` lives in `agentcore_eval.in_memory`. The product memory package stays the stub under `primitives/memory`.
 
 `pytest -m "not runtime"` is the default CI slice. The one test that constructs the real Evaluators runner is marked `runtime` and skips unless `AWS_ACCESS_KEY_ID`, `AWS_REGION`, `AGENTCORE_RUNTIME_ARN`, and `AGENTCORE_SPAN_LOG_GROUP` are set. That test does not call Evaluate.
 

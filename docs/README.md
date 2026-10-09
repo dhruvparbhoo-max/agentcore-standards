@@ -1,12 +1,12 @@
 # Docs
 
-Shared choices live in [design/library.md](design/library.md). Path leases stay in [AGENTS.md](../AGENTS.md). How far the tree matches the pattern library is [design/coverage-review.md](design/coverage-review.md). Each pattern design page follows [design/pattern-design-template.md](design/pattern-design-template.md). This index is the reading map for the playbooks around those rules.
+Shared choices live in [design/library.md](design/library.md). Which pattern to copy is [catalog.md](catalog.md). Path leases stay in [AGENTS.md](../AGENTS.md). How far the tree matches the pattern library is [design/coverage-review.md](design/coverage-review.md). Each pattern design page follows [design/pattern-design-template.md](design/pattern-design-template.md). This index is the reading map for the playbooks around those rules.
 
 Nothing here is a Runtime verdict. A mock judge `PASS` proves the in-process entrypoint. The ship gate is still a different process on `AgentCoreRuntimeHarness`. See [eval-pass-path.md](eval-pass-path.md).
 
 ## Reading order
 
-1. [design/library.md](design/library.md).
+1. [catalog.md](catalog.md) if you are picking a pattern; otherwise [design/library.md](design/library.md).
 2. [eval-pass-path.md](eval-pass-path.md) and [evals/README.md](evals/README.md).
 3. The playbooks below, when the task matches.
 

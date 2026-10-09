@@ -36,8 +36,8 @@ config/environments/            per-environment settings (no account ids)
 templates/minimal-agent/        BedrockAgentCoreApp entrypoint plus a harness binding (an app, not a PyPI lib)
 templates/agent-with-tools/     invoice desk; imports the shelf; offline judge; no live Runtime PASS
 templates/multi-agent/          stub
-templates/human-in-the-loop/    stub
 experiments/                    messy drafts allowed; templates and primitives must not import them
+docs/catalog.md                 which pattern to copy; asks whether a workflow is enough
 docs/design/library.md          the shared design
 docs/README.md                  index of playbooks (evals, tools, runtime, ops)
 docs/capability-maps/           how to drive a template and what observable proves it

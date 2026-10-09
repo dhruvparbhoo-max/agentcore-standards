@@ -23,7 +23,7 @@ Shared libraries live under `primitives/<name>/` (for example `primitives/tracin
 - `docker/` holds the digest-pinned base images (`base-agent`, `base-lambda`) and the compose stand-ins. `compose.yaml`, `Makefile`, and `.devcontainer/` sit at the root. CI runs in the `.devcontainer` image.
 - `config/environments/<env>.yaml` holds per-environment settings. Account ids never go in git.
 
-`primitives/front-door/` is implemented (no Runtime PASS). The remaining patterns arrive in later PRs. `templates/` and `experiments/` stay in place until a later step retires them.
+`primitives/front-door/` is implemented (no Runtime PASS). `patterns/` holds `_template`, `policy-qa`, `human-approval`, and `ambient`. `templates/` and `experiments/` stay in place until a later step retires them.
 
 ## Leases
 
@@ -51,7 +51,6 @@ One writer per path prefix. Scouts may read anything. Writers need a lease.
 | `infra/`, `docker/`, `config/` | platform | foundation, front door, network, alarms, model profiles; base images; per-env config |
 | `templates/agent-with-tools/` | F | invoice desk offline; imports the shelf; no Runtime PASS |
 | `templates/multi-agent/` | F | stub |
-| `templates/human-in-the-loop/` | F | stub |
 | `docs/`, `scripts/`, `.github/` | G | docs and gates |
 | `pyproject.toml`, `uv.lock`, `compose.yaml`, `Makefile`, `.devcontainer/` | platform | serialized; one owner |
 
@@ -95,7 +94,7 @@ Real Runtime: add `--harness runtime` after `AWS_REGION`, `AGENTCORE_RUNTIME_ARN
 
 Do not start a writer on `agentcore-session`, `agentcore-guardrails`, `agentcore-memory`, or an unfinished template until a coordinator leases a free path **and** a separate process records `PASS` or `PASS+NOTES` for `minimal-agent.golden-turn` on `AgentCoreRuntimeHarness`. Scouts may write under `docs/capability-maps/` only.
 
-If your task needs `agentcore-session` and `agentcore-tools` in one PR, split it. Memory writes go through guardrails. The shelf in [docs/playbooks/shared-shelf.md](docs/playbooks/shared-shelf.md) is not an independent Runtime PASS. `templates/agent-with-tools` imports that shelf. The other domain templates stay stubs.
+If your task needs `agentcore-session` and `agentcore-tools` in one PR, split it. Memory writes go through guardrails. The shelf in [docs/playbooks/shared-shelf.md](docs/playbooks/shared-shelf.md) is not an independent Runtime PASS. `templates/agent-with-tools` imports that shelf. `templates/multi-agent/` stays a stub. Use `patterns/human-approval/` for a pause, not a template.
 
 ## Hill-climbing
 

@@ -40,7 +40,6 @@
 /templates/minimal-agent/               @agentcore/platform
 /templates/agent-with-tools/            @agentcore/platform
 /templates/multi-agent/                 @agentcore/platform
-/templates/human-in-the-loop/           @agentcore/platform
 
 /docs/                                  @agentcore/platform
 /experiments/                           @agentcore/platform

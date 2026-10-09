@@ -51,7 +51,7 @@ Order the controls:
 
 1. **Validate** inputs. Reject fast.
 2. **Authorize** with Gateway. No matching permit is a deny. One policy engine per agent version, so an old permit does not outlive that version.
-3. **Review** irreversible work (payment, outbound message, IAM change) with a reviewer that sees different evidence than the proposer's essay, or with the HITL gate. Rejection comes back as a tool result that includes the reason. `templates/human-in-the-loop` is still a stub; the eval-pack gate is `HitlGate` (`approve.*` scenarios).
+3. **Review** irreversible work (payment, outbound message, IAM change) with a reviewer that sees different evidence than the proposer's essay, or with the HITL gate. Rejection comes back as a tool result that includes the reason. The pattern is `patterns/human-approval`. The eval-pack gate is `HitlGate` (`approve.*` scenarios).
 4. **Sidecar or guard** on the structured tool fields only (`tool` name and arguments). Free text in the same prompt is an injection path. A burst of refusals escalates to a person. It does not retry forever.
 5. **Verify** when the result is checkable (lint after a write, balance after a payment) and return that check in the tool result.
 

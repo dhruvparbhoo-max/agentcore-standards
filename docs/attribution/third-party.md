@@ -85,6 +85,12 @@ The references name an AWS document or a non-AgentCore sample for these gaps. Ea
 | --- | --- | --- |
 | `patterns/ambient/agent/ambient/jobs.py` | docs/design/library.md "Job queue" and "Idempotency" | Conditional put on source plus event id; job status including `waiting_for_approval` |
 
+## Step 8: catalogue
+
+No production files were copied in this step. `docs/catalog.md` is original. It cites [Anthropic, Building effective agents](https://www.anthropic.com/engineering/building-effective-agents), the same link already on the library page. The 8 October coverage-review tables stay as the gap list that drove the stack; a 9 October snapshot sits above them.
+
+`templates/human-in-the-loop/` is deleted. Use `patterns/human-approval/`.
+
 ## BOISE substitutions
 
 BOISE is PolyForm Noncommercial. Nothing was copied from it. Where the references point at BOISE, this repo uses the following instead:
