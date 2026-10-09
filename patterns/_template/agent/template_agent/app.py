@@ -16,6 +16,7 @@ from typing import Any
 from agentcore_agent import AgentSession, PatternConfig, build_agent, echo_script, load_pattern
 from agentcore_agent.config import ACTOR_HEADER
 from agentcore_agent.logging import get_logger, update_correlation
+from agentcore_agent.models import langchain_model, route_for, strands_model
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
 from bedrock_agentcore.runtime.context import RequestContext
 
@@ -33,16 +34,11 @@ def load_config() -> PatternConfig:
 
 
 def model_for(config: PatternConfig) -> Any:
-    """The chat model for ``config.framework``. Providers stay out of the shared packages."""
-    model_id = os.environ.get("BEDROCK_MODEL_ID", str(config.section("model")["primary"]))
-    region = os.environ.get("AWS_REGION", str(config.section("data")["region"]))
+    """The chat model through the model access layer: backoff, fallback, EU profile, per-agent key."""
+    route = route_for(config)
     if config.framework == "strands":
-        from strands.models import BedrockModel
-
-        return BedrockModel(model_id=model_id, region_name=region)
-    from langchain_aws import ChatBedrockConverse
-
-    return ChatBedrockConverse(model=model_id, region_name=region)
+        return strands_model(route)
+    return langchain_model(route)
 
 
 def make_agent(config: PatternConfig | None = None) -> AgentSession:
@@ -87,6 +83,8 @@ def invoke(payload: dict[str, Any], context: RequestContext) -> dict[str, Any]:
     body: dict[str, Any] = {"status": result.status, "result": result.text, "release_id": result.release_id}
     if result.ticket is not None:
         body["approval"] = result.ticket.as_dict()
+    if result.usage is not None:
+        body["usage"] = result.usage.as_dict()
     return body
 
 

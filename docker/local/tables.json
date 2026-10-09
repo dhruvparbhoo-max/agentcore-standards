@@ -1,3 +1,5 @@
 [
-  {"name": "notes", "pk": "pk", "used_by": "primitives/gateway-tools/_template"}
+  {"name": "notes", "pk": "pk", "used_by": "primitives/gateway-tools/_template"},
+  {"name": "front-door-state", "pk": "pk", "sk": "sk", "used_by": "primitives/front-door"},
+  {"name": "front-door-audit", "pk": "pk", "sk": "sk", "used_by": "primitives/front-door"}
 ]

@@ -24,9 +24,12 @@ prereqs:
 	@$(DOCKER) ps >/dev/null || { echo "'$(DOCKER) ps' failed: start Docker Desktop, the Docker daemon, or 'finch vm start'"; exit 1; }
 
 local: prereqs
+	$(UV) run python scripts/local_token.py --init
+	$(KIT) front-door-policy patterns/$(PATTERN) --env dev --runtime-arn local --output build/local/agents.json
 	$(DOCKER) compose --profile base build base-agent base-lambda
 	$(DOCKER) compose up -d --build --wait
 	$(KIT) post-events patterns/$(PATTERN) --url $(AGENT_URL)
+	$(UV) run python scripts/front_door_smoke.py --agent $(PATTERN)
 
 local-down:
 	$(DOCKER) compose down -t 10

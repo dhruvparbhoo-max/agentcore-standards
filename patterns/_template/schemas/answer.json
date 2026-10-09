@@ -8,6 +8,17 @@
     "status": {"enum": ["completed", "paused", "blocked"]},
     "result": {"type": "string"},
     "release_id": {"type": "string"},
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model_calls", "input_tokens", "output_tokens", "model"],
+      "properties": {
+        "model_calls": {"type": "integer", "minimum": 0},
+        "input_tokens": {"type": "integer", "minimum": 0},
+        "output_tokens": {"type": "integer", "minimum": 0},
+        "model": {"type": "string"}
+      }
+    },
     "approval": {
       "type": "object",
       "required": ["token_id", "tool", "args_hash", "actor_id", "action", "reviewers", "expires_at"],

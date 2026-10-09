@@ -19,11 +19,11 @@ Shared libraries live under `primitives/<name>/` (for example `primitives/tracin
 - `primitives/agent/` is `agentcore-agent`: `pattern.yaml` loading, `build_agent` over `create_agent`, Strands, and the managed harness, and the `agentcore-kit` command (generate, check-kit, doctor, production-check, verify, post-events).
 - `primitives/gateway-tools/<tool>/` holds one Gateway tool per folder: `tool.yaml` (its Agent Registry listing), the handler, tests, and its own Dockerfile. New tools copy `_template/`.
 - `patterns/<name>/` holds one deployable pattern with the twelve kit items. New patterns copy `patterns/_template/`.
-- `infra/constructs/` is the CDK foundation construct; `infra/rotation/` is the rotation Lambda image.
+- `infra/constructs/` is the CDK constructs a pattern deploys with (foundation, front door, network, alarms, per-agent model profiles); `infra/rotation/` is the rotation Lambda image.
 - `docker/` holds the digest-pinned base images (`base-agent`, `base-lambda`) and the compose stand-ins. `compose.yaml`, `Makefile`, and `.devcontainer/` sit at the root. CI runs in the `.devcontainer` image.
 - `config/environments/<env>.yaml` holds per-environment settings. Account ids never go in git.
 
-`primitives/front-door/` and the remaining patterns arrive in later PRs. `templates/` and `experiments/` stay in place until a later step retires them.
+`primitives/front-door/` is implemented (no Runtime PASS). The remaining patterns arrive in later PRs. `templates/` and `experiments/` stay in place until a later step retires them.
 
 ## Leases
 
@@ -45,9 +45,10 @@ One writer per path prefix. Scouts may read anything. Writers need a lease.
 | `primitives/completion/` | L | implemented |
 | `primitives/langchain/` | M | implemented; model providers stay outside |
 | `primitives/agent/` | N | implemented; no Runtime PASS |
+| `primitives/front-door/` | O | implemented; no Runtime PASS |
 | `primitives/gateway-tools/` | C | tool folder template; no Runtime PASS |
 | `patterns/` | P | `_template` only; no Runtime PASS |
-| `infra/`, `docker/`, `config/` | platform | foundation construct, base images, per-env config |
+| `infra/`, `docker/`, `config/` | platform | foundation, front door, network, alarms, model profiles; base images; per-env config |
 | `templates/agent-with-tools/` | F | invoice desk offline; imports the shelf; no Runtime PASS |
 | `templates/multi-agent/` | F | stub |
 | `templates/human-in-the-loop/` | F | stub |

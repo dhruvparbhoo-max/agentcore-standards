@@ -19,7 +19,7 @@ from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMe
 from langchain_core.outputs import ChatGeneration, ChatResult
 from langchain_core.tools import StructuredTool
 
-from agentcore_agent.frameworks.base import LoopOutcome, ToolSpec, risky_reviews
+from agentcore_agent.frameworks.base import LoopOutcome, LoopUsage, ToolSpec, risky_reviews
 from agentcore_agent.scripted import Script
 
 
@@ -81,6 +81,9 @@ class LangChainLoop:
 
     def _outcome(self, result: Any, thread_id: str) -> LoopOutcome:
         turn = read_graph_result(result, waiting="")
+        state = self._graph.get_state(self._config(thread_id))
+        messages = state.values.get("messages", []) if state is not None else []
+        usage = _usage(messages)
         if turn.status == "interrupted" and turn.interrupt is not None:
             arguments = turn.interrupt.get("arguments")
             return LoopOutcome(
@@ -88,11 +91,25 @@ class LangChainLoop:
                 text="",
                 tool=turn.tool_name,
                 arguments=arguments if isinstance(arguments, Mapping) else {},
+                usage=usage,
             )
-        state = self._graph.get_state(self._config(thread_id))
-        messages = state.values.get("messages", []) if state is not None else []
         called = tuple(m.name for m in messages if isinstance(m, ToolMessage) and isinstance(m.name, str))
-        return LoopOutcome(status="completed", text=turn.text, tools_called=called)
+        return LoopOutcome(status="completed", text=turn.text, tools_called=called, usage=usage)
+
+
+def _usage(messages: Sequence[Any]) -> LoopUsage:
+    """Sum ``usage_metadata`` on the model replies since the last user message."""
+    start = max((i for i, m in enumerate(messages) if isinstance(m, HumanMessage)), default=-1) + 1
+    replies = [m for m in messages[start:] if isinstance(m, AIMessage)]
+    input_tokens = output_tokens = 0
+    model = ""
+    for reply in replies:
+        meta: Any = reply.usage_metadata or {}
+        input_tokens += int(meta.get("input_tokens", 0) or 0)
+        output_tokens += int(meta.get("output_tokens", 0) or 0)
+        named = reply.response_metadata.get("model_name") or reply.response_metadata.get("model_id")
+        model = str(named) if named else model
+    return LoopUsage(model_calls=len(replies), input_tokens=input_tokens, output_tokens=output_tokens, model=model)
 
 
 def _to_langchain(tool: ToolSpec) -> StructuredTool:

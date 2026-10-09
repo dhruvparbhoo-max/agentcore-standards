@@ -33,11 +33,12 @@ def main() -> int:
         if name in existing:
             print(f"exists {name}")
             continue
+        keys = [(table["pk"], "HASH")] + ([(table["sk"], "RANGE")] if table.get("sk") else [])
         client.create_table(
             TableName=name,
             BillingMode="PAY_PER_REQUEST",
-            AttributeDefinitions=[{"AttributeName": table["pk"], "AttributeType": "S"}],
-            KeySchema=[{"AttributeName": table["pk"], "KeyType": "HASH"}],
+            AttributeDefinitions=[{"AttributeName": key, "AttributeType": "S"} for key, _ in keys],
+            KeySchema=[{"AttributeName": key, "KeyType": kind} for key, kind in keys],
         )
         print(f"created {name}")
     return 0

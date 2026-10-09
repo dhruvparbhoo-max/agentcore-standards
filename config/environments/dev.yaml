@@ -11,13 +11,35 @@ secrets:
   prefix: agentcore/dev
   rotation_days: 90
 controls:
-  front_door: false
+  front_door: true
   guardrails_service: false
-  audit_store: false
-  kill_switch: false
-  quotas: false
+  audit_store: true
+  kill_switch: true
+  quotas: true
 observability:
   alarms: false
   alarm_email: ""
 network:
   mode: PUBLIC
+# What the front door enforces across every agent in this environment
+# (agentcore_front_door.policy.DoorSettings). Zero means no limit.
+front_door:
+  quotas:
+    user_daily: 200
+    team_daily: 2000
+    agent_daily: 5000
+    user_per_minute: 10
+  user_monthly_usd: 20
+  team_monthly_usd: 200
+  lease_grace_s: 30
+  throttle:
+    rate: 10
+    burst: 20
+  # USD per million tokens. Check https://aws.amazon.com/bedrock/pricing/ for the region before relying on them.
+  prices:
+    "eu.anthropic.claude-sonnet-4-5-20250929-v1:0":
+      input_per_million: 3.0
+      output_per_million: 15.0
+    "eu.anthropic.claude-haiku-4-5-20251001-v1:0":
+      input_per_million: 1.0
+      output_per_million: 5.0

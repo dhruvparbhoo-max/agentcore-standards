@@ -24,9 +24,10 @@ primitives/recovery/            retry budget, circuit breaker, in-flight cap
 primitives/completion/          completion check; proposer is not the verifier
 primitives/langchain/           LangChain create_agent over the tool registry, plus graph helpers
 primitives/agent/               pattern.yaml, build_agent (create_agent | strands | harness), agentcore-kit CLI
+primitives/front-door/          the only way to start a Runtime session (identity, quotas, kill switch, audit)
 primitives/gateway-tools/       one Gateway tool per folder, each its own image and registry listing
 patterns/_template/             the 12-item starter kit; copy it to start a pattern
-infra/                          CDK foundation construct and the secret rotation Lambda
+infra/                          CDK constructs: foundation, front door, network, alarms, model profiles
 docker/                         digest-pinned base images and the compose stand-ins
 config/environments/            per-environment settings (no account ids)
 templates/minimal-agent/        BedrockAgentCoreApp entrypoint plus a harness binding (an app, not a PyPI lib)

@@ -26,6 +26,24 @@ class ToolSpec:
 
 
 @dataclass(frozen=True)
+class LoopUsage:
+    """Model calls and tokens for one turn, as the framework reported them. The front door prices this."""
+
+    model_calls: int = 0
+    input_tokens: int = 0
+    output_tokens: int = 0
+    model: str = ""
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "model_calls": self.model_calls,
+            "input_tokens": self.input_tokens,
+            "output_tokens": self.output_tokens,
+            "model": self.model,
+        }
+
+
+@dataclass(frozen=True)
 class LoopOutcome:
     """``completed`` with text, or ``interrupted`` on a risky tool with its arguments."""
 
@@ -34,6 +52,7 @@ class LoopOutcome:
     tool: str | None = None
     arguments: Mapping[str, Any] = field(default_factory=dict)
     tools_called: tuple[str, ...] = ()
+    usage: LoopUsage | None = None
 
 
 class Loop(Protocol):

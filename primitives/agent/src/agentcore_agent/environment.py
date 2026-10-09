@@ -72,7 +72,50 @@ _ENV_SCHEMA: dict[str, Any] = {
             "type": "object",
             "additionalProperties": False,
             "required": ["mode"],
-            "properties": {"mode": {"enum": ["PUBLIC", "VPC"]}},
+            "properties": {
+                "mode": {"enum": ["PUBLIC", "VPC"]},
+                "nat_gateways": {"type": "integer", "minimum": 0, "maximum": 2},
+                "allowed_domains": {"type": "array", "items": {"type": "string", "pattern": r"^(\*\.)?[a-z0-9.-]+$"}},
+                "code_interpreter": {"type": "boolean"},
+            },
+        },
+        "front_door": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "quotas": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        name: {"type": "integer", "minimum": 0}
+                        for name in ("user_daily", "team_daily", "agent_daily", "user_per_minute")
+                    },
+                },
+                "user_monthly_usd": {"type": "number", "minimum": 0},
+                "team_monthly_usd": {"type": "number", "minimum": 0},
+                "lease_grace_s": {"type": "integer", "minimum": 0, "maximum": 300},
+                "throttle": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["rate", "burst"],
+                    "properties": {
+                        "rate": {"type": "integer", "minimum": 1},
+                        "burst": {"type": "integer", "minimum": 1},
+                    },
+                },
+                "prices": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "required": ["input_per_million", "output_per_million"],
+                        "properties": {
+                            "input_per_million": {"type": "number", "minimum": 0},
+                            "output_per_million": {"type": "number", "minimum": 0},
+                        },
+                    },
+                },
+            },
         },
     },
 }
@@ -130,6 +173,26 @@ class EnvironmentConfig:
     def network_mode(self) -> str:
         return str(self.raw["network"]["mode"])
 
+    @property
+    def network(self) -> Mapping[str, Any]:
+        return dict(self.raw["network"])
+
+    @property
+    def alarms(self) -> bool:
+        return bool(self.raw["observability"]["alarms"])
+
+    @property
+    def front_door(self) -> Mapping[str, Any]:
+        """The ``DoorSettings`` document (``agentcore_front_door.policy``): quotas, user/team caps, prices."""
+        settings = dict(self.raw.get("front_door") or {})
+        settings.pop("throttle", None)
+        return settings
+
+    @property
+    def front_door_throttle(self) -> tuple[int, int]:
+        throttle = (self.raw.get("front_door") or {}).get("throttle") or {"rate": 20, "burst": 40}
+        return int(throttle["rate"]), int(throttle["burst"])
+
 
 def environments_dir(repo_root: Path) -> Path:
     return repo_root / "config" / "environments"
@@ -163,4 +226,6 @@ def validate_environment(raw: Any) -> list[str]:
             problems.append("removal: production retains stateful resources")
         if raw["observability"]["alarms"] and "@" not in raw["observability"]["alarm_email"]:
             problems.append("observability.alarm_email: a monitored inbox when alarms are on")
+        if raw["controls"]["quotas"] and not (raw.get("front_door") or {}).get("quotas"):
+            problems.append("front_door.quotas: production states its quotas when controls.quotas is on")
     return problems

@@ -16,6 +16,7 @@ members = [
     "agentcore-constructs",
     "agentcore-context",
     "agentcore-eval",
+    "agentcore-front-door",
     "agentcore-guardrails",
     "agentcore-identity",
     "agentcore-langchain",
@@ -69,6 +70,7 @@ version = "0.1.0"
 source = { editable = "primitives/agent" }
 dependencies = [
     { name = "agentcore-approvals" },
+    { name = "agentcore-front-door" },
     { name = "agentcore-guardrails" },
     { name = "agentcore-langchain" },
     { name = "agentcore-memory" },
@@ -88,6 +90,7 @@ strands = [
 [package.metadata]
 requires-dist = [
     { name = "agentcore-approvals", editable = "primitives/approvals" },
+    { name = "agentcore-front-door", editable = "primitives/front-door" },
     { name = "agentcore-guardrails", editable = "primitives/guardrails" },
     { name = "agentcore-langchain", editable = "primitives/langchain" },
     { name = "agentcore-memory", editable = "primitives/memory" },
@@ -146,6 +149,25 @@ requires-dist = [
     { name = "agentcore-tracing", editable = "primitives/tracing" },
     { name = "bedrock-agentcore", specifier = ">=1.24" },
     { name = "boto3", specifier = ">=1.35" },
+]
+
+[[package]]
+name = "agentcore-front-door"
+version = "0.1.0"
+source = { editable = "primitives/front-door" }
+dependencies = [
+    { name = "agentcore-identity" },
+    { name = "agentcore-recovery" },
+    { name = "boto3" },
+    { name = "pyjwt", extra = ["crypto"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "agentcore-identity", editable = "primitives/identity" },
+    { name = "agentcore-recovery", editable = "primitives/recovery" },
+    { name = "boto3", specifier = ">=1.40" },
+    { name = "pyjwt", extras = ["crypto"], specifier = ">=2.10,<3" },
 ]
 
 [[package]]

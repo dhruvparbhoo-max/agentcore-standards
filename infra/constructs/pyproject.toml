@@ -1,7 +1,7 @@
 [project]
 name = "agentcore-constructs"
 version = "0.1.0"
-description = "CDK constructs every pattern deploys with: KMS, secrets with rotation, ECR with scanning, log groups with retention and PII masking."
+description = "CDK constructs every pattern deploys with: foundation, front door, network lockdown, runtime alarms, and per-agent model profiles."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
