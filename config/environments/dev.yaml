@@ -1,0 +1,23 @@
+# Development. Stateful resources are destroyed on teardown. Secrets are referenced by name;
+# values live in Secrets Manager. Shape follows sample-agentcore-enterprise-platform presets/*.yaml.
+environment: dev
+deployment:
+  mode: development
+region: eu-west-2
+endpoint: DEV
+removal: destroy
+log_retention_days: 30
+secrets:
+  prefix: agentcore/dev
+  rotation_days: 90
+controls:
+  front_door: false
+  guardrails_service: false
+  audit_store: false
+  kill_switch: false
+  quotas: false
+observability:
+  alarms: false
+  alarm_email: ""
+network:
+  mode: PUBLIC

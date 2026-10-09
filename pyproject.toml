@@ -26,6 +26,9 @@ members = [
   "primitives/recovery",
   "primitives/completion",
   "primitives/langchain",
+  "primitives/agent",
+  "patterns/_template/agent",
+  "infra/constructs",
   "templates/minimal-agent",
   "templates/agent-with-tools",
 ]
@@ -40,6 +43,9 @@ dev = [
   "pytest>=8.3",
   "pytest-asyncio>=0.25",
   "ruff>=0.8",
+  "strands-agents>=1.20,<2",
+  "types-jsonschema>=4.23",
+  "types-pyyaml>=6.0",
 ]
 
 [tool.ruff]
@@ -71,11 +77,17 @@ files = [
   "primitives/recovery/src",
   "primitives/completion/src",
   "primitives/langchain/src",
+  "primitives/agent/src",
+  "patterns/_template/agent",
+  "infra/constructs/src",
+  "primitives/gateway-tools/_template/template_tool",
   "templates/minimal-agent/src",
   "templates/agent-with-tools/src",
   "scripts/check_boundaries.py",
+  "scripts/images.py",
+  "docker/local/create_tables.py",
 ]
-mypy_path = "templates/minimal-agent/src:templates/agent-with-tools/src"
+mypy_path = "patterns/_template/agent:primitives/gateway-tools/_template:templates/minimal-agent/src:templates/agent-with-tools/src"
 
 [[tool.mypy.overrides]]
 module = [
@@ -102,11 +114,17 @@ testpaths = [
   "primitives/recovery/tests",
   "primitives/completion/tests",
   "primitives/langchain/tests",
+  "primitives/agent/tests",
+  "patterns/_template/tests",
+  "primitives/gateway-tools/_template/tests",
+  "infra/constructs/tests",
   "templates/minimal-agent/tests",
   "templates/agent-with-tools/tests",
   "tests",
 ]
 pythonpath = [
+  "patterns/_template/agent",
+  "primitives/gateway-tools/_template",
   "templates/minimal-agent/src",
   "templates/agent-with-tools/src",
   "primitives/tools/tests",

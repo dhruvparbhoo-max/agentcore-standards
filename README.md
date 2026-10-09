@@ -29,7 +29,18 @@ Every pattern comes with the same kit:
 - limits on cost and time
 - one command to deploy it and one to remove it
 
-The aim is that automatic checks fail any agent that has no tracing, no exam, no limits on its tools, or no approval step for risky actions. That check is not in the repo yet.
+The aim is that automatic checks fail any agent that has no tracing, no exam, no limits on its tools, or no approval step for risky actions. `agentcore-kit check-kit` is that check.
+
+## Before you start
+
+You need Python 3.12, [uv](https://docs.astral.sh/uv/), and Docker, or [Finch](https://runfinch.com) on a Mac. `docker ps` (or `finch ps` with `DOCKER=finch`) must succeed before you run a local stack.
+
+```bash
+uv sync --all-packages
+make local
+```
+
+`make local` starts the sample agent, a Gateway tool, DynamoDB Local and LocalStack, then posts the pattern's sample events. You do not need AWS for that.
 
 ## How to pick and run a pattern
 
@@ -38,16 +49,16 @@ The aim is that automatic checks fail any agent that has no tracing, no exam, no
 3. Run it on your laptop with the sample inputs in its `events/` folder. You don't need AWS for this.
 4. Copy the pattern folder, change the prompts, tools and exam to fit your job, and deploy it with its one deploy command.
 
-Patterns being built first are a company-policy question-and-answer agent (it answers questions from policy documents, quotes the section and source, and says so when it can't find the answer), a human approval agent (four ways to ask a person before acting) and an ambient agent (one that reacts to events on its own). For now, the shared building blocks are in place and the patterns are still to come. These paths named above are not in the repo yet: `patterns/`, `primitives/gateway-tools/` (including `_template/`), `primitives/agent/`, `primitives/knowledge/`, `infra/constructs/`, `docs/catalog.md`, and `docs/design.md`. Tools that are here today live in `primitives/tools/`. The LangChain loop that is here today lives in `primitives/langchain/`. There is no `pattern.yaml` and no switch to Strands. None of this has been tested on a live AWS account yet.
+Patterns being built first are a company-policy question-and-answer agent (it answers questions from policy documents, quotes the section and source, and says so when it can't find the answer), a human approval agent (four ways to ask a person before acting) and an ambient agent (one that reacts to events on its own). Copy `patterns/_template/` to start a new one. Those three named patterns are still to come. `primitives/knowledge/` and `docs/catalog.md` are not in the repo yet. None of this has been tested on a live AWS account yet.
 
 ## How changes are tested
 
-- **On every pull request**, quick checks run and need no AWS: tool tests, format checks, and a check that examples do not paste in copies of the shared building blocks. They do not check that cloud setup builds, because that folder is not in the repo yet.
+- **On every pull request**, quick checks run and need no AWS: tool tests, format checks, a kit check, and a check that examples do not paste in copies of the shared building blocks.
 - **On merge, every night and before each release** there is no deploy. No pattern is sent to an AWS account, and nothing is removed afterwards because nothing was started.
 
 ## How to add a tool
 
-1. Copy `primitives/gateway-tools/_template/` to a new folder named after your tool. That folder is not in the repo yet.
+1. Copy `primitives/gateway-tools/_template/` to a new folder named after your tool.
 2. Fill in the parts that come with it: what the tool does and what goes in and out of it, the code that does the work, a rule saying which agents may use it, a test of the tool itself, a test that checks what goes in and comes out, and a short README.
 3. Add the tool to the tool list.
 4. List the tool in the `pattern.yaml` of each agent that needs it. The agent then picks it up from the tool list, so nobody copies code around.
@@ -89,4 +100,4 @@ These are known gaps. None of them is being built yet. Research and sources are 
 
 ## For developers
 
-Setup, test commands and team rules are in [docs/developer-guide.md](docs/developer-guide.md) and [AGENTS.md](AGENTS.md).
+Setup, test commands, the directory tree and team rules are in [docs/developer-guide.md](docs/developer-guide.md) and [AGENTS.md](AGENTS.md). Shared design choices are in [docs/design/library.md](docs/design/library.md).

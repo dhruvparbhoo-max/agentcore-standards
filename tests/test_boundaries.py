@@ -63,3 +63,31 @@ def test_resource_arns_are_rejected(tmp_path: Path) -> None:
     note.write_text(f"deployed at {marker}iam:::role/example\n", encoding="utf-8")
     violations = check_boundaries.find_violations(tmp_path)
     assert any("resource ARN" in item for item in violations)
+
+
+def test_patterns_cannot_import_experiments(tmp_path: Path) -> None:
+    pattern = tmp_path / "patterns" / "demo"
+    pattern.mkdir(parents=True)
+    (pattern / "app.py").write_text("from experiments import draft\n", encoding="utf-8")
+    violations = check_boundaries.find_violations(tmp_path)
+    assert any("imports experiments" in item for item in violations)
+
+
+def test_patterns_cannot_copy_package_source(tmp_path: Path) -> None:
+    package = tmp_path / "primitives" / "widget"
+    pattern = tmp_path / "patterns" / "demo"
+    package.mkdir(parents=True)
+    pattern.mkdir(parents=True)
+    body = "\n".join(f"value_{index} = 'abcdefghijklmnopqrstuvwxyz-{index}'" for index in range(4)) + "\n"
+    (package / "impl.py").write_text(body, encoding="utf-8")
+    (pattern / "impl.py").write_text(body, encoding="utf-8")
+    violations = check_boundaries.find_violations(tmp_path)
+    assert any("copies package source" in item for item in violations)
+
+
+def test_dockerfiles_and_scripts_are_scanned(tmp_path: Path) -> None:
+    marker = "arn:" + "aws:"
+    (tmp_path / "Dockerfile").write_text(f"ENV ROLE={marker}iam:::role/example\n", encoding="utf-8")
+    (tmp_path / "deploy.sh").write_text(f"ROLE={marker}iam:::role/example\n", encoding="utf-8")
+    violations = check_boundaries.find_violations(tmp_path)
+    assert len([item for item in violations if "resource ARN" in item]) == 2

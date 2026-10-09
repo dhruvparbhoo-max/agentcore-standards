@@ -92,7 +92,7 @@ That command prints `synced billing gateway target` and does not print the sync 
 
 ## Deploy
 
-1. Host this entrypoint as `BedrockAgentCoreApp` (`python -m agent_with_tools`, port 8080). Do not use `bedrock-agentcore-starter-toolkit`.
+1. Host this entrypoint as `BedrockAgentCoreApp` (`python -m agent_with_tools`, port 8080).
 2. Give the runtime role `bedrock:InvokeModel` (or the Converse equivalent) for `BEDROCK_MODEL_ID`, and nothing else it does not need.
 3. Deploy `lambda_handler` as its own function. The runtime role does not need to call billing tools directly.
 4. Run `gateway_sync` with the four Gateway names. The local policy is already deny-by-default. It does not flip a `LOG_ONLY` engine to `ENFORCE`.

@@ -1,0 +1,7 @@
+{
+  "description": "One chat turn. trigger is none, so this is the front door payload, not a queue event.",
+  "session_id": "local-template-session-000000000000001",
+  "actor_id": "actor-template-user",
+  "payload": {"prompt": "hello"},
+  "expect": {"status": "completed", "contains": "hello"}
+}

@@ -20,7 +20,7 @@ Words used here, once:
 
 ## What the repo is
 
-This repo is a pattern library for AgentCore. Python 3.12 only. We build on the [AgentCore CLI](https://github.com/aws/agentcore-cli) (`npm` package `@aws/agentcore`) and on AWS-managed pieces. We do not use `bedrock-agentcore-starter-toolkit`. That package is not a dependency today. The ban is written in `AGENTS.md` and in `templates/agent-with-tools/README.md`. Removing those sentences is a later code change.
+This repo is a pattern library for AgentCore. Python 3.12 only. We build on the [AgentCore CLI](https://github.com/aws/agentcore-cli) (`npm` package `@aws/agentcore`) and on AWS-managed pieces. `pattern.yaml` generates the CLI's `agentcore.json`, and `agentcore deploy` builds and deploys from it.
 
 Shared code lives in `primitives/`. The first new package in that set is `primitives/front-door/`. One CDK construct per primitive will live in `infra/constructs/`. The CLI's CDK handles AgentCore resources (runtime, memory, gateway, knowledge base, endpoints) inside our CDK app. We do not hand-write those resources a second time. Our constructs own the front door, the job table, the queue, and the container functions.
 
@@ -76,7 +76,7 @@ Long work that outlives an HTTP call is submit-then-poll. The caller receives a 
 
 - `create_agent`, the default. This is LangChain's tool-calling loop. Model providers stay outside the LangChain package. The caller passes the model the config names.
 - `strands`, the code alternative. The managed extras from AWS tend to arrive here first. The switch stays covered by tests.
-- `harness`, the AgentCore managed loop. The pattern describes the model, prompt, tools, and limits in config, and AWS runs the loop. The harness is built on Strands. A later export can turn that config into Strands code when the pattern outgrows config.
+- `harness`, the AgentCore managed loop. The pattern describes the model, prompt, tools, and limits in config, and AWS runs the loop. The harness is built on Strands. A later export can turn that config into Strands code when the pattern outgrows config. The generator writes the harness config to `app/<harness name>/harness.json` with `system-prompt.md` beside it, which is where the CLI looks for it.
 
 Every framework still enters through the front door. The order inside the session is:
 
@@ -299,7 +299,7 @@ Each pattern has one `pattern.yaml`. The memory section, the framework, the depl
 | `approval.expire_s` | yes | Token lifetime. Expiry fails closed. |
 | `approval.reviewers` | yes | 1, or 2 when `risk_tier` is high. |
 | `output_schema` | yes | Path to the schema checked before a side effect or a UI render. |
-| `runtime.header_allowlist` | yes | Headers forwarded into the session. CDK sends this on every update. |
+| `runtime.header_allowlist` | yes | Headers forwarded into the session. CDK sends this on every update. Runtime forwards only `Authorization` and `X-Amzn-Bedrock-AgentCore-Runtime-Custom-*`, so it carries the actor header. The session header is not listed: Runtime reads it itself. |
 | `runtime.session_header` | yes | `X-Amzn-Bedrock-AgentCore-Runtime-Session-Id`, or `Mcp-Session-Id` when the protocol is MCP. |
 | `data.classification` | yes | `public`, `internal`, or `confidential`. |
 | `data.pii` | yes | Whether personal data can appear. |
@@ -365,7 +365,8 @@ approval:
 output_schema: schemas/answer.json
 runtime:
   header_allowlist:
-    - X-Amzn-Bedrock-AgentCore-Runtime-Session-Id
+    - Authorization
+    - X-Amzn-Bedrock-AgentCore-Runtime-Custom-Actor-Id
   session_header: X-Amzn-Bedrock-AgentCore-Runtime-Session-Id
 data:
   classification: internal

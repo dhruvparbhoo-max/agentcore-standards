@@ -1,43 +1,77 @@
+# Pull request checks. Every step runs inside the toolchain image built from
+# .devcontainer/Dockerfile, the same container developers use. No AWS access:
+# tests marked `runtime` are deselected, and nothing deploys.
+#
+# Lock gate (`uv lock --check`, `uv sync --locked`) and SHA-pinned actions follow
+# aws-samples/sample-social-intelligence-agents .github/workflows/ci.yml (MIT-0).
+# The arm64 build and the Trivy gate follow aws-samples/sample-bedrock-agentcore-runtime-cicd
+# (MIT-0) and docs/design/library.md (Deployment).
+
 name: ci
 
 on:
   push:
+    branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
+env:
+  TOOLCHAIN: agentcore-standards/toolchain:ci
+
 jobs:
-  lint-test:
+  checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-        with:
-          python-version: "3.12"
-          enable-cache: true
-      - name: Install workspace
-        run: uv sync --all-packages --frozen
-      - name: Ruff
-        run: uv run ruff check .
-      - name: Ruff format
-        run: uv run ruff format --check .
-      - name: Mypy
-        run: uv run mypy
-      - name: Pytest
-        run: uv run pytest -m "not runtime"
-      - name: Path bans
-        run: uv run python scripts/check_boundaries.py
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+      - name: Build toolchain image
+        run: docker buildx build --load -t "$TOOLCHAIN" .devcontainer
+      - name: Lint, types, tests, boundaries, kit checks
+        run: docker run --rm --user root -v "$PWD":/workspace "$TOOLCHAIN" make ci
+      - name: AgentCore CLI validate (generated project)
+        run: docker run --rm --user root -v "$PWD":/workspace -w /workspace/patterns/_template "$TOOLCHAIN" agentcore validate
       - name: Judge mock golden eval
-        run: PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge --evidence-dir evidence/judge
+        run: >
+          docker run --rm --user root -v "$PWD":/workspace -e PYTHONPATH=templates/minimal-agent/src "$TOOLCHAIN"
+          bash -c 'uv sync --all-packages --locked -q && python -m minimal_agent.judge --evidence-dir evidence/judge'
       - name: Upload judge evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: minimal-agent-judge-evidence
           path: evidence/judge
           if-no-files-found: error
       - name: Judge invoice desk offline
-        run: PYTHONPATH=templates/agent-with-tools/src uv run python -m agent_with_tools.judge --evidence-dir evidence/judge-tools
+        run: >
+          docker run --rm --user root -v "$PWD":/workspace -e PYTHONPATH=templates/agent-with-tools/src "$TOOLCHAIN"
+          bash -c 'uv sync --all-packages --locked -q && python -m agent_with_tools.judge --evidence-dir evidence/judge-tools'
       - name: Upload invoice desk evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: agent-with-tools-judge-evidence
           path: evidence/judge-tools
           if-no-files-found: error
+
+  images:
+    # Native arm64 runner: AgentCore Runtime and our Lambdas run linux/arm64.
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+        with:
+          driver: docker
+      - name: Build toolchain image
+        run: docker buildx build --load -t "$TOOLCHAIN" .devcontainer
+      - name: Build every image for linux/arm64
+        run: >
+          docker run --rm --user root -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD":/workspace "$TOOLCHAIN"
+          python3 scripts/images.py build --platform linux/arm64 --tag ci
+      - name: Trivy (fail on fixable HIGH or CRITICAL)
+        run: >
+          docker run --rm --user root -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD":/workspace "$TOOLCHAIN"
+          python3 scripts/images.py scan --tag ci

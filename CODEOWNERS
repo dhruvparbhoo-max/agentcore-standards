@@ -9,6 +9,10 @@
 
 /pyproject.toml                         @agentcore/platform
 /uv.lock                                @agentcore/platform
+/compose.yaml                           @agentcore/platform
+/Makefile                               @agentcore/platform
+/.devcontainer/                         @agentcore/platform
+/NOTICE                                 @agentcore/platform
 /.github/                               @agentcore/platform
 /scripts/                               @agentcore/platform
 
@@ -24,10 +28,16 @@
 /primitives/recovery/           @agentcore/platform
 /primitives/completion/         @agentcore/platform
 /primitives/langchain/          @agentcore/platform
+/primitives/agent/              @agentcore/platform
+/primitives/gateway-tools/      @agentcore/platform
+
+/patterns/                      @agentcore/platform
+/infra/                         @agentcore/platform
+/docker/                        @agentcore/platform
+/config/                        @agentcore/platform
 
 /templates/minimal-agent/               @agentcore/platform
 /templates/agent-with-tools/            @agentcore/platform
-/templates/agent-with-memory/           @agentcore/platform
 /templates/multi-agent/                 @agentcore/platform
 /templates/human-in-the-loop/           @agentcore/platform
 

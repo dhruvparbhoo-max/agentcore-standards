@@ -1,0 +1,42 @@
+[project]
+name = "agentcore-agent"
+version = "0.1.0"
+description = "pattern.yaml, build_agent, the agentcore.json generator, and the kit, doctor, verify, and production checks."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "agentcore-approvals",
+  "agentcore-guardrails",
+  "agentcore-langchain",
+  "agentcore-memory",
+  "agentcore-tools",
+  "agentcore-tracing",
+  "bedrock-agentcore>=1.24",
+  "boto3>=1.40",
+  "jsonschema>=4.23",
+  "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+strands = ["strands-agents>=1.20,<2"]
+
+[project.scripts]
+agentcore-kit = "agentcore_agent.cli:main"
+
+[tool.uv.sources]
+agentcore-approvals = { workspace = true }
+agentcore-guardrails = { workspace = true }
+agentcore-langchain = { workspace = true }
+agentcore-memory = { workspace = true }
+agentcore-tools = { workspace = true }
+agentcore-tracing = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentcore_agent"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src" = ""

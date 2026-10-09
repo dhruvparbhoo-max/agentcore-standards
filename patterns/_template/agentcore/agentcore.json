@@ -1,0 +1,88 @@
+{
+  "$schema": "https://schema.agentcore.aws.dev/v1/agentcore.json",
+  "name": "PatternTemplate",
+  "version": 1,
+  "managedBy": "CDK",
+  "tags": {
+    "agentcore:created-by": "agentcore-standards",
+    "agentcore:project-name": "PatternTemplate",
+    "pattern": "_template",
+    "owner": "platform-team@example.com",
+    "team": "platform",
+    "alert-route": "email:platform-alerts@example.com",
+    "data-classification": "internal"
+  },
+  "runtimes": [
+    {
+      "name": "Template",
+      "description": "_template pattern (create_agent)",
+      "build": "Container",
+      "entrypoint": "main.py",
+      "codeLocation": "agent/",
+      "dockerfile": "patterns/_template/agent/Dockerfile",
+      "buildContextPath": "../..",
+      "runtimeVersion": "PYTHON_3_12",
+      "protocol": "HTTP",
+      "networkMode": "PUBLIC",
+      "requestHeaderAllowlist": [
+        "Authorization",
+        "X-Amzn-Bedrock-AgentCore-Runtime-Custom-Actor-Id"
+      ],
+      "lifecycleConfiguration": {
+        "idleRuntimeSessionTimeout": 300,
+        "maxLifetime": 1800
+      },
+      "instrumentation": {
+        "enableOtel": true
+      },
+      "envVars": [
+        {
+          "name": "AGENTCORE_PATTERN",
+          "value": "_template"
+        },
+        {
+          "name": "AGENTCORE_ENVIRONMENT",
+          "value": "local"
+        },
+        {
+          "name": "AGENTCORE_RELEASE_ID",
+          "value": ""
+        },
+        {
+          "name": "AGENTCORE_ENDPOINT",
+          "value": "DEV"
+        },
+        {
+          "name": "BEDROCK_MODEL_ID",
+          "value": "eu.anthropic.claude-sonnet-4-5-20250929-v1:0"
+        },
+        {
+          "name": "BEDROCK_FALLBACK_MODEL_ID",
+          "value": "eu.anthropic.claude-haiku-4-5-20251001-v1:0"
+        }
+      ],
+      "tags": {
+        "agentcore:created-by": "agentcore-standards",
+        "agentcore:project-name": "PatternTemplate",
+        "pattern": "_template",
+        "owner": "platform-team@example.com",
+        "team": "platform",
+        "alert-route": "email:platform-alerts@example.com",
+        "data-classification": "internal"
+      }
+    }
+  ],
+  "memories": [],
+  "harnesses": [],
+  "knowledgeBases": [],
+  "credentials": [],
+  "evaluators": [],
+  "onlineEvalConfigs": [],
+  "agentCoreGateways": [],
+  "policyEngines": [],
+  "configBundles": [],
+  "abTests": [],
+  "datasets": [],
+  "capacityProviders": [],
+  "payments": []
+}
