@@ -16,8 +16,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from agentcore_front_door.models import FALLBACK_PROFILE_ENV, PROFILE_ENV
+
 from agentcore_agent.config import PatternConfig
 from agentcore_agent.environment import EnvironmentConfig
+from agentcore_agent.stack_outputs import FALLBACK_PROFILE, MODEL_PROFILE, network_config
 
 SCHEMA_URL = "https://schema.agentcore.aws.dev/v1/agentcore.json"
 AGENTCORE_DIR = "agentcore"
@@ -85,8 +88,13 @@ def render_agentcore_json(
     endpoint_version: int | None = None,
     build_context: str = REPO_CONTEXT,
     build_args: Mapping[str, str] | None = None,
+    outputs: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
-    """The CLI project file. Arguments other than ``config`` are deploy-time only."""
+    """The CLI project file. Arguments other than ``config`` are deploy-time only.
+
+    ``outputs`` are the foundation stack's CDK outputs: the per-agent model
+    profiles and, in VPC mode, the subnets and security group.
+    """
     document: dict[str, Any] = {
         "$schema": SCHEMA_URL,
         "name": project_name(config),
@@ -110,6 +118,7 @@ def render_agentcore_json(
                 endpoint_version=endpoint_version,
                 build_context=build_context,
                 build_args=build_args,
+                outputs=outputs or {},
             )
         )
     return document
@@ -186,6 +195,7 @@ def render_deploy_project(
     endpoint_version: int | None = None,
     build_args: Mapping[str, str] | None = None,
     gateway_arn: str = "",
+    outputs: Mapping[str, str] | None = None,
 ) -> Path:
     """Write the deploy copy: ``agentcore.json`` with the release and ``aws-targets.json`` with the account.
 
@@ -194,6 +204,8 @@ def render_deploy_project(
     """
     if not (account.isdigit() and len(account) == 12):
         raise ValueError("account must be a 12-digit AWS account id from the environment")
+    if environment.network_mode == "VPC" and network_config(outputs or {}) is None:
+        raise ValueError(f"{environment.name} runs in VPC mode: pass the foundation stack outputs (--outputs)")
     agentcore_dir = destination / AGENTCORE_DIR
     agentcore_dir.mkdir(parents=True, exist_ok=True)
     document = render_agentcore_json(
@@ -203,6 +215,7 @@ def render_deploy_project(
         endpoint_version=endpoint_version,
         build_context=str(repo_root.resolve()),
         build_args=build_args,
+        outputs=outputs,
     )
     if config.framework == "harness":
         folder = destination / harness_dir(config)
@@ -234,6 +247,7 @@ def _runtime(
     endpoint_version: int | None,
     build_context: str,
     build_args: Mapping[str, str] | None,
+    outputs: Mapping[str, str],
 ) -> dict[str, Any]:
     runtime_cfg = config.section("runtime")
     model = config.section("model")
@@ -245,6 +259,10 @@ def _runtime(
         "BEDROCK_MODEL_ID": str(model["primary"]),
         "BEDROCK_FALLBACK_MODEL_ID": str(model["fallback"]),
     }
+    if outputs.get(MODEL_PROFILE):
+        env_vars[PROFILE_ENV] = outputs[MODEL_PROFILE]
+    if outputs.get(FALLBACK_PROFILE):
+        env_vars[FALLBACK_PROFILE_ENV] = outputs[FALLBACK_PROFILE]
     runtime: dict[str, Any] = {
         "name": config.runtime_name[:48],
         "description": f"{config.name} pattern ({config.framework})",
@@ -262,6 +280,9 @@ def _runtime(
         "envVars": [{"name": key, "value": value} for key, value in env_vars.items()],
         "tags": pattern_tags(config, environment),
     }
+    network = network_config(outputs) if runtime["networkMode"] == "VPC" else None
+    if network is not None:
+        runtime["networkConfig"] = network
     if build_args:
         runtime["customDockerBuildArgs"] = dict(build_args)
     if endpoint_version is not None:

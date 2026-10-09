@@ -5,15 +5,16 @@
 #
 # 1. `docker ps`, doctor (read-only), and the production gate. Production refuses
 #    to continue when a required control is missing.
-# 2. CDK deploys the pattern foundation (KMS key, ECR repository with scan on push,
-#    masked log group, secrets with rotation).
-# 3. The base-agent image is built for linux/arm64 and pushed to that repository,
-#    so CodeBuild can start the agent image FROM it. In production (or when
-#    SIGNING_PROFILE_ARN is set) scripts/sign-and-sbom.sh must pass first.
-# 4. The build-input digest and release id are computed, the deploy copy of
-#    agentcore.json is rendered under build/deploy/ (outside git), and the
-#    AgentCore CLI deploys it. The CLI builds the agent image in CodeBuild.
-# 5. `agentcore-kit verify` compares the live runtime with pattern.yaml.
+# 2. CDK deploys the pattern foundation (KMS key, ECR, log group, secrets,
+#    per-agent model profiles, and in VPC mode the network and DNS Firewall).
+# 3. The base-agent and base-lambda images are built for linux/arm64 and pushed
+#    to that repository. In production (or when SIGNING_PROFILE_ARN is set)
+#    scripts/sign-and-sbom.sh must pass first.
+# 4. The deploy copy of agentcore.json is rendered with those outputs (VPC
+#    networkConfig, model profile ARNs) and the AgentCore CLI deploys the runtime.
+# 5. The edge stack deploys the front door. `agentcore-kit harden` requires
+#    MMDSv2 and lets only the front-door role invoke. Verify checks both.
+#    Needs FRONT_DOOR_ISSUER and FRONT_DOOR_AUDIENCE in the environment.
 #
 # ECR registry scanning (ENHANCED, scan on push) follows
 # aws-samples/sample-bedrock-agentcore-runtime-cicd .github/workflows/deploy-agentcore.yml
@@ -81,21 +82,61 @@ if [ ! -d "$PROJECT_DIR/agentcore/cdk" ]; then
   agentcore create --name "$PROJECT" --no-agent --skip-git --skip-install --output-dir "$DEPLOY_DIR"
   (cd "$PROJECT_DIR/agentcore/cdk" && npm install --no-audit --no-fund)
 fi
+LAMBDA_TAG="base-lambda-$(git hash-object docker/base-lambda/Dockerfile | cut -c1-12)"
+if ! aws ecr describe-images --region "$REGION" --repository-name "${REPOSITORY_URI#*/}" \
+  --image-ids "imageTag=$LAMBDA_TAG" >/dev/null 2>&1; then
+  "$DOCKER" buildx build --platform linux/arm64 --provenance=false -t "$REPOSITORY_URI:$LAMBDA_TAG" --push docker/base-lambda
+fi
+LAMBDA_DIGEST="$(aws ecr describe-images --region "$REGION" --repository-name "${REPOSITORY_URI#*/}" \
+  --image-ids "imageTag=$LAMBDA_TAG" --query 'imageDetails[0].imageDigest' --output text)"
+
+FOUNDATION_OUT="$DEPLOY_DIR/$PROJECT-foundation.json"
 "${KIT[@]}" render-deploy "$FOLDER" --env "$ENV_NAME" --destination "$PROJECT_DIR" \
   --account "$ACCOUNT" --release-id "$RELEASE_ID" \
+  --outputs "$FOUNDATION_OUT" \
   --build-arg "BASE_AGENT_IMAGE=$REPOSITORY_URI@$BASE_DIGEST"
 
 echo "== agentcore deploy"
 (cd "$PROJECT_DIR" && agentcore validate && agentcore deploy -y --target "$ENV_NAME")
 
-RUNTIME_ID="$("${UV[@]}" python - "$PROJECT_DIR/agentcore/.cli/deployed-state.json" "$ENV_NAME" "$RUNTIME" <<'PY'
+read -r RUNTIME_ID RUNTIME_ARN < <("${UV[@]}" python - "$PROJECT_DIR/agentcore/.cli/deployed-state.json" "$ENV_NAME" "$RUNTIME" "$REGION" "$ACCOUNT" <<'PY'
 import json, sys
 state = json.load(open(sys.argv[1]))
-print(state["targets"][sys.argv[2]]["resources"]["runtimes"][sys.argv[3]]["runtimeId"])
+runtime = state["targets"][sys.argv[2]]["resources"]["runtimes"][sys.argv[3]]
+runtime_id = runtime.get("runtimeId") or runtime["id"]
+arn = runtime.get("runtimeArn") or runtime.get("arn") or (
+    "arn:" + f"aws:bedrock-agentcore:{sys.argv[4]}:{sys.argv[5]}:runtime/{runtime_id}"
+)
+print(runtime_id, arn)
 PY
-)"
+)
+
+: "${FRONT_DOOR_ISSUER:?set FRONT_DOOR_ISSUER (the sign-in token issuer URL)}"
+: "${FRONT_DOOR_AUDIENCE:?set FRONT_DOOR_AUDIENCE (the token audience / client id)}"
+POLICY="$DEPLOY_DIR/front-door-policy.json"
+"${KIT[@]}" front-door-policy "$FOLDER" --env "$ENV_NAME" --runtime-arn "$RUNTIME_ARN" \
+  --release-id "$RELEASE_ID" --outputs "$FOUNDATION_OUT" --output "$POLICY"
+
+echo "== edge stack"
+export BASE_LAMBDA_IMAGE="$REPOSITORY_URI@$LAMBDA_DIGEST"
+(cd "$FOLDER/infra" && npx --yes aws-cdk@2 deploy -c "env=$ENV_NAME" \
+  -c "runtime_arn=$RUNTIME_ARN" -c "front_door_policy=$POLICY" \
+  --require-approval never --outputs-file "$DEPLOY_DIR/$PROJECT-edge.json")
+DOOR_ROLE="$("${UV[@]}" python -c 'import json,sys; o=json.load(open(sys.argv[1])); print(next(v["FrontDoorRoleArn"] for v in o.values()))' "$DEPLOY_DIR/$PROJECT-edge.json")"
+
+echo "== harden"
+"${KIT[@]}" harden --runtime-id "$RUNTIME_ID" --runtime-arn "$RUNTIME_ARN" --region "$REGION" \
+  --allow-principal "$DOOR_ROLE"
 
 echo "== verify"
+ENDPOINT="$("${UV[@]}" python - "$FOLDER" "$ENV_NAME" "$ROOT" <<'PY'
+import sys
+from pathlib import Path
+from agentcore_agent.environment import load_environment
+print(load_environment(sys.argv[2], repo_root=Path(sys.argv[3])).endpoint)
+PY
+)"
 "${KIT[@]}" verify "$FOLDER" --runtime-id "$RUNTIME_ID" --release-id "$RELEASE_ID" \
-  --endpoint "${ENDPOINT:-DEFAULT}" --region "$REGION"
+  --endpoint "$ENDPOINT" --region "$REGION" --env "$ENV_NAME" \
+  --runtime-arn "$RUNTIME_ARN" --front-door-role "$DOOR_ROLE"
 echo "deployed $PATTERN release $RELEASE_ID to $ENV_NAME (runtime $RUNTIME_ID)"

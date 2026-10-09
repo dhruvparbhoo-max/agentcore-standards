@@ -91,8 +91,9 @@ def test_retrieval_pattern_needs_source_backed_cases(make_pattern: Callable[...,
 def test_production_mode_refuses_missing_controls(make_pattern: Callable[..., Path]) -> None:
     folder = _ready(make_pattern())
     problems = production_problems(load_pattern(folder), load_environment("prod", repo_root=REPO), repo_root=REPO)
-    for control in ("front_door", "guardrails_service", "audit_store", "kill_switch", "quotas"):
-        assert f"controls.{control}: must be on in production" in problems
+    assert "controls.guardrails_service: must be on in production" in problems
+    for control in ("front_door", "audit_store", "kill_switch", "quotas"):
+        assert f"controls.{control}: must be on in production" not in problems
 
 
 def test_production_mode_passes_when_every_control_is_on(make_pattern: Callable[..., Path], tmp_path: Path) -> None:
@@ -110,7 +111,7 @@ def test_cli_check_kit_and_production(make_pattern: Callable[..., Path]) -> None
     lines: list[str] = []
     assert main(["--repo-root", str(REPO), "check-kit", str(folder)], echo=lines.append) == 0
     assert main(["--repo-root", str(REPO), "production-check", str(folder), "--env", "prod"], echo=lines.append) == 1
-    assert any(line.startswith("REFUSE controls.front_door") for line in lines)
+    assert any(line.startswith("REFUSE controls.guardrails_service") for line in lines)
     assert main(["--repo-root", str(REPO), "generate", "--check", str(folder)], echo=lines.append) == 0
 
 

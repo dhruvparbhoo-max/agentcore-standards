@@ -53,6 +53,7 @@ class AgentPolicy:
     runtime_arn: str = ""
     workload_name: str = ""
     obo: tuple[OboTarget, ...] = ()
+    model_aliases: Mapping[str, str] = field(default_factory=dict)
 
     @classmethod
     def from_mapping(cls, raw: Mapping[str, Any]) -> AgentPolicy:
@@ -74,6 +75,7 @@ class AgentPolicy:
                 runtime_arn=str(raw.get("runtime_arn", "")),
                 workload_name=str(raw.get("workload_name", "")),
                 obo=tuple(_obo(item) for item in raw.get("obo", ())),
+                model_aliases={str(k): str(v) for k, v in (raw.get("model_aliases") or {}).items()},
             )
         except KeyError as exc:
             raise PolicyError(f"agent policy is missing {exc.args[0]}") from exc
@@ -104,6 +106,7 @@ class AgentPolicy:
                 }
                 for t in self.obo
             ],
+            "model_aliases": dict(self.model_aliases),
         }
 
 

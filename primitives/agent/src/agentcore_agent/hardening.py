@@ -61,6 +61,7 @@ def front_door_policy(
     runtime_arn: str = "",
     workload_name: str = "",
     release_id: str = "",
+    model_aliases: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     lifecycle = config.section("lifecycle")
     cost = config.section("cost")
@@ -89,6 +90,7 @@ def front_door_policy(
         "runtime_arn": runtime_arn,
         "workload_name": workload_name,
         "obo": obo,
+        "model_aliases": dict(model_aliases or {}),
     }
 
 

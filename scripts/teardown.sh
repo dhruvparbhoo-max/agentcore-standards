@@ -7,8 +7,10 @@
 #
 # The AgentCore CLI removes resources by dropping them from the project and
 # deploying the empty project (`agentcore remove all`, then `agentcore deploy`).
-# CDK then destroys the foundation. In environments with `removal: retain` the
-# KMS key, the log group, and the secrets stay behind on purpose.
+# CloudFormation then deletes the edge stack (front door) by name, the CLI
+# removes AgentCore resources, and CDK destroys the foundation. In environments
+# with `removal: retain` the KMS key, log group, secrets, and DynamoDB tables
+# stay behind on purpose.
 set -uo pipefail
 
 PATTERN="${1:?usage: scripts/teardown.sh <pattern> <env>}"
@@ -33,6 +35,16 @@ CDK_DEFAULT_ACCOUNT="$(aws sts get-caller-identity --query Account --output text
 export CDK_DEFAULT_ACCOUNT
 PROJECT_DIR="$ROOT/build/deploy/$ENV_NAME/$PROJECT"
 failed=0
+
+EDGE="$PROJECT-$ENV_NAME-edge"
+echo "== edge stack"
+if aws cloudformation describe-stacks --stack-name "$EDGE" >/dev/null 2>&1; then
+  # Destroy by name so teardown does not need FRONT_DOOR_ISSUER to synth the app.
+  aws cloudformation delete-stack --stack-name "$EDGE" || failed=1
+  aws cloudformation wait stack-delete-complete --stack-name "$EDGE" || failed=1
+else
+  echo "no edge stack $EDGE"
+fi
 
 if [ -d "$PROJECT_DIR/agentcore" ]; then
   echo "== agentcore resources"

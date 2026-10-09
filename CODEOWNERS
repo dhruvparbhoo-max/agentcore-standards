@@ -29,6 +29,7 @@
 /primitives/completion/         @agentcore/platform
 /primitives/langchain/          @agentcore/platform
 /primitives/agent/              @agentcore/platform
+/primitives/front-door/         @agentcore/platform
 /primitives/gateway-tools/      @agentcore/platform
 
 /patterns/                      @agentcore/platform

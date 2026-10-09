@@ -1,7 +1,7 @@
 # Production. `deployment.mode: production` turns on the production gate: a deploy refuses to
-# start while any control below is false. The platform controls are switched on as each one
-# ships (front door and quotas arrive with primitives/front-door). Replace the alarm inbox
-# before a real deploy. Shape follows sample-agentcore-enterprise-platform presets/production.yaml.
+# start while any control below is false. The guardrail service is still off, so a production
+# deploy refuses until it ships. Replace the alarm inbox before a real deploy. Shape follows
+# sample-agentcore-enterprise-platform presets/production.yaml.
 environment: prod
 deployment:
   mode: production
@@ -13,13 +13,37 @@ secrets:
   prefix: agentcore/prod
   rotation_days: 30
 controls:
-  front_door: false
+  front_door: true
   guardrails_service: false
-  audit_store: false
-  kill_switch: false
-  quotas: false
+  audit_store: true
+  kill_switch: true
+  quotas: true
 observability:
   alarms: true
   alarm_email: ops@example.invalid
 network:
   mode: VPC
+  nat_gateways: 1
+  # Names the runtime may resolve besides AWS service names. The DNS Firewall blocks the rest.
+  allowed_domains: []
+  code_interpreter: false
+front_door:
+  quotas:
+    user_daily: 200
+    team_daily: 2000
+    agent_daily: 10000
+    user_per_minute: 10
+  user_monthly_usd: 50
+  team_monthly_usd: 1000
+  lease_grace_s: 30
+  throttle:
+    rate: 50
+    burst: 100
+  # USD per million tokens. Check https://aws.amazon.com/bedrock/pricing/ for the region before relying on them.
+  prices:
+    "eu.anthropic.claude-sonnet-4-5-20250929-v1:0":
+      input_per_million: 3.0
+      output_per_million: 15.0
+    "eu.anthropic.claude-haiku-4-5-20251001-v1:0":
+      input_per_million: 1.0
+      output_per_million: 5.0

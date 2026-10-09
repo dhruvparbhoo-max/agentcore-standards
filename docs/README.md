@@ -24,6 +24,7 @@ Nothing here is a Runtime verdict. A mock judge `PASS` proves the in-process ent
 | Prefix, status bar, compression | [runtime/context-budget.md](runtime/context-budget.md) |
 | System prompt and injection hygiene | [prompts/context-engineering.md](prompts/context-engineering.md) |
 | Production miss to eval, doc, or skill | [ops/experience-loop.md](ops/experience-loop.md) |
+| On-call, escalation, RACI | [ops/operating-model.md](ops/operating-model.md) |
 | Capability maps | [capability-maps/README.md](capability-maps/README.md) |
 | Which skill to add | [skills/pstack-vs-agentcore.md](skills/pstack-vs-agentcore.md) |
 

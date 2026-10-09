@@ -51,24 +51,76 @@ def test_answer_matches_its_schema(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_production_gate_refuses_until_platform_controls_exist() -> None:
     problems = production_problems(load_pattern(PATTERN), load_environment("prod", repo_root=REPO), repo_root=REPO)
-    assert "controls.front_door: must be on in production" in problems
+    assert "controls.front_door: must be on in production" not in problems
+    assert "controls.guardrails_service: must be on in production" in problems
 
 
 def test_development_gate_passes() -> None:
     assert production_problems(load_pattern(PATTERN), load_environment("dev", repo_root=REPO), repo_root=REPO) == []
 
 
+def _infra() -> dict[str, Any]:
+    spec_path = PATTERN / "infra" / "app.py"
+    namespace: dict[str, Any] = {"__name__": "template_infra", "__file__": str(spec_path)}
+    exec(compile(spec_path.read_text(encoding="utf-8"), str(spec_path), "exec"), namespace)
+    return namespace
+
+
 def test_infra_synthesises() -> None:
     import aws_cdk as cdk
     from aws_cdk import assertions
 
-    spec_path = PATTERN / "infra" / "app.py"
-    namespace: dict[str, Any] = {"__name__": "template_infra", "__file__": str(spec_path)}
-    exec(compile(spec_path.read_text(encoding="utf-8"), str(spec_path), "exec"), namespace)
-    stack = namespace["build"](cdk.App(), "dev")
+    app = cdk.App()
+    stack = _infra()["build"](app, "dev")
     template = assertions.Template.from_stack(stack)
     template.resource_count_is("AWS::ECR::Repository", 1)
     template.has_resource_properties("AWS::Logs::LogGroup", {"RetentionInDays": 90})
+    template.resource_count_is("AWS::Bedrock::ApplicationInferenceProfile", 2)
+    template.resource_count_is("AWS::EC2::VPC", 0)
+    names = [child.node.id for child in app.node.children]
+    assert stack.node.id in names
+    assert f"{stack.node.id}-edge" not in names
+
+
+def test_prod_infra_has_the_network_and_the_edge(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import aws_cdk as cdk
+    from agentcore_agent.hardening import front_door_policy
+    from aws_cdk import assertions
+
+    arn = "arn:" + "aws:bedrock-agentcore:eu-west-2:000000000000:runtime/template-abc"
+    policy = tmp_path / "policy.json"
+    document = front_door_policy(load_pattern(PATTERN), load_environment("prod", repo_root=REPO), runtime_arn=arn)
+    policy.write_text(json.dumps(document), encoding="utf-8")
+    monkeypatch.setenv("FRONT_DOOR_ISSUER", "https://issuer.example.invalid")
+    monkeypatch.setenv("FRONT_DOOR_AUDIENCE", "client")
+    images: list[str] = []
+
+    def no_build(base_image: str = "") -> Any:
+        images.append(base_image)
+
+        def image(scope: Any, handler: str) -> Any:
+            name = handler.split(".")[-2]
+            repository = cdk.aws_ecr.Repository.from_repository_name(scope, f"Repo{name}", "front-door")
+            return cdk.aws_lambda.DockerImageCode.from_ecr(repository, cmd=[handler])
+
+        return image
+
+    namespace = _infra()
+    namespace["image_asset"] = no_build
+    with pytest.raises(ValueError, match="front_door_policy"):
+        namespace["build"](cdk.App(), "prod", runtime_arn=arn)
+    app = cdk.App()
+    stack = namespace["build"](app, "prod", runtime_arn=arn, front_door_policy=str(policy))
+    foundation = assertions.Template.from_stack(stack)
+    foundation.resource_count_is("AWS::EC2::VPC", 1)
+    foundation.resource_count_is("AWS::Route53Resolver::FirewallRuleGroupAssociation", 1)
+    edge = assertions.Template.from_stack(app.node.find_child(f"{stack.node.id}-edge"))
+    edge.resource_count_is("AWS::DynamoDB::GlobalTable", 2)
+    edge.resource_count_is("AWS::ApiGatewayV2::Api", 1)
+    alarms = edge.find_resources("AWS::CloudWatch::Alarm")
+    assert all("Check first" in json.dumps(body) for body in alarms.values())
+    assert len(alarms) == 8
+    assert images == [""]
 
 
 @pytest.mark.skipif(shutil.which("agentcore") is None, reason="AgentCore CLI (@aws/agentcore) is not installed")

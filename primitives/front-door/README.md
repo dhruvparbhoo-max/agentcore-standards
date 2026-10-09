@@ -25,7 +25,7 @@ The only way to start an AgentCore Runtime session. Chat, API, job, schedule, ev
 | `agentcore_front_door.handlers.chat.handler` | `POST /agents/{agent}/invoke` on the HTTP API | People, through the JWT authorizer |
 | `agentcore_front_door.handlers.job.handler` | Direct Lambda invoke | The triggers worker, with IAM |
 
-The image is `primitives/front-door/Dockerfile` (`lambda-front-door` in `scripts/images.py`), on the shared Lambda base. The CDK construct is `agentcore_constructs.FrontDoor`. Operators use `agentcore-front-door switch off agent <name> --reason ... --by ...`.
+The image is `primitives/front-door/Dockerfile` (`lambda-front-door` in `scripts/images.py`), on the shared Lambda base. The CDK construct is `agentcore_constructs.FrontDoor` (tables, JWT HTTP API, least-privilege role). Operators use `agentcore-front-door switch off agent <name> --reason ... --by ...`. Runbooks: [kill-switch](../../docs/runbooks/kill-switch.md), [quotas](../../docs/runbooks/quotas.md).
 
 ## Sources
 

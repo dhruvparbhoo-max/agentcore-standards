@@ -210,3 +210,15 @@ def test_service_agents_take_service_callers_and_audit_the_consent(runtime: Fake
 def test_undeployed_agent_is_refused(runtime: FakeRuntime, store: MemoryStore) -> None:
     with pytest.raises(Refused, match="no runtime"):
         _call(make_door(runtime, store, policies=[policy(runtime_arn="")]))
+
+
+def test_a_profile_arn_is_priced_as_the_profile_it_copies() -> None:
+    from agentcore_front_door.cost import REPORTED, UNPRICED, Usage, price_usage
+    from agentcore_front_door.policy import Price
+
+    arn = "arn:" + "aws:bedrock:eu-west-2:111111111111:application-inference-profile/abc"
+    usage = Usage(model_calls=1, input_tokens=1_000_000, output_tokens=0, model=arn, reported=True)
+    prices = {"eu.model": Price(3.0, 15.0)}
+    assert price_usage(usage, prices).source == UNPRICED
+    priced = price_usage(usage, prices, aliases={arn: "eu.model"})
+    assert (priced.usd, priced.source) == (3.0, REPORTED)

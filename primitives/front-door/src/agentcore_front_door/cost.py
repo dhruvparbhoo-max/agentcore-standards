@@ -49,10 +49,11 @@ class Cost:
     source: str
 
 
-def price_usage(usage: Usage, prices: Mapping[str, Price]) -> Cost:
+def price_usage(usage: Usage, prices: Mapping[str, Price], *, aliases: Mapping[str, str] | None = None) -> Cost:
+    """``aliases`` maps an agent's application inference profile ARN to the geographic id it copies."""
     if not usage.reported:
         return Cost(0.0, UNREPORTED)
-    price = prices.get(usage.model)
+    price = prices.get(usage.model) or prices.get((aliases or {}).get(usage.model, ""))
     if price is None:
         return Cost(0.0, UNPRICED)
     usd = (usage.input_tokens * price.input_per_million + usage.output_tokens * price.output_per_million) / 1_000_000

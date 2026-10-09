@@ -18,6 +18,7 @@ from agentcore_agent.environment import EnvironmentConfigError, load_environment
 from agentcore_agent.production import production_problems
 from agentcore_agent.registry import load_tool, publish, tool_problems
 from agentcore_agent.release import release_id, release_inputs
+from agentcore_agent.stack_outputs import load_outputs, model_aliases
 
 Echo = Callable[[str], None]
 
@@ -83,6 +84,7 @@ def _parser() -> argparse.ArgumentParser:
     deploy.add_argument("--endpoint-version", type=int)
     deploy.add_argument("--build-arg", action="append", default=[], help="NAME=VALUE for the image build")
     deploy.add_argument("--gateway-arn", default="")
+    deploy.add_argument("--outputs", type=Path, action="append", default=[], help="CDK outputs file (repeatable)")
     deploy.set_defaults(run=_render_deploy)
 
     verify = commands.add_parser("verify", help="compare the deployed runtime with pattern.yaml (needs AWS)")
@@ -102,6 +104,7 @@ def _parser() -> argparse.ArgumentParser:
     policy.add_argument("--runtime-arn", default="")
     policy.add_argument("--workload-name", default="")
     policy.add_argument("--release-id", default="")
+    policy.add_argument("--outputs", type=Path, action="append", default=[], help="CDK outputs file (repeatable)")
     policy.add_argument("--output", type=Path, required=True)
     policy.set_defaults(run=_front_door_policy)
 
@@ -236,6 +239,7 @@ def _render_deploy(args: argparse.Namespace, echo: Echo) -> int:
         endpoint_version=args.endpoint_version,
         build_args=build_args,
         gateway_arn=args.gateway_arn,
+        outputs=load_outputs(*args.outputs),
     )
     echo(f"wrote {path}")
     return 0
@@ -279,12 +283,16 @@ def _front_door_policy(args: argparse.Namespace, echo: Echo) -> int:
 
     config = load_pattern(args.pattern)
     environment = load_environment(args.env, repo_root=args.repo_root)
+    model = config.section("model")
     document = front_door_policy(
         config,
         environment,
         runtime_arn=args.runtime_arn,
         workload_name=args.workload_name,
         release_id=args.release_id,
+        model_aliases=model_aliases(
+            load_outputs(*args.outputs), primary=str(model["primary"]), fallback=str(model.get("fallback") or "")
+        ),
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")

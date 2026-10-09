@@ -17,6 +17,16 @@ from agentcore_agent.agentcore_json import (
 )
 from agentcore_agent.environment import load_environment
 from agentcore_agent.release import build_digest, release_id
+from agentcore_agent.stack_outputs import (
+    FALLBACK_PROFILE,
+    MODEL_PROFILE,
+    NETWORK_SECURITY_GROUPS,
+    NETWORK_SUBNETS,
+    NETWORK_VPC,
+    load_outputs,
+    model_aliases,
+    network_config,
+)
 
 REPO = Path(__file__).resolve().parents[3]
 CLI = shutil.which("agentcore")
@@ -83,6 +93,64 @@ def test_deploy_copy_has_the_release_and_endpoint(make_pattern: Callable[..., Pa
     assert Path(runtime["buildContextPath"]).is_absolute()
     targets = json.loads((path.parent / "aws-targets.json").read_text(encoding="utf-8"))
     assert targets[0]["region"] == "eu-west-2"
+
+
+def test_vpc_deploy_needs_the_foundation_outputs(make_pattern: Callable[..., Path], tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="VPC"):
+        render_deploy_project(
+            load_pattern(make_pattern()),
+            environment=load_environment("prod", repo_root=REPO),
+            destination=tmp_path / "deploy",
+            repo_root=REPO,
+            account="111111111111",
+            release_id="rel-x",
+        )
+
+
+def test_deploy_copy_takes_network_and_model_profiles(make_pattern: Callable[..., Path], tmp_path: Path) -> None:
+    arn = "arn:" + "aws:bedrock:eu-west-2:111111111111:application-inference-profile/abc"
+    fallback = "arn:" + "aws:bedrock:eu-west-2:111111111111:application-inference-profile/def"
+    path = render_deploy_project(
+        load_pattern(make_pattern()),
+        environment=load_environment("prod", repo_root=REPO),
+        destination=tmp_path / "deploy",
+        repo_root=REPO,
+        account="111111111111",
+        release_id="rel-x",
+        outputs={
+            MODEL_PROFILE: arn,
+            FALLBACK_PROFILE: fallback,
+            NETWORK_SUBNETS: "subnet-aaa,subnet-bbb",
+            NETWORK_SECURITY_GROUPS: "sg-aaa",
+            NETWORK_VPC: "vpc-aaa",
+        },
+    )
+    runtime = json.loads(path.read_text(encoding="utf-8"))["runtimes"][0]
+    variables = {item["name"]: item["value"] for item in runtime["envVars"]}
+    assert runtime["networkMode"] == "VPC"
+    assert runtime["networkConfig"] == {
+        "subnets": ["subnet-aaa", "subnet-bbb"],
+        "securityGroups": ["sg-aaa"],
+        "vpcId": "vpc-aaa",
+    }
+    assert variables["AGENTCORE_MODEL_PROFILE_ARN"] == arn
+    assert variables["AGENTCORE_FALLBACK_PROFILE_ARN"] == fallback
+
+
+def test_stack_outputs_merge_and_alias_profiles(tmp_path: Path) -> None:
+    first = tmp_path / "a.json"
+    first.write_text(json.dumps({"StackA": {MODEL_PROFILE: "arn:p", NETWORK_SUBNETS: "subnet-1"}}), encoding="utf-8")
+    second = tmp_path / "b.json"
+    second.write_text(
+        json.dumps({"StackB": {FALLBACK_PROFILE: "arn:f", NETWORK_SECURITY_GROUPS: "sg-1", NETWORK_VPC: "vpc-1"}}),
+        encoding="utf-8",
+    )
+    outputs = load_outputs(first, second)
+    assert network_config(outputs) == {"subnets": ["subnet-1"], "securityGroups": ["sg-1"], "vpcId": "vpc-1"}
+    assert model_aliases(outputs, primary="eu.primary", fallback="eu.fallback") == {
+        "arn:p": "eu.primary",
+        "arn:f": "eu.fallback",
+    }
 
 
 def test_deploy_copy_refuses_a_bad_account(make_pattern: Callable[..., Path], tmp_path: Path) -> None:

@@ -185,7 +185,7 @@ class FrontDoor:
         latency_ms = round((time.perf_counter() - started) * 1000, 1)
 
         usage = Usage.from_reply(body)
-        cost = price_usage(usage, self.settings.prices)
+        cost = price_usage(usage, self.settings.prices, aliases=policy.model_aliases)
         breaches: list[str] = []
         if usage.model_calls > policy.max_steps:
             breaches.append("steps")

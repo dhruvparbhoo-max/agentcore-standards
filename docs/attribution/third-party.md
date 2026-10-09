@@ -14,8 +14,10 @@ Each copied file also names its source in its own header, so the credit stays wi
 | SAMPLES | awslabs/amazon-bedrock-agentcore-samples | Apache-2.0 | Keep the NOTICE and the licence |
 | LOOM | awslabs/loom | Apache-2.0 | Keep the NOTICE and the licence |
 | SOCIAL | aws-samples/sample-social-intelligence-agents | MIT-0 | None; credited anyway |
+| AGENT-PLATFORM | aws-samples/sample-agent-platform-with-agentcore | MIT-0 | None; credited anyway |
 | CICD | aws-samples/sample-bedrock-agentcore-runtime-cicd | MIT-0 | None; credited anyway |
 | CWL-DP | aws-samples/cloudwatch-logs-data-protection-policies-with-cdk | MIT-0 | None; credited anyway |
+| DNS-FW | aws-samples/sample-route53-iac-with-cdk | MIT-0 | None; credited anyway |
 | BOISE | Boise-State-Development/agentcore-public-stack | PolyForm Noncommercial 1.0.0 | **Not copied.** See below |
 
 ## Step 3: starter kits
@@ -37,6 +39,18 @@ Each copied file also names its source in its own header, so the credit stays wi
 | `patterns/_template/policies/tools.cedar` | ENTERPRISE `control-library/cedar/gateway-default/10-permit-read-tools.cedar` | One permit per tool, scoped to the gateway resource |
 | `patterns/_template/pattern.yaml` (`owner`, `alert_route`, `runbook_url`) | ENTERPRISE `use-cases/_template/manifest.yaml` | Validated `owner:` field; `alert_route` and `runbook_url` added next to it (the references note no repo has them) |
 
+## Step 4: front door, network, alarms
+
+| This repo | Source | What was taken |
+| --- | --- | --- |
+| `primitives/front-door/` (caller, sessions, governance, door, audit) | AGENT-PLATFORM (aws-samples/sample-agent-platform-with-agentcore) session binding, `governance_service.py`, audit rows, JWKS verifiers, the single invocation pipeline (MIT-0) | Verified caller, HMAC session ids, one lease per session, quotas, kill switches, fail-closed audit |
+| `primitives/front-door/` (usage / retryable codes) | aws-samples/sample-eval-first-building-enterprise-agents-with-agentcore `evaluators/mtg_eval/shared/llm_client.py` (MIT-0) | Token usage on the cost record; retryable model faults |
+| `infra/constructs/src/agentcore_constructs/front_door.py` | SOCIAL `infra/stacks/social_intelligence_stack.py` (PITR, RETAIN); AGENT-PLATFORM (HTTP API + JWT) | Two tables, JWT HTTP API, `PutItem` only on audit, runtime invoke scoped to named ARNs |
+| `infra/constructs/src/agentcore_constructs/networking.py` | ENTERPRISE `stacks/networking_stack.py`; FAST `docs/DEPLOYMENT.md` | Private-with-egress, 443-only SG, the full endpoint list, org-scoped AgentCore endpoint policy, SSM parameters |
+| `infra/constructs/src/agentcore_constructs/networking.py` (DNS Firewall) | DNS-FW `examples/dns_firewall_example.py` | `CfnFirewallDomainList`, rule group, association with mutation protection, query logging, blocked-queries metric and alarm. Allow-list then block `*` (the sample blocked named bad domains; DNS lookups have been used to move data out) |
+| `infra/constructs/src/agentcore_constructs/observability.py` | ENTERPRISE `stacks/observability_stack.py` (lines 204 to 370) | SNS + email, SystemErrors / Throttles / p99, "Check first" descriptions, missing data not breaching, dashboard |
+| `docs/ops/operating-model.md` | ENTERPRISE `docs/OPERATING_MODEL.md` | Owner roles, on-call, escalation, RACI; TBD placeholders left in |
+
 ## Where no AgentCore reference exists
 
 The references name an AWS document or a non-AgentCore sample for these gaps. Each file cites it.
@@ -46,6 +60,8 @@ The references name an AWS document or a non-AgentCore sample for these gaps. Ea
 | `infra/rotation/handler.py`, `RotationFunction` in `foundation.py` | AWS CDK `secret.add_rotation_schedule` docs; Secrets Manager rotation function template |
 | `scripts/sign-and-sbom.sh` | ECR managed signing docs (`put-signing-configuration`, `describe-image-signing-status`); `notation verify`; Inspector `create-sbom-export` docs |
 | `.trivyignore.yaml` and the Trivy step | Trivy as the pipeline image gate. The reference was BOISE `.github/workflows/nightly.yml`, which cannot be copied (below); Trivy's own documented flags are used instead |
+| `infra/constructs/src/agentcore_constructs/model_profile.py` | Bedrock user guide, "Create an application inference profile" (`AWS::Bedrock::ApplicationInferenceProfile`, `ModelSource.CopyFrom`). Team tag in the spirit of LOOM's group tag | Per-agent model key; no AgentCore repo creates application inference profiles |
+| `infra/constructs/.../networking.py` Code Interpreter | `AWS::BedrockAgentCore::CodeInterpreterCustom` (CloudFormation); docs/design/library.md "Code the model wrote" | VPC mode with its own role, behind the DNS Firewall |
 
 ## BOISE substitutions
 
