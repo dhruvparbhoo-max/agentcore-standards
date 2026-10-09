@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Policy Q&A answer",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "result", "release_id"],
+  "properties": {
+    "status": {"enum": ["completed", "paused", "blocked"]},
+    "result": {"type": "string"},
+    "release_id": {"type": "string"},
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model_calls", "input_tokens", "output_tokens", "model"],
+      "properties": {
+        "model_calls": {"type": "integer", "minimum": 0},
+        "input_tokens": {"type": "integer", "minimum": 0},
+        "output_tokens": {"type": "integer", "minimum": 0},
+        "model": {"type": "string"}
+      }
+    },
+    "approval": {
+      "type": "object",
+      "required": ["token_id", "tool", "args_hash", "actor_id", "action", "reviewers", "expires_at"],
+      "properties": {
+        "token_id": {"type": "string"},
+        "tool": {"type": "string"},
+        "args_hash": {"type": "string"},
+        "actor_id": {"type": "string"},
+        "action": {"enum": ["send", "spend", "delete", "change"]},
+        "reviewers": {"enum": [1, 2]},
+        "expires_at": {"type": "string"},
+        "arguments": {"type": "object"},
+        "summary": {"type": "string"}
+      }
+    }
+  }
+}

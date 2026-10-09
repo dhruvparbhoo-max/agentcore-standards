@@ -1,0 +1,7 @@
+{
+  "description": "A question with no passage. The empty sentence is the success.",
+  "session_id": "local-policy-qa-session-000000000000002",
+  "actor_id": "acme/employee/alice",
+  "payload": {"prompt": "What is the quantum teleportation allowance?"},
+  "expect": {"status": "completed", "contains": "I couldn't find this in the policies"}
+}

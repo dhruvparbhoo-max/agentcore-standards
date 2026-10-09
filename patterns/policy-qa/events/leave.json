@@ -1,0 +1,7 @@
+{
+  "description": "A leave question. trigger is none, so this is the front door payload, not a queue event.",
+  "session_id": "local-policy-qa-session-000000000000001",
+  "actor_id": "acme/employee/alice",
+  "payload": {"prompt": "How many paid leave days do full-time employees get each year?"},
+  "expect": {"status": "completed", "contains": "HR-Leave-2024"}
+}

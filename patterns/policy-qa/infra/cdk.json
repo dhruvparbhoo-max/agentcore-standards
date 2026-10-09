@@ -1,0 +1,6 @@
+{
+  "app": "uv run --frozen python app.py",
+  "context": {
+    "env": "dev"
+  }
+}
