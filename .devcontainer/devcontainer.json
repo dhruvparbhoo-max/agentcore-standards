@@ -1,0 +1,20 @@
+{
+  "name": "agentcore-standards",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+    "source=${localEnv:HOME}/.aws,target=/home/dev/.aws,type=bind,readonly"
+  ],
+  "remoteUser": "dev",
+  "postCreateCommand": "uv sync --all-packages --locked",
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "charliermarsh.ruff", "ms-python.mypy-type-checker"]
+    }
+  }
+}
