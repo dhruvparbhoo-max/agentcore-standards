@@ -27,6 +27,8 @@ members = [
   "primitives/completion",
   "primitives/langchain",
   "primitives/agent",
+  "patterns/_template/agent",
+  "infra/constructs",
   "templates/minimal-agent",
   "templates/agent-with-tools",
 ]
@@ -76,11 +78,14 @@ files = [
   "primitives/completion/src",
   "primitives/langchain/src",
   "primitives/agent/src",
+  "patterns/_template/agent",
+  "infra/constructs/src",
+  "primitives/gateway-tools/_template/template_tool",
   "templates/minimal-agent/src",
   "templates/agent-with-tools/src",
   "scripts/check_boundaries.py",
 ]
-mypy_path = "templates/minimal-agent/src:templates/agent-with-tools/src"
+mypy_path = "patterns/_template/agent:primitives/gateway-tools/_template:templates/minimal-agent/src:templates/agent-with-tools/src"
 
 [[tool.mypy.overrides]]
 module = [
@@ -108,11 +113,16 @@ testpaths = [
   "primitives/completion/tests",
   "primitives/langchain/tests",
   "primitives/agent/tests",
+  "patterns/_template/tests",
+  "primitives/gateway-tools/_template/tests",
+  "infra/constructs/tests",
   "templates/minimal-agent/tests",
   "templates/agent-with-tools/tests",
   "tests",
 ]
 pythonpath = [
+  "patterns/_template/agent",
+  "primitives/gateway-tools/_template",
   "templates/minimal-agent/src",
   "templates/agent-with-tools/src",
   "primitives/tools/tests",

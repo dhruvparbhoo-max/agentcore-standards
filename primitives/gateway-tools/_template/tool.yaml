@@ -1,0 +1,24 @@
+# One Gateway tool. Copy this folder to primitives/gateway-tools/<name> and rename.
+# `agentcore-kit tool-check` validates this file; `agentcore-kit publish-tool` lists it in Agent Registry.
+name: save_note
+description: Save a short note for the caller. Saving twice with one key stores it once.
+version: 0.1.0
+owner: platform-team@example.com
+action: change
+idempotency: required
+handler: template_tool.handler.handler
+secrets: []
+input_schema:
+  type: object
+  additionalProperties: false
+  required: [idempotency_key, actor_id, text]
+  properties:
+    idempotency_key: {type: string, minLength: 8, maxLength: 128}
+    actor_id: {type: string, minLength: 1}
+    text: {type: string, minLength: 1, maxLength: 2000}
+output_schema:
+  type: object
+  required: [status, note_id]
+  properties:
+    status: {enum: [created, replayed]}
+    note_id: {type: string}
