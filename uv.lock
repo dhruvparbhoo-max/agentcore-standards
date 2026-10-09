@@ -70,6 +70,7 @@ version = "0.1.0"
 source = { editable = "primitives/agent" }
 dependencies = [
     { name = "agentcore-approvals" },
+    { name = "agentcore-front-door" },
     { name = "agentcore-guardrails" },
     { name = "agentcore-langchain" },
     { name = "agentcore-memory" },
@@ -89,6 +90,7 @@ strands = [
 [package.metadata]
 requires-dist = [
     { name = "agentcore-approvals", editable = "primitives/approvals" },
+    { name = "agentcore-front-door", editable = "primitives/front-door" },
     { name = "agentcore-guardrails", editable = "primitives/guardrails" },
     { name = "agentcore-langchain", editable = "primitives/langchain" },
     { name = "agentcore-memory", editable = "primitives/memory" },

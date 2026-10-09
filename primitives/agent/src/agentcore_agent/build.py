@@ -26,7 +26,7 @@ from agentcore_tracing import TurnLog, emit_turn_log, turn_span
 
 from agentcore_agent.approvals import ApprovalStore, InMemoryApprovalStore, PauseRequest, PauseTicket, utc_now
 from agentcore_agent.config import PatternConfig
-from agentcore_agent.frameworks.base import Loop, LoopOutcome, ToolSpec, UnsupportedFramework
+from agentcore_agent.frameworks.base import Loop, LoopOutcome, LoopUsage, ToolSpec, UnsupportedFramework
 from agentcore_agent.scripted import Script
 from agentcore_agent.untrusted import wrap
 
@@ -48,6 +48,7 @@ class TurnResult:
     ticket: PauseTicket | None = None
     tools_called: tuple[str, ...] = ()
     blocked_reason: str | None = None
+    usage: LoopUsage | None = None
 
 
 @dataclass(frozen=True)
@@ -192,10 +193,13 @@ class AgentSession:
                 release_id=self.release_id,
                 ticket=ticket,
                 tools_called=outcome.tools_called,
+                usage=outcome.usage,
             )
         shown = self.guard.apply_output(outcome.text)
         if isinstance(shown, Blocked):
-            return self._blocked(session_id, shown.reason, WITHHELD_REPLY, outcome.tools_called)
+            return replace(
+                self._blocked(session_id, shown.reason, WITHHELD_REPLY, outcome.tools_called), usage=outcome.usage
+            )
         self._remember(session_id, actor_id, user_text, shown.text)
         return TurnResult(
             status="completed",
@@ -203,6 +207,7 @@ class AgentSession:
             session_id=session_id,
             release_id=self.release_id,
             tools_called=outcome.tools_called,
+            usage=outcome.usage,
         )
 
     def _prompt(self, user_text: str, actor_id: str) -> str:

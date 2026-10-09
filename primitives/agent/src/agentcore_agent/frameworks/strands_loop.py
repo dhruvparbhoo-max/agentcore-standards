@@ -18,7 +18,7 @@ from strands.models.model import Model
 from strands.tools.tools import PythonAgentTool
 from strands.types.interrupt import InterruptResponseContent
 
-from agentcore_agent.frameworks.base import LoopOutcome, ToolSpec
+from agentcore_agent.frameworks.base import LoopOutcome, LoopUsage, ToolSpec
 from agentcore_agent.scripted import Script
 
 APPROVE = "approve"
@@ -77,6 +77,7 @@ class StrandsLoop:
         self._risky = {tool.name: f"{tool.action}: {tool.description}" for tool in self._tools if tool.risky}
         self._agents: dict[str, Agent] = {}
         self._pending: dict[str, str] = {}
+        self._seen: dict[str, tuple[int, int, int]] = {}
 
     def invoke(self, prompt: str, *, thread_id: str) -> LoopOutcome:
         agent = self._agent(thread_id)
@@ -123,6 +124,7 @@ class StrandsLoop:
         return agent
 
     def _outcome(self, result: Any, thread_id: str) -> LoopOutcome:
+        usage = self._usage(result, thread_id)
         if getattr(result, "stop_reason", "") == "interrupt" and result.interrupts:
             interrupt = result.interrupts[0]
             self._pending[thread_id] = interrupt.id
@@ -133,9 +135,32 @@ class StrandsLoop:
                 text="",
                 tool=str(reason.get("tool")) if reason.get("tool") else None,
                 arguments=arguments if isinstance(arguments, Mapping) else {},
+                usage=usage,
             )
         agent = self._agents[thread_id]
-        return LoopOutcome(status="completed", text=str(result).strip(), tools_called=_tools_called(agent.messages))
+        return LoopOutcome(
+            status="completed", text=str(result).strip(), tools_called=_tools_called(agent.messages), usage=usage
+        )
+
+    def _usage(self, result: Any, thread_id: str) -> LoopUsage:
+        """This turn's share of the agent's running totals (``EventLoopMetrics`` accumulate per agent)."""
+        metrics = getattr(result, "metrics", None)
+        totals = getattr(metrics, "accumulated_usage", None) or {}
+        now = (
+            int(getattr(metrics, "cycle_count", 0) or 0),
+            int(totals.get("inputTokens", 0) or 0),
+            int(totals.get("outputTokens", 0) or 0),
+        )
+        before = self._seen.get(thread_id, (0, 0, 0))
+        self._seen[thread_id] = now
+        config = self._model.get_config() if hasattr(self._model, "get_config") else {}
+        model = str(config.get("model_id", "")) if isinstance(config, Mapping) else ""
+        return LoopUsage(
+            model_calls=max(0, now[0] - before[0]),
+            input_tokens=max(0, now[1] - before[1]),
+            output_tokens=max(0, now[2] - before[2]),
+            model=model,
+        )
 
 
 def _tools_called(messages: Sequence[Mapping[str, Any]]) -> tuple[str, ...]:

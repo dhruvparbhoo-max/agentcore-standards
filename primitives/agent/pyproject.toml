@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
   "agentcore-approvals",
+  "agentcore-front-door",
   "agentcore-guardrails",
   "agentcore-langchain",
   "agentcore-memory",
@@ -25,6 +26,7 @@ agentcore-kit = "agentcore_agent.cli:main"
 
 [tool.uv.sources]
 agentcore-approvals = { workspace = true }
+agentcore-front-door = { workspace = true }
 agentcore-guardrails = { workspace = true }
 agentcore-langchain = { workspace = true }
 agentcore-memory = { workspace = true }

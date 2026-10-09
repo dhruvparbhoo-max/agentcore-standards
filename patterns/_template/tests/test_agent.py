@@ -30,7 +30,9 @@ def _context(actor: str = "actor-1") -> RequestContext:
 
 def test_entrypoint_answers(entrypoint: Any) -> None:
     body = entrypoint({"prompt": "hello"}, _context())
+    usage = body.pop("usage")
     assert body == {"status": "completed", "result": "pong:hello", "release_id": "unreleased"}
+    assert usage["model_calls"] == 1
 
 
 def test_entrypoint_refuses_an_unverified_caller(entrypoint: Any) -> None:
