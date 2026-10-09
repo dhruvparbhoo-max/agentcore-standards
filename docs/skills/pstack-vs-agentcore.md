@@ -51,7 +51,7 @@ When the metric is an AgentCore behavior:
 | --- | --- |
 | `skills/agentcore-verify/` | `start` / `invoke` / `capture_traces` / `tear_down`, evidence JSON, author draft. Unit tests and CI do not close the ship gate. |
 | `skills/agentcore-judge/` | A different process re-runs the claimed eval on `AgentCoreRuntimeHarness`. |
-| `skills/agentcore-lease/` | One `primitives/<name>/` or one `templates/<name>/` per PR. |
+| `skills/agentcore-lease/` | One `primitives/<name>/` or one `patterns/<name>/` per PR. |
 | `skills/agentcore-encode-miss/` | Reproduce, add a failing eval or CI gate, confirm red, then fix. |
 | `skills/agentcore-capability-map/` | Edit `docs/capability-maps/` when a driveable surface changes. |
 | `skills/agentcore-eval-dataset/` | Author one eval case: four-part task, deterministic checks, anti-cheat. The ship gate stays `agentcore-judge`. |

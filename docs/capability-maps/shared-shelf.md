@@ -15,4 +15,4 @@ Status: in-process libraries. No Gateway, Memory service, or Runtime PASS.
 | `agentcore-tools` cite | `Corpus.retrieve` | A token overlap returns a `Citation` whose `render()` names the passage id. An unrelated query returns `()`. |
 | `agentcore-langchain` | `registry_callables` inside `bind_turn` | An unpermitted tool returns a `fatal` code and the handler count stays 0. `create_runtime_agent` passes those callables through to `create_agent`. |
 
-Domain templates are not on this map. They import this shelf when they are written.
+Patterns are not on this map. They import this shelf when they are written.

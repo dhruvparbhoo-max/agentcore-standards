@@ -30,17 +30,19 @@ Every pattern in that table has the twelve kit items. None of them has a live Ru
 | Gateway tool folder | `primitives/gateway-tools/` (`_template`, `submit_change`) |
 | Operating model and runbooks | `docs/ops/operating-model.md`, `docs/runbooks/` |
 
+## Golden eval
+
+`patterns/minimal-agent/` is the ping agent that runs `minimal-agent.golden-turn`. Copy `_template/` for new work, not this folder. It is not a twelve-item kit.
+
 ## Not a pattern yet
 
 - A shared streaming UI (`frontend/` is not in the tree).
-- A second agent that the first authenticates to with IAM (the multi-agent rules are in [library.md](design/library.md); `templates/multi-agent/` is still a stub).
+- A second agent that the first authenticates to with IAM (the multi-agent rules are in [library.md](design/library.md)).
 - Prompt caching on.
 - Separate AWS accounts for dev and prod.
 - A live trigger Lambda and DynamoDB job table (ambient uses an in-process `JobStore`).
 - The Bedrock Guardrails **service** (production-check still refuses because `guardrails_service` is off).
 
-## Templates that remain
+## Gone
 
-`templates/minimal-agent/` and `templates/agent-with-tools/` still run their offline judges. They are not patterns. New work copies `patterns/_template/`, not those folders.
-
-`templates/human-in-the-loop/` is gone; use `patterns/human-approval/`. `templates/multi-agent/` is still a stub.
+`templates/` (invoice desk, `minimal-agent` before the move, multi-agent stub, human-in-the-loop stub) and `experiments/` are deleted. Use `patterns/human-approval/` for a pause. The golden-eval ping agent lives at `patterns/minimal-agent/`.

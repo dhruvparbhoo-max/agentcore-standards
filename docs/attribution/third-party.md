@@ -89,7 +89,7 @@ The references name an AWS document or a non-AgentCore sample for these gaps. Ea
 
 No production files were copied in this step. `docs/catalog.md` is original. It cites [Anthropic, Building effective agents](https://www.anthropic.com/engineering/building-effective-agents), the same link already on the library page. The 8 October coverage-review tables stay as the gap list that drove the stack; a 9 October snapshot sits above them.
 
-`templates/human-in-the-loop/` is deleted. Use `patterns/human-approval/`.
+`templates/` is deleted. The golden-eval ping agent moved to `patterns/minimal-agent/`. The invoice desk, multi-agent stub, and human-in-the-loop stub are gone. Use `patterns/human-approval/` for a pause. `experiments/` is deleted.
 
 ## BOISE substitutions
 

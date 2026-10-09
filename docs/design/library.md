@@ -28,7 +28,7 @@ Each pattern will live in `patterns/<name>/` with a README, `pattern.yaml`, `age
 
 A shared UI will live in `frontend/`. The catalogue is [docs/catalog.md](../catalog.md).
 
-`templates/`, `experiments/`, and `skills/` stay until a later change retires them. Templates import primitives. They do not copy primitive source. Nothing under `templates/` or `primitives/` imports `experiments/`.
+`skills/` stay. `templates/` and `experiments/` are gone. Patterns import primitives. They do not copy primitive source. Nothing under `primitives/`, `patterns/`, or `infra/` imports `experiments/`.
 
 The first three patterns are:
 

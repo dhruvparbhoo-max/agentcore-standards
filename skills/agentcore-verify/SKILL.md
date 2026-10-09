@@ -3,7 +3,7 @@ name: agentcore-verify
 description: >
   Prove an AgentCore behavior change on RuntimeHarness and keep the evidence
   JSON. Use after principle-prove-it-works, before calling a package or
-  template change done. Use when the claim is a turn, span, log, cost
+  pattern change done. Use when the claim is a turn, span, log, cost
   attribute, or tool side effect.
 ---
 
@@ -15,18 +15,18 @@ Run **principle-prove-it-works** first. This skill is the surface that principle
 
 ## When
 
-A package or template behavior changed, an eval changed, or someone is about to call that behavior done.
+A package or pattern behavior changed, an eval changed, or someone is about to call that behavior done.
 
 ## Steps
 
-1. Name the eval and the observable. The lane A eval is `minimal-agent.golden-turn` in `templates/minimal-agent/evals/golden_turn.py`.
+1. Name the eval and the observable. The lane A eval is `minimal-agent.golden-turn` in `patterns/minimal-agent/evals/golden_turn.py`.
 2. Run the in-process harness and read the evidence file it writes. `run_eval` always calls `capture_traces` and `tear_down`, including when the assertion fails.
 
 ```bash
-uv run pytest templates/minimal-agent/tests/test_golden_eval.py -m "not runtime"
+uv run pytest patterns/minimal-agent/tests/test_golden_eval.py -m "not runtime"
 ```
 
-For a suite added with the change, call `run_suite` with that template's harness and an `evidence_dir`. `evidence/` is gitignored. The evidence JSON includes spans, logs, status, and failures. It must match the observable. `write_evidence` redacts a resource ARN and records `FAIL`.
+For a suite added with the change, call `run_suite` with that pattern's harness and an `evidence_dir`. `evidence/` is gitignored. The evidence JSON includes spans, logs, status, and failures. It must match the observable. `write_evidence` redacts a resource ARN and records `FAIL`.
 
 3. Put an author draft in the PR: eval name, evidence path, which harness ran, status (`PASS`, `PASS+NOTES`, or `FAIL`), and what this run did not prove.
 4. Hand the ship check to **agentcore-judge**. A different process re-runs the eval. That draft is not the ship verdict.

@@ -36,23 +36,13 @@ jobs:
         run: docker run --rm --user root -v "$PWD":/workspace -w /workspace/patterns/_template "$TOOLCHAIN" agentcore validate
       - name: Judge mock golden eval
         run: >
-          docker run --rm --user root -v "$PWD":/workspace -e PYTHONPATH=templates/minimal-agent/src "$TOOLCHAIN"
+          docker run --rm --user root -v "$PWD":/workspace -e PYTHONPATH=patterns/minimal-agent/src "$TOOLCHAIN"
           bash -c 'uv sync --all-packages --locked -q && python -m minimal_agent.judge --evidence-dir evidence/judge'
       - name: Upload judge evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: minimal-agent-judge-evidence
           path: evidence/judge
-          if-no-files-found: error
-      - name: Judge invoice desk offline
-        run: >
-          docker run --rm --user root -v "$PWD":/workspace -e PYTHONPATH=templates/agent-with-tools/src "$TOOLCHAIN"
-          bash -c 'uv sync --all-packages --locked -q && python -m agent_with_tools.judge --evidence-dir evidence/judge-tools'
-      - name: Upload invoice desk evidence
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: agent-with-tools-judge-evidence
-          path: evidence/judge-tools
           if-no-files-found: error
 
   images:

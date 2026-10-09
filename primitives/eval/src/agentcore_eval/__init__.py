@@ -11,7 +11,7 @@ The eval pack (golden datasets, guardrail fixtures, groundedness, HITL, and the
 optional Evaluators adapter) sits on that harness. ``run_eval`` / ``run_suite``
 remain the ship gate. Offline stand-ins (``PatternGuard``, ``BusinessStub``,
 ``LexicalGroundednessScorer``, ``InMemoryHitlGate``) stay in their modules.
-They are not ``agentcore-guardrails``, Memory, or the human-in-the-loop template.
+They are not ``agentcore-guardrails``, Memory, or ``patterns/human-approval``.
 """
 
 from typing import Any
@@ -74,7 +74,7 @@ def __getattr__(name: str) -> Any:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
     raise ImportError(
         f"{name} is an offline eval stand-in in {module}. "
-        "It is not agentcore-guardrails, agentcore-memory, or templates/human-in-the-loop. "
+        "It is not agentcore-guardrails, agentcore-memory, or patterns/human-approval. "
         "Import it from that module only inside the eval pack."
     )
 

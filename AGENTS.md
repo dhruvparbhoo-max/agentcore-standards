@@ -4,7 +4,7 @@ Read [docs/design/library.md](docs/design/library.md) before writing code. This 
 
 pstack (poteto-mode and its playbooks) is the general method. AgentCore skills under `skills/` add only the RuntimeHarness, judge, lease, gate, eval-dataset, tool-register, loop-verifier, and experience-to-gate steps. The overlap map is [docs/skills/pstack-vs-agentcore.md](docs/skills/pstack-vs-agentcore.md). Do not add a skill that restates pstack. Playbooks distilled from elsewhere live under `docs/` with attribution in [docs/attribution/bojieli-ai-agent-book.md](docs/attribution/bojieli-ai-agent-book.md). Hill-climbing stays the poteto Hillclimb playbook; the command sequence on this repo is [docs/evals/hill-climbing.md](docs/evals/hill-climbing.md). There is no `agentcore-hill-climb` skill.
 
-This repo is **agentcore-standards**: a Python standards library for Amazon Bedrock AgentCore. It is not a platform product. Python 3.12 only. uv workspace, hatchling for publishable packages, templates as applications.
+This repo is **agentcore-standards**: a Python standards library for Amazon Bedrock AgentCore. It is not a platform product. Python 3.12 only. uv workspace, hatchling for publishable packages, patterns as applications.
 
 ## Glossary
 
@@ -18,12 +18,12 @@ Shared libraries live under `primitives/<name>/` (for example `primitives/tracin
 
 - `primitives/agent/` is `agentcore-agent`: `pattern.yaml` loading, `build_agent` over `create_agent`, Strands, and the managed harness, and the `agentcore-kit` command (generate, check-kit, doctor, production-check, verify, post-events).
 - `primitives/gateway-tools/<tool>/` holds one Gateway tool per folder: `tool.yaml` (its Agent Registry listing), the handler, tests, and its own Dockerfile. New tools copy `_template/`.
-- `patterns/<name>/` holds one deployable pattern with the twelve kit items. New patterns copy `patterns/_template/`.
+- `patterns/<name>/` holds one deployable pattern with the twelve kit items. New patterns copy `patterns/_template/`. `patterns/minimal-agent/` is the golden-eval ping agent; it is not a kit.
 - `infra/constructs/` is the CDK constructs a pattern deploys with (foundation, front door, network, alarms, per-agent model profiles); `infra/rotation/` is the rotation Lambda image.
 - `docker/` holds the digest-pinned base images (`base-agent`, `base-lambda`) and the compose stand-ins. `compose.yaml`, `Makefile`, and `.devcontainer/` sit at the root. CI runs in the `.devcontainer` image.
 - `config/environments/<env>.yaml` holds per-environment settings. Account ids never go in git.
 
-`primitives/front-door/` is implemented (no Runtime PASS). `patterns/` holds `_template`, `policy-qa`, `human-approval`, and `ambient`. `templates/` and `experiments/` stay in place until a later step retires them.
+`primitives/front-door/` is implemented (no Runtime PASS). `patterns/` holds `_template`, `policy-qa`, `human-approval`, `ambient`, and the golden-eval ping agent `minimal-agent`. `templates/` and `experiments/` are gone.
 
 ## Leases
 
@@ -33,7 +33,7 @@ One writer per path prefix. Scouts may read anything. Writers need a lease.
 | --- | --- | --- |
 | `primitives/tracing/` | A | implemented |
 | `primitives/eval/` | A | implemented |
-| `templates/minimal-agent/` | A | implemented |
+| `patterns/minimal-agent/` | A | implemented; golden-eval ping agent; no Runtime PASS |
 | `primitives/session/` | B | stub; actor headers are `agentcore-identity` |
 | `primitives/tools/` | C | implemented (registry, compact, cite, catalog) |
 | `primitives/guardrails/` | D | implemented; no Runtime PASS |
@@ -49,8 +49,6 @@ One writer per path prefix. Scouts may read anything. Writers need a lease.
 | `primitives/gateway-tools/` | C | `_template` and `submit_change`; no Runtime PASS |
 | `patterns/` | P | `_template`, `policy-qa`, `human-approval`, `ambient`; no Runtime PASS |
 | `infra/`, `docker/`, `config/` | platform | foundation, front door, network, alarms, model profiles; base images; per-env config |
-| `templates/agent-with-tools/` | F | invoice desk offline; imports the shelf; no Runtime PASS |
-| `templates/multi-agent/` | F | stub |
 | `docs/`, `scripts/`, `.github/` | G | docs and gates |
 | `pyproject.toml`, `uv.lock`, `compose.yaml`, `Makefile`, `.devcontainer/` | platform | serialized; one owner |
 
@@ -58,11 +56,11 @@ One writer per path prefix. Scouts may read anything. Writers need a lease.
 
 Rules:
 
-1. Branch: `agent/<id>/<package-or-template>/<slug>`. One package **or** one template per PR.
+1. Branch: `agent/<id>/<package-or-pattern>/<slug>`. One package **or** one pattern per PR.
 2. Do not edit another lease. If you need a new package API, stop and report the blocker.
 3. Do not edit `pyproject.toml` or `uv.lock` unless your lease includes the platform manifest. Adding a workspace member is a platform change. Declare every workspace dependency explicitly in the member that imports it.
-4. Templates and patterns import packages. They do not copy package source. `scripts/check_boundaries.py` fails the build when they do.
-5. `experiments/` may be messy. Nothing under `templates/`, `primitives/`, `patterns/`, or `infra/` may import it. The same script fails the build when they do.
+4. Patterns import packages. They do not copy package source. `scripts/check_boundaries.py` fails the build when they do.
+5. `experiments/` is gone. Nothing under `primitives/`, `patterns/`, or `infra/` may import it. The same script fails the build when they do.
 6. No resource ARNs, account ids, or secrets in git. `.env.example` is names only.
 7. Do not declare done from `ruff` / `mypy` / unit tests. Those are necessary. A ship verdict is PASS or PASS+NOTES from a **different** process that re-runs the Runtime eval. CI green is not that verdict. No extra human approval on top of a PASS / PASS+NOTES. FAIL or missing evidence blocks merge.
 8. Evals run in the same AWS account as dev. Isolate with agent versions, namespaces, and IAM paths.
@@ -83,7 +81,7 @@ uv run python scripts/check_boundaries.py
 Independent judge (mock path, no AWS). Evidence is `evidence/judge/verdict.json`. Full sequence: [docs/eval-pass-path.md](docs/eval-pass-path.md).
 
 ```bash
-PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge --evidence-dir evidence/judge
+PYTHONPATH=patterns/minimal-agent/src uv run python -m minimal_agent.judge --evidence-dir evidence/judge
 ```
 
 Real Runtime: add `--harness runtime` after `AWS_REGION`, `AGENTCORE_RUNTIME_ARN`, and `AGENTCORE_SPAN_LOG_GROUP` are set. An access key and its secret are a pair; a role needs neither. Missing settings write `SKIPPED` and the runtime judge exits 1. `SKIPPED` is not a ship verdict. `.github/workflows/runtime-evals.yml` runs that judge and fails closed. This repo does not contain a live Runtime PASS.
@@ -92,9 +90,9 @@ Real Runtime: add `--harness runtime` after `AWS_REGION`, `AGENTCORE_RUNTIME_ARN
 
 `agentcore-tools` and the offline eval pack are already on main without an independent Runtime PASS. That landing is a recorded miss, not a precedent.
 
-Do not start a writer on `agentcore-session`, `agentcore-guardrails`, `agentcore-memory`, or an unfinished template until a coordinator leases a free path **and** a separate process records `PASS` or `PASS+NOTES` for `minimal-agent.golden-turn` on `AgentCoreRuntimeHarness`. Scouts may write under `docs/capability-maps/` only.
+Do not start a writer on `agentcore-session`, `agentcore-guardrails`, or `agentcore-memory` until a coordinator leases a free path **and** a separate process records `PASS` or `PASS+NOTES` for `minimal-agent.golden-turn` on `AgentCoreRuntimeHarness`. Scouts may write under `docs/capability-maps/` only.
 
-If your task needs `agentcore-session` and `agentcore-tools` in one PR, split it. Memory writes go through guardrails. The shelf in [docs/playbooks/shared-shelf.md](docs/playbooks/shared-shelf.md) is not an independent Runtime PASS. `templates/agent-with-tools` imports that shelf. `templates/multi-agent/` stays a stub. Use `patterns/human-approval/` for a pause, not a template.
+If your task needs `agentcore-session` and `agentcore-tools` in one PR, split it. Memory writes go through guardrails. The shelf in [docs/playbooks/shared-shelf.md](docs/playbooks/shared-shelf.md) is not an independent Runtime PASS. Use `patterns/human-approval/` for a pause. Multi-agent is not a pattern yet.
 
 ## Hill-climbing
 

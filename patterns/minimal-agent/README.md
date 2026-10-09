@@ -22,7 +22,7 @@ Observable: two turns on one session return `pong:ping` and `pong:again`; each `
 Judge process (this is the PASS path, not the author pytest):
 
 ```bash
-PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge --evidence-dir evidence/judge
+PYTHONPATH=patterns/minimal-agent/src uv run python -m minimal_agent.judge --evidence-dir evidence/judge
 ```
 
 `evidence/judge/verdict.json` is the roll-up. `evidence/judge/minimal-agent.golden-turn.json` is the spans and logs. `--harness runtime` is the real AgentCore Runtime path. Missing settings write `SKIPPED` and exit 1. Details: [docs/eval-pass-path.md](../../docs/eval-pass-path.md).
@@ -30,12 +30,12 @@ PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge --ev
 Author unit check:
 
 ```bash
-uv run pytest templates/minimal-agent/tests/test_golden_eval.py -m "not runtime"
+uv run pytest patterns/minimal-agent/tests/test_golden_eval.py -m "not runtime"
 ```
 
 ## Point the same eval at AgentCore Runtime
 
-1. Deploy this entrypoint (`PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent` is the local server on port 8080; Runtime hosts that same app).
+1. Deploy this entrypoint (`PYTHONPATH=patterns/minimal-agent/src uv run python -m minimal_agent` is the local server on port 8080; Runtime hosts that same app).
 2. Export `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AGENTCORE_RUNTIME_ARN`, and `AGENTCORE_SPAN_LOG_GROUP`. Optional: `AGENTCORE_RUNTIME_QUALIFIER`.
 3. Run `uv run pytest -m runtime`.
 

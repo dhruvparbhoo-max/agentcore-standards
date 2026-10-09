@@ -239,10 +239,10 @@ Pointing this adapter at `AgentCoreRuntimeHarness` is the real Evaluators path. 
 
 ## What you can run today
 
-The golden eval is `minimal-agent.golden-turn`. Details and the real Runtime command: [templates/minimal-agent/README.md](../../templates/minimal-agent/README.md). The independent judge sequence is [docs/eval-pass-path.md](../eval-pass-path.md). A mock `PASS` there is not a Runtime verdict.
+The golden eval is `minimal-agent.golden-turn`. Details and the real Runtime command: [patterns/minimal-agent/README.md](../../patterns/minimal-agent/README.md). The independent judge sequence is [docs/eval-pass-path.md](../eval-pass-path.md). A mock `PASS` there is not a Runtime verdict.
 
 ```bash
-uv run pytest templates/minimal-agent/tests/test_golden_eval.py -m "not runtime"
+uv run pytest patterns/minimal-agent/tests/test_golden_eval.py -m "not runtime"
 uv run pytest -m runtime
 ```
 

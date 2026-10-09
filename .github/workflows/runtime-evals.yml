@@ -27,7 +27,7 @@ jobs:
           AGENTCORE_SPAN_LOG_GROUP: ${{ secrets.AGENTCORE_SPAN_LOG_GROUP }}
           AGENTCORE_APP_LOG_GROUP: ${{ secrets.AGENTCORE_APP_LOG_GROUP }}
         run: |
-          PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge \
+          PYTHONPATH=patterns/minimal-agent/src uv run python -m minimal_agent.judge \
             --harness runtime \
             --evidence-dir evidence/judge
       - name: Upload Runtime judge evidence
@@ -37,65 +37,3 @@ jobs:
           name: runtime-judge-evidence
           path: evidence/judge
           if-no-files-found: error
-
-  # Fail-closed gate for the invoice desk. Missing settings write SKIPPED and
-  # the judge exits 1, the same rule as the minimal-agent job above.
-  agent-with-tools-runtime:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-        with:
-          python-version: "3.12"
-          enable-cache: true
-      - name: Install workspace
-        run: uv sync --all-packages --frozen
-      - name: Resolve AWS auth mode
-        id: aws
-        env:
-          AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: |
-          if [ -n "$AWS_ROLE_TO_ASSUME" ]; then
-            echo "mode=oidc" >> "$GITHUB_OUTPUT"
-          elif [ -n "$AWS_ACCESS_KEY_ID" ] && [ -n "$AWS_SECRET_ACCESS_KEY" ]; then
-            echo "mode=keys" >> "$GITHUB_OUTPUT"
-          else
-            echo "mode=none" >> "$GITHUB_OUTPUT"
-          fi
-      - name: Configure AWS credentials from OIDC
-        if: steps.aws.outputs.mode == 'oidc'
-        uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7 # v6.0.0
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          aws-region: ${{ secrets.AWS_REGION }}
-      - name: Invoice desk judge with access keys
-        if: steps.aws.outputs.mode == 'keys'
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AGENTCORE_RUNTIME_ARN: ${{ secrets.AGENTCORE_RUNTIME_ARN }}
-          AGENTCORE_RUNTIME_QUALIFIER: ${{ secrets.AGENTCORE_RUNTIME_QUALIFIER }}
-          AGENTCORE_SPAN_LOG_GROUP: ${{ secrets.AGENTCORE_SPAN_LOG_GROUP }}
-        run: PYTHONPATH=templates/agent-with-tools/src uv run python -m agent_with_tools.judge --harness runtime --evidence-dir evidence/judge-tools
-      - name: Invoice desk judge with OIDC or missing settings
-        if: steps.aws.outputs.mode != 'keys'
-        env:
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AGENTCORE_RUNTIME_ARN: ${{ secrets.AGENTCORE_RUNTIME_ARN }}
-          AGENTCORE_RUNTIME_QUALIFIER: ${{ secrets.AGENTCORE_RUNTIME_QUALIFIER }}
-          AGENTCORE_SPAN_LOG_GROUP: ${{ secrets.AGENTCORE_SPAN_LOG_GROUP }}
-        run: PYTHONPATH=templates/agent-with-tools/src uv run python -m agent_with_tools.judge --harness runtime --evidence-dir evidence/judge-tools
-      - name: Upload invoice desk runtime evidence
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: agent-with-tools-runtime-evidence
-          path: evidence/judge-tools
-          if-no-files-found: ignore

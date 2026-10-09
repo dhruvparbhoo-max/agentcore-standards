@@ -15,18 +15,20 @@ Status words still mean Exists / Partial / Missing. Nothing below is a Runtime P
 | `patterns/human-approval/` | Exists | Four asks, `submit_change`, pause token. Offline golden pause + resume unit tests. |
 | `patterns/ambient/` | Exists | Event to job to agent. In-process `JobStore`. No live SQS/Lambda. |
 | `docs/catalog.md` | Exists | Asks whether a workflow is enough, then names the four folders. |
+| `patterns/minimal-agent/` | Exists | Golden-eval ping agent, moved from `templates/minimal-agent/`. No Runtime PASS. |
 | `docs/runbooks/` | Exists | Runtime, kill switch, quotas. |
 | `docs/ops/operating-model.md` | Exists | TBD placeholders; copied from ENTERPRISE. |
 | Live Runtime PASS | Missing | This repo still has none. `SKIPPED` is not a ship verdict. |
 | `frontend/` | Missing | No shared UI. |
 | Bedrock Guardrails service | Missing | `controls.guardrails_service` is still off in prod; production-check refuses. |
-| `templates/human-in-the-loop/` | Removed | Use `patterns/human-approval/`. |
+| `templates/` | Removed | Invoice desk, multi-agent stub, and human-in-the-loop stub deleted. Ping agent moved to `patterns/minimal-agent/`. |
+| `experiments/` | Removed | The drafts folder is gone. |
 
 The tables below are the 8 October snapshot and are kept so the gap list that drove the stack is still readable. Where they say Missing for the front door, the kit, or the first three patterns, the table above is the later fact.
 
 Status words: **Exists** means the target is already in the tree. **Partial** means a piece is here, but not in the target shape. **Missing** means it is not in the tree.
 
-`templates/`, `experiments/`, `skills/`, and the primitive code stay in this pull request. Later steps retire the templates. This page only records what the tree held when it was written.
+`skills/` stay. This page only records what the tree held when it was written.
 
 ## Layout
 

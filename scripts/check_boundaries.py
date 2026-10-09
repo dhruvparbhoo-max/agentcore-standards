@@ -1,9 +1,9 @@
-"""Hard gates for template and experiment boundaries.
+"""Hard gates for pattern and experiment boundaries.
 
 Fails when:
 
-- ``templates/``, ``primitives/``, ``patterns/`` or ``infra/`` import ``experiments``
-- a template or pattern file repeats a contiguous block of package source
+- ``primitives/``, ``patterns/``, ``infra/``, or a recreated ``templates/`` import ``experiments``
+- a pattern (or a recreated template) repeats a contiguous block of package source
 - a tracked text file contains a resource ARN or a private-key marker
 
 Soft wording in docs is not a control. This script is the control.
@@ -29,8 +29,8 @@ _SKIP_DIRS = {
 }
 _TEXT_SUFFIXES = {".py", ".md", ".toml", ".yml", ".yaml", ".txt", ".example", ".json", ".sh", ".cedar", ".cfg"}
 _TEXT_NAMES = {"CODEOWNERS", "AGENTS.md", ".env.example", "uv.lock", "Dockerfile", "Makefile", "NOTICE"}
-_NO_EXPERIMENTS = ("templates", "primitives", "patterns", "infra")
-_NO_COPIES = ("templates", "patterns")
+_NO_EXPERIMENTS = ("primitives", "patterns", "infra", "templates")
+_NO_COPIES = ("patterns", "templates")
 _SHINGLE = 4
 _MIN_LINE = 12
 _ARN_RE = re.compile("arn:" + "aws" + r"[a-z0-9-]*:")

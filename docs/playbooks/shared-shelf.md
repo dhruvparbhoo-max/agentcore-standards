@@ -1,6 +1,6 @@
 # Shared shelf
 
-Copy these packages. Do not paste them into a template, and do not start a domain template until the import line is the package.
+Copy these packages. Do not paste them into a pattern, and do not start a pattern until the import line is the package.
 
 This shelf has no independent Runtime PASS. Unit tests are the offline check. A live Gateway or Runtime call that lacks its settings is not a pass.
 

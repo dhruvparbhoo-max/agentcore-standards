@@ -196,7 +196,7 @@ def format_outcome(outcome: JudgeOutcome) -> str:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Generic judge CLI. Product templates wrap this with a concrete harness."""
+    """Generic judge CLI. Product patterns wrap this with a concrete harness."""
     parser = argparse.ArgumentParser(description="Re-run a RuntimeHarness eval suite and write evidence.")
     parser.add_argument("--suite", type=Path, required=True)
     parser.add_argument("--agent-version", required=True)

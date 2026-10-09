@@ -37,9 +37,4 @@
 /docker/                        @agentcore/platform
 /config/                        @agentcore/platform
 
-/templates/minimal-agent/               @agentcore/platform
-/templates/agent-with-tools/            @agentcore/platform
-/templates/multi-agent/                 @agentcore/platform
-
 /docs/                                  @agentcore/platform
-/experiments/                           @agentcore/platform
