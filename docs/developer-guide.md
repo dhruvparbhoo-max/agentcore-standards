@@ -29,6 +29,7 @@ primitives/gateway-tools/       one Gateway tool per folder, each its own image 
 patterns/_template/             the 12-item starter kit; copy it to start a pattern
 patterns/policy-qa/             company-policy Q&A: trusted retrieve, citations, or the empty sentence
 patterns/human-approval/        four ways to ask a person; submit_change pauses
+patterns/ambient/               event to job to agent; wait lives on the job row
 infra/                          CDK constructs: foundation, front door, network, alarms, model profiles
 docker/                         digest-pinned base images and the compose stand-ins
 config/environments/            per-environment settings (no account ids)

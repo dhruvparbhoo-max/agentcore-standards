@@ -1,0 +1,22 @@
+[project]
+name = "pattern-ambient-agent"
+version = "0.1.0"
+description = "Ambient work: an event becomes a job, the job runs an agent, a risky action waits. An application, not a published library."
+requires-python = ">=3.12"
+dependencies = [
+  "agentcore-agent[strands]",
+  "agentcore-tools",
+  "bedrock-agentcore>=1.24",
+  "langchain-aws>=1.0",
+]
+
+[tool.uv.sources]
+agentcore-agent = { workspace = true }
+agentcore-tools = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ambient"]
