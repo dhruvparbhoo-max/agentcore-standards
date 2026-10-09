@@ -26,6 +26,7 @@ members = [
   "primitives/recovery",
   "primitives/completion",
   "primitives/langchain",
+  "primitives/agent",
   "templates/minimal-agent",
   "templates/agent-with-tools",
 ]
@@ -40,6 +41,9 @@ dev = [
   "pytest>=8.3",
   "pytest-asyncio>=0.25",
   "ruff>=0.8",
+  "strands-agents>=1.20,<2",
+  "types-jsonschema>=4.23",
+  "types-pyyaml>=6.0",
 ]
 
 [tool.ruff]
@@ -71,6 +75,7 @@ files = [
   "primitives/recovery/src",
   "primitives/completion/src",
   "primitives/langchain/src",
+  "primitives/agent/src",
   "templates/minimal-agent/src",
   "templates/agent-with-tools/src",
   "scripts/check_boundaries.py",
@@ -102,6 +107,7 @@ testpaths = [
   "primitives/recovery/tests",
   "primitives/completion/tests",
   "primitives/langchain/tests",
+  "primitives/agent/tests",
   "templates/minimal-agent/tests",
   "templates/agent-with-tools/tests",
   "tests",
