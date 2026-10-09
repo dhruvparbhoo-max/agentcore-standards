@@ -8,7 +8,8 @@
 # 2. CDK deploys the pattern foundation (KMS key, ECR repository with scan on push,
 #    masked log group, secrets with rotation).
 # 3. The base-agent image is built for linux/arm64 and pushed to that repository,
-#    so CodeBuild can start the agent image FROM it.
+#    so CodeBuild can start the agent image FROM it. In production (or when
+#    SIGNING_PROFILE_ARN is set) scripts/sign-and-sbom.sh must pass first.
 # 4. The build-input digest and release id are computed, the deploy copy of
 #    agentcore.json is rendered under build/deploy/ (outside git), and the
 #    AgentCore CLI deploys it. The CLI builds the agent image in CodeBuild.
@@ -32,7 +33,7 @@ cd "$ROOT"
 "${KIT[@]}" doctor "$FOLDER" --env "$ENV_NAME"
 "${KIT[@]}" production-check "$FOLDER" --env "$ENV_NAME"
 
-read -r REGION PROJECT RUNTIME < <("${UV[@]}" python - "$FOLDER" "$ENV_NAME" "$ROOT" <<'PY'
+read -r REGION PROJECT RUNTIME PRODUCTION < <("${UV[@]}" python - "$FOLDER" "$ENV_NAME" "$ROOT" <<'PY'
 import sys
 from pathlib import Path
 from agentcore_agent import load_pattern
@@ -40,7 +41,7 @@ from agentcore_agent.agentcore_json import project_name
 from agentcore_agent.environment import load_environment
 config = load_pattern(sys.argv[1])
 environment = load_environment(sys.argv[2], repo_root=Path(sys.argv[3]))
-print(environment.region, project_name(config), config.runtime_name)
+print(environment.region, project_name(config), config.runtime_name, environment.production)
 PY
 )
 ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
@@ -67,6 +68,9 @@ if ! aws ecr describe-images --region "$REGION" --repository-name "${REPOSITORY_
 fi
 BASE_DIGEST="$(aws ecr describe-images --region "$REGION" --repository-name "${REPOSITORY_URI#*/}" \
   --image-ids "imageTag=$BASE_TAG" --query 'imageDetails[0].imageDigest' --output text)"
+if [ "$PRODUCTION" = "True" ] || [ -n "${SIGNING_PROFILE_ARN:-}" ]; then
+  scripts/sign-and-sbom.sh "${REPOSITORY_URI#*/}" "$BASE_DIGEST"
+fi
 
 echo "== release"
 BUILD_DIGEST="$("${KIT[@]}" build-digest "$FOLDER" --base-digest "$BASE_DIGEST")"
