@@ -241,3 +241,48 @@ def test_secret_names_stay_under_the_prefix() -> None:
     assert secret_module.secret_name("agentcore/dev", "key") == "agentcore/dev/key"
     with pytest.raises(ValueError):
         secret_module.secret_name("agentcore/dev", "../prod/key")
+
+
+def test_post_event_sends_front_door_headers_and_checks_expect() -> None:
+    from agentcore_agent.config import ACTOR_HEADER
+    from agentcore_agent.events import post_event, turn_events
+    from agentcore_agent.schema import SESSION_HEADER
+
+    sent: list[tuple[str, Mapping[str, str]]] = []
+
+    def post(url: str, data: bytes, headers: Mapping[str, str]) -> Mapping[str, Any]:
+        sent.append((url, headers))
+        return {"status": "completed", "result": json.loads(data)["prompt"]}
+
+    paths = turn_events(REPO / "patterns" / "_template")
+    assert [path.name for path in paths] == ["hello.json"]
+    outcome = post_event(paths[0], "http://localhost:8080/", post)
+    assert outcome.passed
+    url, headers = sent[0]
+    assert url == "http://localhost:8080/invocations"
+    assert headers[ACTOR_HEADER] == "actor-template-user"
+    assert len(headers[SESSION_HEADER]) >= 33
+
+
+def test_post_event_reports_a_wrong_reply(tmp_path: Path) -> None:
+    from agentcore_agent.events import post_event
+
+    (tmp_path / "events").mkdir()
+    event = tmp_path / "events" / "turn.json"
+    event.write_text(
+        json.dumps(
+            {
+                "session_id": "s" * 40,
+                "actor_id": "a",
+                "payload": {"prompt": "x"},
+                "expect": {"status": "completed", "contains": "pong", "excludes": "secret"},
+            }
+        ),
+        encoding="utf-8",
+    )
+    outcome = post_event(event, "http://x", lambda *_: {"status": "blocked", "result": "the secret"})
+    assert outcome.problems == (
+        "status 'blocked', expected 'completed'",
+        "reply does not contain 'pong'",
+        "reply contains 'secret'",
+    )

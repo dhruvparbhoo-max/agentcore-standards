@@ -1,7 +1,7 @@
-"""``agentcore-kit``: generate, check, doctor, production-check, verify, release-id, render-deploy, publish-tool.
+"""``agentcore-kit``: the commands a pattern needs from scaffold to deploy.
 
-Every command except ``doctor`` (AWS part), ``verify``, and ``publish-tool``
-is offline. Exit status is 0 on success and 1 on any problem.
+Every command except ``doctor`` (AWS part), ``verify``, ``post-events`` (a local
+container), and ``publish-tool`` is offline. Exit status is 0 on success and 1 on any problem.
 """
 
 from __future__ import annotations
@@ -87,6 +87,11 @@ def _parser() -> argparse.ArgumentParser:
     verify.add_argument("--endpoint", required=True)
     verify.add_argument("--region", required=True)
     verify.set_defaults(run=_verify)
+
+    events = commands.add_parser("post-events", help="post a pattern's events/*.json to a running agent")
+    events.add_argument("pattern", type=Path)
+    events.add_argument("--url", default="http://localhost:8080")
+    events.set_defaults(run=_post_events)
 
     pub = commands.add_parser("publish-tool", help="create the Agent Registry record for a tool (needs AWS)")
     pub.add_argument("tool", type=Path)
@@ -219,6 +224,23 @@ def _verify(args: argparse.Namespace, echo: Echo) -> int:
         echo(f"MISS {problem}")
     echo("verify failed" if problems else f"verified {config.name} release {args.release_id}")
     return 1 if problems else 0
+
+
+def _post_events(args: argparse.Namespace, echo: Echo) -> int:
+    from agentcore_agent.events import post_event, turn_events
+
+    paths = turn_events(args.pattern)
+    if not paths:
+        echo(f"{args.pattern}: no events with a payload under events/")
+        return 1
+    failed = 0
+    for path in paths:
+        outcome = post_event(path, args.url)
+        failed += not outcome.passed
+        echo(f"{'PASS' if outcome.passed else 'FAIL'} {outcome.name}: {outcome.body.get('status')}")
+        for problem in outcome.problems:
+            echo(f"  - {problem}")
+    return 1 if failed else 0
 
 
 def _publish(args: argparse.Namespace, echo: Echo) -> int:
