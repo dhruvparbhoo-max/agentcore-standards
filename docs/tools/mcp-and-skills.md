@@ -20,7 +20,7 @@ Gateway's three useful separations, in MCP terms:
 
 - **Tools** — actions with a JSON schema. That schema is what `@registry.tool` already checks.
 - **Resources** — read-only data the client can browse without taking the action.
-- **Prompt templates** — reusable text the client may apply. In this repo, stable prompt text belongs in the template or a skill, not in a per-request rewrite of the system prefix.
+- **Prompt templates** — reusable text the client may apply. In this repo, stable prompt text belongs in the pattern or a skill, not in a per-request rewrite of the system prefix.
 
 Remote MCP transport for new servers is Streamable HTTP. Leave deprecated SSE unused. Local process transport is stdio. The same server can run as either, with different credentials.
 

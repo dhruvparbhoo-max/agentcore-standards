@@ -1,10 +1,34 @@
 # Coverage review
 
-Reviewed 8 October 2026 on `main` after the move from `packages/` to `primitives/`, then updated the same day for the CLI, front door, and container decisions. This page compares that tree with the pattern-library layout. It does not claim a live AWS run. A ship verdict is still a separate Runtime check. See [the library design](library.md) for the choices, and [the pattern design outline](pattern-design-template.md) for what each pattern page must contain.
+Reviewed 8 October 2026 on `main` after the move from `packages/` to `primitives/`, then updated the same day for the CLI, front door, and container decisions. Updated again on 9 October 2026 after the starter kits, front door, three patterns, and catalogue landed on this stack. This page compares the tree with the pattern-library layout. It does not claim a live AWS run. A ship verdict is still a separate Runtime check. See [the library design](library.md) for the choices, [the catalogue](../catalog.md) for which pattern to copy, and [the pattern design outline](pattern-design-template.md) for what each pattern page must contain.
+
+## After steps 3–8 (9 October 2026)
+
+Status words still mean Exists / Partial / Missing. Nothing below is a Runtime PASS.
+
+| Piece | Status | What is in the repo now |
+| --- | --- | --- |
+| `primitives/front-door/` | Exists | Verified caller, session binding, quotas, kill switches, audit, cost, local stack. No live Runtime call. |
+| `infra/constructs/` | Exists | Foundation, front door, network, DNS Firewall, alarms, per-agent model profiles. Synthesized in tests; not deployed. |
+| `patterns/_template/` | Exists | Twelve-item kit. |
+| `patterns/policy-qa/` | Exists | Trusted retrieve, citations, empty sentence. Offline golden score. |
+| `patterns/human-approval/` | Exists | Four asks, `submit_change`, pause token. Offline golden pause + resume unit tests. |
+| `patterns/ambient/` | Exists | Event to job to agent. In-process `JobStore`. No live SQS/Lambda. |
+| `docs/catalog.md` | Exists | Asks whether a workflow is enough, then names the four folders. |
+| `patterns/minimal-agent/` | Exists | Golden-eval ping agent, moved from `templates/minimal-agent/`. No Runtime PASS. |
+| `docs/runbooks/` | Exists | Runtime, kill switch, quotas. |
+| `docs/ops/operating-model.md` | Exists | TBD placeholders; copied from ENTERPRISE. |
+| Live Runtime PASS | Missing | This repo still has none. `SKIPPED` is not a ship verdict. |
+| `frontend/` | Missing | No shared UI. |
+| Bedrock Guardrails service | Missing | `controls.guardrails_service` is still off in prod; production-check refuses. |
+| `templates/` | Removed | Invoice desk, multi-agent stub, and human-in-the-loop stub deleted. Ping agent moved to `patterns/minimal-agent/`. |
+| `experiments/` | Removed | The drafts folder is gone. |
+
+The tables below are the 8 October snapshot and are kept so the gap list that drove the stack is still readable. Where they say Missing for the front door, the kit, or the first three patterns, the table above is the later fact.
 
 Status words: **Exists** means the target is already in the tree. **Partial** means a piece is here, but not in the target shape. **Missing** means it is not in the tree.
 
-`templates/`, `experiments/`, `skills/`, and the primitive code stay in this pull request. Later steps retire the templates. This page only records what the tree held when it was written.
+`skills/` stay. This page only records what the tree held when it was written.
 
 ## Layout
 

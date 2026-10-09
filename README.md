@@ -49,7 +49,7 @@ make local
 3. Run it on your laptop with the sample inputs in its `events/` folder. You don't need AWS for this.
 4. Copy the pattern folder, change the prompts, tools and exam to fit your job, and deploy it with its one deploy command.
 
-`patterns/policy-qa/` is the company-policy question-and-answer agent. It answers from policy documents, quotes the section and source, and says so when it can't find the answer. `patterns/human-approval/` is the human approval agent: four ways to ask a person before acting. `patterns/ambient/` is the ambient agent: it reacts to events on its own. Copy `patterns/_template/` to start a new one. `primitives/knowledge/` and `docs/catalog.md` are not in the repo yet. None of this has been tested on a live AWS account yet.
+`patterns/policy-qa/` is the company-policy question-and-answer agent. It answers from policy documents, quotes the section and source, and says so when it can't find the answer. `patterns/human-approval/` is the human approval agent: four ways to ask a person before acting. `patterns/ambient/` is the ambient agent: it reacts to events on its own. `patterns/minimal-agent/` is the ping agent for the golden eval. Copy `patterns/_template/` to start a new one. `docs/catalog.md` is the catalogue for picking a pattern. `templates/` and `experiments/` are gone. `primitives/knowledge/` is not in the repo yet. None of this has been tested on a live AWS account yet.
 
 ## How changes are tested
 
@@ -100,4 +100,4 @@ These are known gaps. None of them is being built yet. Research and sources are 
 
 ## For developers
 
-Setup, test commands, the directory tree and team rules are in [docs/developer-guide.md](docs/developer-guide.md) and [AGENTS.md](AGENTS.md). Shared design choices are in [docs/design/library.md](docs/design/library.md).
+Setup, test commands, the directory tree and team rules are in [docs/developer-guide.md](docs/developer-guide.md) and [AGENTS.md](AGENTS.md). Shared design choices are in [docs/design/library.md](docs/design/library.md). Which pattern to copy is [docs/catalog.md](docs/catalog.md).

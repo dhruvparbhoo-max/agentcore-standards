@@ -32,7 +32,7 @@ From the repo root:
 
 ```bash
 uv sync --all-packages
-PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge --evidence-dir evidence/judge
+PYTHONPATH=patterns/minimal-agent/src uv run python -m minimal_agent.judge --evidence-dir evidence/judge
 ```
 
 Expect:
@@ -55,7 +55,7 @@ CI runs the same command in `.github/workflows/ci.yml` and uploads `evidence/jud
 Same eval, same judge process, harness `runtime`. That harness calls `InvokeAgentRuntime` with the actor on `X-Amzn-Bedrock-AgentCore-Runtime-Custom-Actor-Id`, collects ADOT spans (`attributes.session.id` is the raw session id) and `agentcore.turn` logs (`runtimeSessionId` is the hash), then `tear_down` calls `StopRuntimeSession`. It does not call the Evaluate API. `OnDemandEvaluationDatasetRunner` stays a later adapter. The golden cost check on this path is still the length heuristic at zero USD. It is not a billing proof. See [the library design](design/library.md).
 
 ```bash
-PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge \
+PYTHONPATH=patterns/minimal-agent/src uv run python -m minimal_agent.judge \
   --harness runtime \
   --evidence-dir evidence/judge
 ```
@@ -91,32 +91,20 @@ A real Runtime PASS is `status: PASS` or `status: PASS+NOTES` from `--harness ru
 The author and the judge are different processes. The judge does not read the author's chat. It only needs the repo and, for the real path, the environment above.
 
 ```bash
-PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge --evidence-dir evidence/judge
+PYTHONPATH=patterns/minimal-agent/src uv run python -m minimal_agent.judge --evidence-dir evidence/judge
 ```
 
 A second machine or a second cloud agent runs that command again. Matching `PASS` / `PASS+NOTES` plus the evidence files is the independent verdict. `FAIL` or a missing evidence file blocks merge. `SKIPPED` blocks merge too: the real surface was not exercised.
-
-## Invoice desk
-
-Separate evidence directory so a tools run does not overwrite the minimal-agent bundle.
-
-```bash
-PYTHONPATH=templates/agent-with-tools/src uv run python -m agent_with_tools.judge --evidence-dir evidence/judge-tools
-```
-
-`--harness memory` installs the scripted invoice model and must exit 0 on PASS. `--harness runtime` with missing settings writes `SKIPPED` and exits 1. That exit code is the fail-closed gate in `.github/workflows/runtime-evals.yml` job `agent-with-tools-runtime`. The minimal-agent job in the same workflow also exits 1 on `SKIPPED`.
-
-Runtime smoke eval name: `agent-with-tools.runtime-smoke`. It checks a completed or interrupted turn, non-empty text, and `agent.turn` cost attributes. It does not grade the hosted model's prose. A PASS from `--harness runtime` is the ship verdict for this template. This repository does not contain that PASS until the dev-account settings exist. Gateway sync names are in `.env.example` and are not required for the judge to leave `SKIPPED`.
 
 Generic form, if the harness factory is not the minimal agent:
 
 ```bash
 uv run python -m agentcore_eval.judge \
-  --suite templates/minimal-agent/evals \
+  --suite patterns/minimal-agent/evals \
   --agent-version 0.1.0 \
   --harness-name memory \
   --harness-factory minimal_agent.harness:MinimalAgentHarness \
   --evidence-dir evidence/judge
 ```
 
-`PYTHONPATH` must include `templates/minimal-agent/src` for that factory import. Templates stay applications; this command does not install them as libraries.
+`PYTHONPATH` must include `patterns/minimal-agent/src` for that factory import. Patterns stay applications; this command does not install them as libraries.

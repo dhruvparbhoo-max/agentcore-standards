@@ -26,17 +26,17 @@ Shared code lives in `primitives/`. The first new package in that set is `primit
 
 Each pattern will live in `patterns/<name>/` with a README, `pattern.yaml`, `agent/`, a Dockerfile, prompt files, `infra/`, `tests/` (including `tests/e2e/`), `eval/golden_set.json`, `events/`, and `docs/design.md`. `pattern.yaml` generates `agentcore.json`. Account ids stay in the environment. They are not written into git.
 
-A shared UI will live in `frontend/`. A catalogue will live in `docs/catalog.md`.
+A shared UI will live in `frontend/`. The catalogue is [docs/catalog.md](../catalog.md).
 
-`templates/`, `experiments/`, and `skills/` stay until a later change retires them. Templates import primitives. They do not copy primitive source. Nothing under `templates/` or `primitives/` imports `experiments/`.
+`skills/` stay. `templates/` and `experiments/` are gone. Patterns import primitives. They do not copy primitive source. Nothing under `primitives/`, `patterns/`, or `infra/` imports `experiments/`.
 
-The first three patterns, when they are built, are:
+The first three patterns are:
 
 1. Company-policy questions. The agent searches through a Gateway knowledge-base target, cites the source, and says "I couldn't find this in the policies" when search returns nothing. A trusted wrapper adds the tenant and role filter from the verified login, so the model cannot choose another tenant's documents. [Multi-tenancy sample](https://github.com/aws-samples/sample-agentcore-and-multitenancy-blog). There is no custom `search_policies` tool.
 2. Human approval. The pattern shows four ways to ask a person. The pause and the token rules are the ones in this page.
 3. Ambient work. An event becomes a job, the job runs an agent, and a risky action waits for approval.
 
-If the steps of a task never change, use a workflow and call a model only where a real choice is needed. The catalogue page will ask that first. [Anthropic, Building effective agents](https://www.anthropic.com/engineering/building-effective-agents).
+If the steps of a task never change, use a workflow and call a model only where a real choice is needed. The catalogue page asks that first. [Anthropic, Building effective agents](https://www.anthropic.com/engineering/building-effective-agents).
 
 ## Ship bar
 

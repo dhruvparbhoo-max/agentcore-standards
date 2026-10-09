@@ -1,4 +1,4 @@
-"""CI path bans: experiments stay out of templates, package guts are not copied, no ARNs."""
+"""CI path bans: experiments stay out of patterns, package guts are not copied, no ARNs."""
 
 import sys
 from pathlib import Path

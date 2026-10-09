@@ -2,7 +2,7 @@
 
 Run this in a process that did not author the change:
 
-    PYTHONPATH=templates/minimal-agent/src uv run python -m minimal_agent.judge
+    PYTHONPATH=patterns/minimal-agent/src uv run python -m minimal_agent.judge
 
 ``--harness memory`` calls the entrypoint in-process (no AWS credentials).
 ``--harness runtime`` calls AgentCore Runtime. Missing settings write

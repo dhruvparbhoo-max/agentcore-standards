@@ -33,8 +33,7 @@ members = [
   "patterns/human-approval/agent",
   "patterns/ambient/agent",
   "infra/constructs",
-  "templates/minimal-agent",
-  "templates/agent-with-tools",
+  "patterns/minimal-agent",
 ]
 
 [tool.uv.sources]
@@ -55,7 +54,7 @@ dev = [
 [tool.ruff]
 line-length = 120
 target-version = "py312"
-src = ["primitives", "templates", "scripts", "tests"]
+src = ["primitives", "patterns", "scripts", "tests"]
 extend-exclude = [".venv", "evidence", "uploads"]
 
 [tool.ruff.lint]
@@ -90,15 +89,14 @@ files = [
   "primitives/gateway-tools/submit_change/submit_change",
   "infra/constructs/src",
   "primitives/gateway-tools/_template/template_tool",
-  "templates/minimal-agent/src",
-  "templates/agent-with-tools/src",
+  "patterns/minimal-agent/src",
   "scripts/check_boundaries.py",
   "scripts/images.py",
   "scripts/local_token.py",
   "scripts/front_door_smoke.py",
   "docker/local/create_tables.py",
 ]
-mypy_path = "patterns/_template/agent:patterns/policy-qa/agent:patterns/human-approval/agent:patterns/ambient/agent:primitives/gateway-tools/submit_change:primitives/gateway-tools/_template:templates/minimal-agent/src:templates/agent-with-tools/src"
+mypy_path = "patterns/_template/agent:patterns/policy-qa/agent:patterns/human-approval/agent:patterns/ambient/agent:primitives/gateway-tools/submit_change:primitives/gateway-tools/_template:patterns/minimal-agent/src"
 
 [[tool.mypy.overrides]]
 module = [
@@ -134,8 +132,7 @@ testpaths = [
   "primitives/gateway-tools/submit_change/tests",
   "primitives/gateway-tools/_template/tests",
   "infra/constructs/tests",
-  "templates/minimal-agent/tests",
-  "templates/agent-with-tools/tests",
+  "patterns/minimal-agent/tests",
   "tests",
 ]
 pythonpath = [
@@ -145,8 +142,7 @@ pythonpath = [
   "patterns/ambient/agent",
   "primitives/gateway-tools/submit_change",
   "primitives/gateway-tools/_template",
-  "templates/minimal-agent/src",
-  "templates/agent-with-tools/src",
+  "patterns/minimal-agent/src",
   "primitives/tools/tests",
   "primitives/front-door/tests",
 ]

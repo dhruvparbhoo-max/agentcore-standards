@@ -149,7 +149,7 @@ def test_run_tagged_writes_tags_and_skips_the_golden_eval(tmp_path: Path) -> Non
     assert body["categories"] == ["tool_selection"]
     assert "ship.untagged.json" not in {path.name for path in (tmp_path / "evidence").iterdir()}
 
-    golden = _REPO / "templates" / "minimal-agent" / "evals" / "golden_turn.py"
+    golden = _REPO / "patterns" / "minimal-agent" / "evals" / "golden_turn.py"
     loaded = load_evals(golden)
     assert loaded[0].name == "minimal-agent.golden-turn"
     assert loaded[0].tags is None

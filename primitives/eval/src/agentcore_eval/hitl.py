@@ -1,8 +1,8 @@
 """Human-in-the-loop approval gate used by evals.
 
 High-risk actions stay blocked until a decision arrives, and a decision at or
-after ``expires_at`` does not proceed. The human-in-the-loop template will call
-this interface. This module is the eval stand-in, not that template.
+after ``expires_at`` does not proceed. The human-approval pattern uses a
+different pause token. This module is the eval-pack stand-in, not that pattern.
 """
 
 from datetime import UTC, datetime

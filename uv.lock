@@ -9,7 +9,6 @@ resolution-markers = [
 
 [manifest]
 members = [
-    "agent-with-tools",
     "agentcore-agent",
     "agentcore-approvals",
     "agentcore-completion",
@@ -30,41 +29,6 @@ members = [
     "pattern-human-approval-agent",
     "pattern-policy-qa-agent",
     "pattern-template-agent",
-]
-
-[[package]]
-name = "agent-with-tools"
-version = "0.1.0"
-source = { virtual = "templates/agent-with-tools" }
-dependencies = [
-    { name = "agentcore-approvals" },
-    { name = "agentcore-context" },
-    { name = "agentcore-eval" },
-    { name = "agentcore-guardrails" },
-    { name = "agentcore-identity" },
-    { name = "agentcore-langchain" },
-    { name = "agentcore-memory" },
-    { name = "agentcore-recovery" },
-    { name = "agentcore-tools" },
-    { name = "agentcore-tracing" },
-    { name = "bedrock-agentcore" },
-    { name = "langchain" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "agentcore-approvals", editable = "primitives/approvals" },
-    { name = "agentcore-context", editable = "primitives/context" },
-    { name = "agentcore-eval", editable = "primitives/eval" },
-    { name = "agentcore-guardrails", editable = "primitives/guardrails" },
-    { name = "agentcore-identity", editable = "primitives/identity" },
-    { name = "agentcore-langchain", editable = "primitives/langchain" },
-    { name = "agentcore-memory", editable = "primitives/memory" },
-    { name = "agentcore-recovery", editable = "primitives/recovery" },
-    { name = "agentcore-tools", editable = "primitives/tools" },
-    { name = "agentcore-tracing", editable = "primitives/tracing" },
-    { name = "bedrock-agentcore", specifier = ">=1.24" },
-    { name = "langchain", specifier = ">=1.3.3" },
 ]
 
 [[package]]
@@ -1291,7 +1255,7 @@ wheels = [
 [[package]]
 name = "minimal-agent"
 version = "0.1.0"
-source = { virtual = "templates/minimal-agent" }
+source = { virtual = "patterns/minimal-agent" }
 dependencies = [
     { name = "agentcore-eval" },
     { name = "agentcore-tracing" },

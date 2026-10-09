@@ -19,7 +19,7 @@ The same miss has happened again, or the encode-miss order in [the library desig
 
 1. Reproduce the miss once. Keep the failing command output.
 2. Add the red gate before the product fix.
-   - Behavior: an eval whose assertion fails on the bad behavior, under `templates/<name>/evals/` or that package's suite.
+   - Behavior: an eval whose assertion fails on the bad behavior, under `patterns/<name>/eval/` or that package's suite.
    - Boundary, copied package source, `experiments/` import, resource ARN, or private-key marker: extend `scripts/check_boundaries.py`, which CI already runs.
 3. Run the gate. Confirm it fails on the reproduction.
 4. Fix the code.
