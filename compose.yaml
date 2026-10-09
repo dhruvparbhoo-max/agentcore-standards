@@ -1,0 +1,101 @@
+# Local stack for `make local`. Healthcheck shape follows
+# awslabs/fullstack-solution-template-for-agentcore docker/docker-compose.yml
+# (Apache-2.0, see NOTICE).
+#
+# Images build for the host's architecture so the loop stays fast. `make build`
+# produces the linux/arm64 images AgentCore Runtime and Lambda run.
+#
+# Nothing here reaches AWS: the agent uses the scripted model, the tool writes to
+# DynamoDB Local, and Secrets Manager, SSM, SQS, SNS, EventBridge and Scheduler
+# calls go to LocalStack. The credentials below are LocalStack's dummy values.
+
+x-local-aws: &local-aws
+  AWS_REGION: eu-west-2
+  AWS_DEFAULT_REGION: eu-west-2
+  AWS_ACCESS_KEY_ID: test
+  AWS_SECRET_ACCESS_KEY: test
+  AWS_ENDPOINT_URL_SECRETS_MANAGER: http://localstack:4566
+  AWS_ENDPOINT_URL_SSM: http://localstack:4566
+  AWS_ENDPOINT_URL_SQS: http://localstack:4566
+  AWS_ENDPOINT_URL_SNS: http://localstack:4566
+  AWS_ENDPOINT_URL_EVENTBRIDGE: http://localstack:4566
+  AWS_ENDPOINT_URL_SCHEDULER: http://localstack:4566
+  DYNAMODB_ENDPOINT: http://dynamodb-local:8000
+
+services:
+  base-agent:
+    profiles: [base]
+    image: agentcore-standards/base-agent:local
+    build:
+      context: docker/base-agent
+
+  base-lambda:
+    profiles: [base]
+    image: agentcore-standards/base-lambda:local
+    build:
+      context: docker/base-lambda
+
+  dynamodb-local:
+    image: amazon/dynamodb-local:2.6.1@sha256:1856c05cc66a0e49dc1099e483ad2851477eeebe2135250ac11a1d1227db54b1
+    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-inMemory"]
+    ports:
+      - "8000:8000"
+
+  localstack:
+    image: localstack/localstack:4.9@sha256:59373b4a27dba3ec15c4db0b7455f0cb68c8a42300e2cbbe362b440f9a131697
+    environment:
+      SERVICES: secretsmanager,ssm,sqs,sns,events,scheduler
+    ports:
+      - "4566:4566"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  tables:
+    image: agentcore-standards/base-lambda:local
+    entrypoint: ["python", "/local/create_tables.py"]
+    environment: *local-aws
+    volumes:
+      - ./docker/local:/local:ro
+    depends_on:
+      dynamodb-local:
+        condition: service_started
+
+  template-agent:
+    image: agentcore-standards/template-agent:local
+    build:
+      context: .
+      dockerfile: patterns/_template/agent/Dockerfile
+    environment:
+      <<: *local-aws
+      AGENTCORE_MODEL: scripted
+      AGENTCORE_ENVIRONMENT: local
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/ping', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      localstack:
+        condition: service_healthy
+
+  # Lambda images carry the Runtime Interface Emulator:
+  # POST http://localhost:9001/2015-03-31/functions/function/invocations
+  tool-save-note:
+    image: agentcore-standards/tool-save-note:local
+    build:
+      context: .
+      dockerfile: primitives/gateway-tools/_template/Dockerfile
+    environment:
+      <<: *local-aws
+      NOTES_TABLE: notes
+    ports:
+      - "9001:8080"
+    depends_on:
+      tables:
+        condition: service_completed_successfully
