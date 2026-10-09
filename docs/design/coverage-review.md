@@ -4,7 +4,7 @@ Reviewed 8 October 2026 on `main` after the move from `packages/` to `primitives
 
 Status words: **Exists** means the target is already in the tree. **Partial** means a piece is here, but not in the target shape. **Missing** means it is not in the tree.
 
-`templates/`, `experiments/`, `skills/`, and the primitive code stay in this pull request. Later steps retire the templates. Removing the starter-toolkit sentences is a later code change. This page only records where they are.
+`templates/`, `experiments/`, `skills/`, and the primitive code stay in this pull request. Later steps retire the templates. This page only records what the tree held when it was written.
 
 ## Layout
 
@@ -47,7 +47,7 @@ Status words: **Exists** means the target is already in the tree. **Partial** me
 
 | Piece | Status | What is in the repo now |
 | --- | --- | --- |
-| `bedrock-agentcore-starter-toolkit` | Banned, not imported | No dependency in `pyproject.toml` or `uv.lock`. The words appear only as a ban in `AGENTS.md` and in `templates/agent-with-tools/README.md`. New work uses the AgentCore CLI. Deleting those sentences is a later code change. |
+| AgentCore CLI | Used for deploys | `pattern.yaml` generates `agentcore.json` (step 3). |
 | AgentCore CLI | Missing | No `@aws/agentcore` install, no `agentcore.json`, no generator from `pattern.yaml`. |
 | Docker base images | Missing | No `docker/base-agent`, `docker/base-lambda`, or `docker/base-tool`. |
 | Agent images | Missing | No Dockerfile. Nothing builds or pushes an ARM64 image to ECR. |

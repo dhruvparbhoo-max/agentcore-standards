@@ -9,12 +9,21 @@ This repo is **agentcore-standards**: a Python standards library for Amazon Bedr
 ## Glossary
 
 - **AgentCore Runtime** is the AWS service. The real eval path calls `InvokeAgentRuntime`.
-- **`BedrockAgentCoreApp`** (`bedrock-agentcore` ≥ 1.24) is the process that service hosts. Decorate the turn function with `@app.entrypoint`. Do not use `bedrock-agentcore-starter-toolkit`.
+- **`BedrockAgentCoreApp`** (`bedrock-agentcore` ≥ 1.24) is the process that service hosts. Decorate the turn function with `@app.entrypoint`. Deploys use the [AgentCore CLI](https://github.com/aws/agentcore-cli) (`@aws/agentcore`); `pattern.yaml` generates its `agentcore.json`.
 - **`RuntimeHarness`** is our eval client: `start`, `invoke`, `capture_traces`, `tear_down`. `InMemoryRuntimeHarness` calls the entrypoint in-process. `AgentCoreRuntimeHarness` calls the service. Evals target the protocol, not a particular host.
 
 ## Layout
 
-Shared libraries live under `primitives/<name>/` (for example `primitives/tracing`). Distribution names (`agentcore-tracing`) and import names (`agentcore_tracing`) stay stable. `patterns/`, `primitives/front-door/`, and the container layout in the library page arrive in later PRs. `templates/` and `experiments/` stay in place until then. Do not use `bedrock-agentcore-starter-toolkit`. New deploys use the AgentCore CLI.
+Shared libraries live under `primitives/<name>/` (for example `primitives/tracing`). Distribution names (`agentcore-tracing`) and import names (`agentcore_tracing`) stay stable.
+
+- `primitives/agent/` is `agentcore-agent`: `pattern.yaml` loading, `build_agent` over `create_agent`, Strands, and the managed harness, and the `agentcore-kit` command (generate, check-kit, doctor, production-check, verify, post-events).
+- `primitives/gateway-tools/<tool>/` holds one Gateway tool per folder: `tool.yaml` (its Agent Registry listing), the handler, tests, and its own Dockerfile. New tools copy `_template/`.
+- `patterns/<name>/` holds one deployable pattern with the twelve kit items. New patterns copy `patterns/_template/`.
+- `infra/constructs/` is the CDK foundation construct; `infra/rotation/` is the rotation Lambda image.
+- `docker/` holds the digest-pinned base images (`base-agent`, `base-lambda`) and the compose stand-ins. `compose.yaml`, `Makefile`, and `.devcontainer/` sit at the root. CI runs in the `.devcontainer` image.
+- `config/environments/<env>.yaml` holds per-environment settings. Account ids never go in git.
+
+`primitives/front-door/` and the remaining patterns arrive in later PRs. `templates/` and `experiments/` stay in place until a later step retires them.
 
 ## Leases
 
@@ -35,12 +44,15 @@ One writer per path prefix. Scouts may read anything. Writers need a lease.
 | `primitives/recovery/` | K | implemented |
 | `primitives/completion/` | L | implemented |
 | `primitives/langchain/` | M | implemented; model providers stay outside |
+| `primitives/agent/` | N | implemented; no Runtime PASS |
+| `primitives/gateway-tools/` | C | tool folder template; no Runtime PASS |
+| `patterns/` | P | `_template` only; no Runtime PASS |
+| `infra/`, `docker/`, `config/` | platform | foundation construct, base images, per-env config |
 | `templates/agent-with-tools/` | F | invoice desk offline; imports the shelf; no Runtime PASS |
-| `templates/agent-with-memory/` | F | stub |
 | `templates/multi-agent/` | F | stub |
 | `templates/human-in-the-loop/` | F | stub |
 | `docs/`, `scripts/`, `.github/` | G | docs and gates |
-| `pyproject.toml`, `uv.lock` | platform | serialized; one owner |
+| `pyproject.toml`, `uv.lock`, `compose.yaml`, `Makefile`, `.devcontainer/` | platform | serialized; one owner |
 
 `CODEOWNERS` lists each of those paths. The GitHub team is `@agentcore/platform` until real teams exist. The coordinator lease is still one agent per path even while the team name is shared.
 
@@ -49,8 +61,8 @@ Rules:
 1. Branch: `agent/<id>/<package-or-template>/<slug>`. One package **or** one template per PR.
 2. Do not edit another lease. If you need a new package API, stop and report the blocker.
 3. Do not edit `pyproject.toml` or `uv.lock` unless your lease includes the platform manifest. Adding a workspace member is a platform change. Declare every workspace dependency explicitly in the member that imports it.
-4. Templates import packages. They do not copy package source. `scripts/check_boundaries.py` fails the build when they do.
-5. `experiments/` may be messy. Nothing under `templates/` or `primitives/` may import it. The same script fails the build when they do.
+4. Templates and patterns import packages. They do not copy package source. `scripts/check_boundaries.py` fails the build when they do.
+5. `experiments/` may be messy. Nothing under `templates/`, `primitives/`, `patterns/`, or `infra/` may import it. The same script fails the build when they do.
 6. No resource ARNs, account ids, or secrets in git. `.env.example` is names only.
 7. Do not declare done from `ruff` / `mypy` / unit tests. Those are necessary. A ship verdict is PASS or PASS+NOTES from a **different** process that re-runs the Runtime eval. CI green is not that verdict. No extra human approval on top of a PASS / PASS+NOTES. FAIL or missing evidence blocks merge.
 8. Evals run in the same AWS account as dev. Isolate with agent versions, namespaces, and IAM paths.
@@ -65,6 +77,8 @@ uv run mypy
 uv run pytest -m "not runtime"
 uv run python scripts/check_boundaries.py
 ```
+
+`make ci` runs those plus the lock gate and the kit checks (`agentcore-kit check-kit`, `generate --check`, `tool-check`), the same as CI. `make local` needs `docker ps` to succeed (Docker, or Finch with `DOCKER=finch`). It starts `compose.yaml` and posts the pattern's `events/*.json`. `make build` builds every image for linux/arm64.
 
 Independent judge (mock path, no AWS). Evidence is `evidence/judge/verdict.json`. Full sequence: [docs/eval-pass-path.md](docs/eval-pass-path.md).
 

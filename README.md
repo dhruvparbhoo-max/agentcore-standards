@@ -2,13 +2,13 @@
 
 Standards library for coding agents and humans building on [Amazon Bedrock AgentCore](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/what-is-bedrock-agentcore.html). This repository holds versioned Python primitives, runnable agent templates, and the eval harness those templates share. It is not a hosted platform.
 
-Normative rules live in [docs/DESIGN.md](docs/DESIGN.md). Path leases for parallel agents live in [AGENTS.md](AGENTS.md) (DESIGN §8). Playbooks for eval cases, tools, recovery, and production misses are indexed in [docs/README.md](docs/README.md). Those pages restate selected rules from Bojie Li's *AI Agent* skill pack for AgentCore; the credit matrix is [docs/attribution/bojieli-ai-agent-book.md](docs/attribution/bojieli-ai-agent-book.md).
+The library design is [docs/design/library.md](docs/design/library.md). Path leases for parallel agents live in [AGENTS.md](AGENTS.md). Playbooks for eval cases, tools, recovery, and production misses are indexed in [docs/README.md](docs/README.md). Those pages restate selected rules from Bojie Li's *AI Agent* skill pack for AgentCore; the credit matrix is [docs/attribution/bojieli-ai-agent-book.md](docs/attribution/bojieli-ai-agent-book.md).
 
 Lane A is the root of every later stack: `agentcore-tracing`, `agentcore-eval`, and `templates/minimal-agent`, with one golden eval. The shared shelf and `templates/agent-with-tools` are implemented offline. Neither is a live Runtime PASS. `agentcore-session` stays a stub.
 
 ## Layout
 
-Shared libraries live under `primitives/<name>/`. Folder names are short. Python distribution names (`agentcore-tracing`) and import names (`agentcore_tracing`) are unchanged. `patterns/` (self-contained deployable examples) arrives in later PRs. `templates/` and `experiments/` stay where they are until those later steps retire them.
+Shared libraries live under `primitives/<name>/`. Folder names are short. Python distribution names (`agentcore-tracing`) and import names (`agentcore_tracing`) are unchanged. `patterns/` holds self-contained deployable examples; `patterns/_template/` is the starter kit. `templates/` and `experiments/` stay where they are until later steps retire them.
 
 ```
 primitives/tracing/             OTEL span names, hashed session id, cost attributes, JSON turn logs
@@ -23,9 +23,14 @@ primitives/context/             prompt assembly and the state bar
 primitives/recovery/            retry budget, circuit breaker, in-flight cap
 primitives/completion/          completion check; proposer is not the verifier
 primitives/langchain/           LangChain create_agent over the tool registry, plus graph helpers
+primitives/agent/               pattern.yaml, build_agent (create_agent | strands | harness), agentcore-kit CLI
+primitives/gateway-tools/       one Gateway tool per folder, each its own image and registry listing
+patterns/_template/             the 12-item starter kit; copy it to start a pattern
+infra/                          CDK foundation construct and the secret rotation Lambda
+docker/                         digest-pinned base images and the compose stand-ins
+config/environments/            per-environment settings (no account ids)
 templates/minimal-agent/        BedrockAgentCoreApp entrypoint plus a harness binding (an app, not a PyPI lib)
 templates/agent-with-tools/     invoice desk; imports the shelf; offline judge; no live Runtime PASS
-templates/agent-with-memory/    stub
 templates/multi-agent/          stub
 templates/human-in-the-loop/    stub
 experiments/                    messy drafts allowed; templates and primitives must not import them
@@ -34,7 +39,7 @@ docs/README.md                  index of playbooks (evals, tools, runtime, ops)
 docs/capability-maps/           how to drive a template and what observable proves it
 docs/evals/                     eval pack index, dataset design, hill-climbing
 docs/skills/pstack-vs-agentcore.md   pstack skill to run, and the AgentCore skill if one exists
-docs/attribution/               credit for distilled playbooks
+docs/attribution/               credit for distilled playbooks and copied reference code (see NOTICE)
 skills/                         verify, judge, lease, encode-miss, capability map, eval-dataset, tool-register, loop-verifier, experience-to-gate
 ```
 
@@ -49,12 +54,19 @@ skills/                         verify, judge, lease, encode-miss, capability ma
 
 Evals stay on `RuntimeHarness`. Replacing the hosted container later re-wraps the entrypoint. It does not rewrite the eval.
 
-## Install
+## Prerequisites
 
-Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
+- Python 3.12 and [uv](https://docs.astral.sh/uv/).
+- Docker, or [Finch](https://runfinch.com) on a Mac. `docker ps` (or `finch ps`) must succeed before `make local`, `make build`, or a deploy. Every container target checks it first; use `DOCKER=finch` with Finch.
+- For a deploy only: Node 22, the [AgentCore CLI](https://github.com/aws/agentcore-cli) (`npm install -g @aws/agentcore`), the AWS CDK CLI, and the AWS CLI. `make doctor ENV=dev` checks all of them read-only.
+
+The `.devcontainer/` image carries every tool above at pinned versions. CI runs in that image.
+
+## Install
 
 ```bash
 uv sync --all-packages
+make local        # compose stack: template agent, a Gateway tool, DynamoDB Local, LocalStack; posts events/*.json
 ```
 
 The root project depends on `agentcore-tracing` and `agentcore-eval` explicitly. `templates/minimal-agent` is an application workspace member (`package = false`), and it declares those same packages itself. Do not copy package source into a template.

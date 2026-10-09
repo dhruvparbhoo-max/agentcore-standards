@@ -16,6 +16,7 @@ You are adding a tool, changing its schema or description, or moving a side effe
 
 ## Steps
 
+0. A Gateway tool that ships as its own image starts from `primitives/gateway-tools/_template/`. Its `tool.yaml` is the Agent Registry listing: a side effect needs `idempotency: required` and a required `idempotency_key` input. `agentcore-kit tool-check` must pass. After a deploy, `agentcore-kit publish-tool` creates the registry record, which still needs approval in the registry.
 1. Name the goal, not the upstream route. Merge tools that differ only by a file type or a cosmetic flag. Split when security, audit, nesting, or a hot path needs its own name.
 2. Write the description: when to call it, what it will not do, one concrete parameter example, the return shape, and the cost of a heavy call.
 3. Reject bad arguments. If you normalize, say so in the description and return the value the handler used. Do not rewrite or inject arguments silently.
