@@ -13,9 +13,11 @@ import json
 import os
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 POLICIES_ENV = "FRONT_DOOR_AGENTS"
+POLICIES_FILE_ENV = "FRONT_DOOR_AGENTS_FILE"
 SETTINGS_ENV = "FRONT_DOOR_SETTINGS"
 
 
@@ -152,9 +154,13 @@ class DoorSettings:
 
 def policies_from_env(env: Mapping[str, str] | None = None) -> dict[str, AgentPolicy]:
     source = os.environ if env is None else env
-    raw = json.loads(source.get(POLICIES_ENV, "[]"))
+    path = source.get(POLICIES_FILE_ENV, "")
+    text = Path(path).read_text(encoding="utf-8") if path else source.get(POLICIES_ENV, "[]")
+    raw = json.loads(text)
+    if isinstance(raw, Mapping):
+        raw = [raw]
     if not isinstance(raw, list):
-        raise PolicyError(f"{POLICIES_ENV} must be a JSON list")
+        raise PolicyError(f"{POLICIES_ENV} must be a JSON list of agent policies")
     policies = [AgentPolicy.from_mapping(item) for item in raw]
     return {policy.agent: policy for policy in policies}
 

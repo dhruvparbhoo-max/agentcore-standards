@@ -39,6 +39,10 @@ class UnknownAgent(Refused):
     status = 404
 
 
+class NeedsUser(Refused):
+    status = 403
+
+
 class BadSession(Refused):
     status = 400
 
@@ -124,11 +128,11 @@ class FrontDoor:
 
     def _admit(self, request: CallRequest, policy: AgentPolicy | None) -> tuple[AgentPolicy, str]:
         if request.source not in SOURCES:
-            raise Refused("bad_source", f"source must be one of {SOURCES}")
+            raise BadSession("bad_source", f"source must be one of {SOURCES}")
         if policy is None:
             raise UnknownAgent("unknown_agent", f"no agent named {request.agent}")
         if policy.acts_as == USER and request.caller.kind != USER and not request.caller.on_behalf_of:
-            raise Refused("needs_user", "this agent acts as a signed-in user")
+            raise NeedsUser("needs_user", "this agent acts as a signed-in user")
         try:
             return policy, self.binder(policy).resolve(request.caller.user_id, request.session_id)
         except SessionRejected as exc:

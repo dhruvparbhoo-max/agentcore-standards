@@ -10,6 +10,7 @@ import os
 import threading
 import time
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Any
 
 from agentcore_front_door.caller import ClaimMap, JwtVerifier
@@ -27,6 +28,8 @@ ISSUER = "FRONT_DOOR_ISSUER"
 AUDIENCE = "FRONT_DOOR_AUDIENCE"
 TOKEN_USE = "FRONT_DOOR_TOKEN_USE"
 JWKS_URL = "FRONT_DOOR_JWKS_URL"
+LOCAL_RUNTIME_URL = "FRONT_DOOR_LOCAL_RUNTIME_URL"
+LOCAL_PUBLIC_KEY = "FRONT_DOOR_LOCAL_PUBLIC_KEY_FILE"
 
 _TTL_S = 600
 _lock = threading.Lock()
@@ -57,16 +60,24 @@ def binding_secret(env: Mapping[str, str], *, client: Any | None = None) -> byte
 
 def build_door(env: Mapping[str, str] | None = None) -> FrontDoor:
     source = dict(os.environ if env is None else env)
-    import boto3
+    local_url = source.get(LOCAL_RUNTIME_URL, "")
+    exchanger: OboExchanger | None
+    if local_url:
+        from agentcore_front_door.local import LocalRuntimeClient
 
-    data_plane = boto3.client("bedrock-agentcore")
+        invoker, exchanger = RuntimeInvoker(LocalRuntimeClient(local_url)), None
+    else:
+        import boto3
+
+        data_plane = boto3.client("bedrock-agentcore")
+        invoker, exchanger = RuntimeInvoker(data_plane), OboExchanger(data_plane)
     return FrontDoor(
         policies=policies_from_env(source),
         settings=settings_from_env(source),
         store=store_from_env(source),
         binding_secret=binding_secret(source),
-        invoker=RuntimeInvoker(data_plane),
-        exchanger=OboExchanger(data_plane),
+        invoker=invoker,
+        exchanger=exchanger,
     )
 
 
@@ -82,6 +93,11 @@ def door() -> FrontDoor:
 def verifier() -> JwtVerifier:
     global _verifier
     with _lock:
+        if _verifier is None and os.environ.get(LOCAL_PUBLIC_KEY):
+            from agentcore_front_door.local import LOCAL_ISSUER, public_key
+
+            key = public_key(Path(os.environ[LOCAL_PUBLIC_KEY]))
+            _verifier = JwtVerifier(issuer=LOCAL_ISSUER, signing_key_for=lambda _token: key)
         if _verifier is None:
             _verifier = JwtVerifier(
                 issuer=os.environ[ISSUER],

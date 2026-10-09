@@ -84,6 +84,39 @@ services:
       localstack:
         condition: service_healthy
 
+  # The front door in front of the template agent. `make local` writes
+  # build/local/agents.json (the AgentPolicy) and the local signing key first.
+  # The binding value below is a fixed local placeholder, not a secret.
+  front-door: &front-door
+    image: agentcore-standards/lambda-front-door:local
+    build:
+      context: .
+      dockerfile: primitives/front-door/Dockerfile
+    environment:
+      <<: *local-aws
+      FRONT_DOOR_STATE_TABLE: front-door-state
+      FRONT_DOOR_AUDIT_TABLE: front-door-audit
+      FRONT_DOOR_AGENTS_FILE: /local-build/agents.json
+      FRONT_DOOR_SETTINGS: '{"quotas": {"user_daily": 100, "user_per_minute": 30}}'
+      FRONT_DOOR_LOCAL_BINDING_SECRET: local-only-binding-value-not-a-secret
+      FRONT_DOOR_LOCAL_RUNTIME_URL: http://template-agent:8080
+      FRONT_DOOR_LOCAL_PUBLIC_KEY_FILE: /local-build/local-signing.pub.pem
+    volumes:
+      - ./build/local:/local-build:ro
+    ports:
+      - "9002:8080"
+    depends_on:
+      tables:
+        condition: service_completed_successfully
+      template-agent:
+        condition: service_healthy
+
+  front-door-job:
+    <<: *front-door
+    command: ["agentcore_front_door.handlers.job.handler"]
+    ports:
+      - "9003:8080"
+
   # Lambda images carry the Runtime Interface Emulator:
   # POST http://localhost:9001/2015-03-31/functions/function/invocations
   tool-save-note:
