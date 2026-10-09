@@ -85,6 +85,7 @@ These are known gaps. None of them is being built yet. Research and sources are 
 19. **Agent list and model retirement.** We keep one list of every live agent and get a warning before a model it uses is switched off.
 20. **Smaller items.** Keep knowledge sources up to date. Run any code the agent writes in a sealed-off box. Have backups and a recovery plan. Make screens usable for everyone (the WCAG 2.2 accessibility standard). Add a "do you even need an agent?" question to the catalogue.
 21. **Teams and Slack.** People can talk to agents and approve their actions from inside Microsoft Teams or Slack, through one shared connector with a Teams version and a Slack version.
+22. **Reliable scheduled and background agents** (not built yet). Make scheduled and background agents reliable: track where each source stopped, flag failed reads, re-check items before posting, never post twice, and cap spend per run. [Building effective agent automations](https://claude.dev/blog/building-effective-agent-automations/)
 
 ## For developers
 
