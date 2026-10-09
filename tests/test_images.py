@@ -41,3 +41,19 @@ def test_dockerfile_must_name_one_base(tmp_path: Path) -> None:
     (folder / "Dockerfile").write_text("FROM python\n", encoding="utf-8")
     with pytest.raises(SystemExit, match="declare exactly one"):
         images.units(tmp_path)
+
+
+def test_scan_checks_every_image_and_reports_all_failures() -> None:
+    ran: list[list[str]] = []
+
+    def run(command: list[str]) -> int:
+        ran.append(command)
+        return 1 if command[-1].endswith("base-lambda:t") else 0
+
+    assert images.main(["scan", "--tag", "t"], run=run) == 1
+    assert [command[-1] for command in ran][:2] == [
+        "agentcore-standards/base-agent:t",
+        "agentcore-standards/base-lambda:t",
+    ]
+    assert len(ran) == 2 + len(images.units())
+    assert all("--ignore-unfixed" in command and "HIGH,CRITICAL" in command for command in ran)

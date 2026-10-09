@@ -12,6 +12,10 @@ the same digest-pinned parents. Build context is always the repo root.
 
     python scripts/images.py list
     python scripts/images.py build --platform linux/arm64 --tag arm64
+    python scripts/images.py scan --tag arm64
+
+``scan`` runs Trivy on every image and fails on a fixable HIGH or CRITICAL
+finding that ``.trivyignore.yaml`` does not list (or lists past its expiry).
 """
 
 from __future__ import annotations
@@ -70,6 +74,27 @@ def build_commands(
     return commands
 
 
+def scan_commands(images: Sequence[Image], *, tag: str, root: Path = ROOT) -> list[list[str]]:
+    return [
+        [
+            "trivy",
+            "image",
+            "--quiet",
+            "--scanners",
+            "vuln",
+            "--severity",
+            "HIGH,CRITICAL",
+            "--ignore-unfixed",
+            "--ignorefile",
+            str(root / ".trivyignore.yaml"),
+            "--exit-code",
+            "1",
+            image.ref(tag),
+        ]
+        for image in images
+    ]
+
+
 def main(argv: Sequence[str] | None = None, run: Callable[[list[str]], int] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -78,6 +103,9 @@ def main(argv: Sequence[str] | None = None, run: Callable[[list[str]], int] | No
     build.add_argument("--platform", default="linux/arm64")
     build.add_argument("--tag", default="arm64")
     build.add_argument("--only", action="append", default=[], help="unit name; repeat for more")
+    scan = commands.add_parser("scan", help="Trivy every image built with --tag")
+    scan.add_argument("--tag", default="arm64")
+    scan.add_argument("--only", action="append", default=[], help="unit name; repeat for more")
     args = parser.parse_args(argv)
 
     if args.command == "list":
@@ -91,11 +119,18 @@ def main(argv: Sequence[str] | None = None, run: Callable[[list[str]], int] | No
         print(f"unknown image: {', '.join(sorted(unknown))}", file=sys.stderr)
         return 1
     runner = run or _run
-    for command in build_commands([*bases(), *chosen], platform=args.platform, tag=args.tag):
+    if args.command == "scan":
+        planned = scan_commands([*bases(), *chosen], tag=args.tag)
+    else:
+        planned = build_commands([*bases(), *chosen], platform=args.platform, tag=args.tag)
+    failed = 0
+    for command in planned:
         print("+ " + " ".join(command), flush=True)
         if runner(command) != 0:
-            return 1
-    return 0
+            if args.command == "build":
+                return 1
+            failed += 1
+    return 1 if failed else 0
 
 
 def _unit(name: str, dockerfile: Path) -> Image:

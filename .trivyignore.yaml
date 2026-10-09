@@ -1,0 +1,29 @@
+# Time-boxed Trivy exceptions. CI fails on any fixable HIGH or CRITICAL finding
+# not listed here, and on these once `expired_at` passes. Each entry says why it
+# is accepted and when to look again. Re-pin docker/base-lambda when AWS
+# republishes public.ecr.aws/lambda/python:3.12, then delete the entry.
+vulnerabilities:
+  # Amazon Linux 2023 packages in the Lambda base. The pinned digest is the newest
+  # AWS published on 2026-10-09; the fixed builds are not in its locked release.
+  - id: CVE-2026-80230
+    statement: curl-minimal/libcurl-minimal in the AWS Lambda python:3.12 base; fix not yet in that image.
+    expired_at: 2026-11-09
+  - id: CVE-2026-89161
+    statement: pcre2 in the AWS Lambda python:3.12 base; fix not yet in that image.
+    expired_at: 2026-11-09
+  - id: CVE-2026-78367
+    statement: rpm in the AWS Lambda python:3.12 base; not called at run time.
+    expired_at: 2026-11-09
+  - id: CVE-2026-84233
+    statement: rpm in the AWS Lambda python:3.12 base; not called at run time.
+    expired_at: 2026-11-09
+  # Go stdlib in the Runtime Interface Emulator. /lambda-entrypoint.sh starts the
+  # emulator only when AWS_LAMBDA_RUNTIME_API is unset, so it runs locally, never in Lambda.
+  - id: CVE-2026-78667
+    paths: ["usr/local/bin/aws-lambda-rie"]
+    statement: aws-lambda-rie only runs outside Lambda (local compose).
+    expired_at: 2026-11-09
+  - id: CVE-2026-97031
+    paths: ["usr/local/bin/aws-lambda-rie"]
+    statement: aws-lambda-rie only runs outside Lambda (local compose).
+    expired_at: 2026-11-09

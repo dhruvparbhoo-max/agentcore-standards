@@ -84,6 +84,8 @@ files = [
   "templates/minimal-agent/src",
   "templates/agent-with-tools/src",
   "scripts/check_boundaries.py",
+  "scripts/images.py",
+  "docker/local/create_tables.py",
 ]
 mypy_path = "patterns/_template/agent:primitives/gateway-tools/_template:templates/minimal-agent/src:templates/agent-with-tools/src"
 
