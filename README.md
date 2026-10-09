@@ -14,7 +14,7 @@ An **agent** is a program that uses an AI model to carry out a task. It can look
 - **`infra/constructs/`** holds the cloud setup for each building block. Patterns use it to deploy themselves.
 - **`docs/`** holds the design notes and the catalogue for picking a pattern.
 
-A planned front door (not built yet) will handle verified login, a kill switch, shared model access, cost budgets, and an audit trail.
+The front door (`primitives/front-door/`) handles verified login, a kill switch, shared model access, cost budgets, and an audit trail. It has not been run against a live AWS account.
 
 Every pattern comes with the same kit:
 
