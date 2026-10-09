@@ -49,7 +49,7 @@ make local
 3. Run it on your laptop with the sample inputs in its `events/` folder. You don't need AWS for this.
 4. Copy the pattern folder, change the prompts, tools and exam to fit your job, and deploy it with its one deploy command.
 
-Patterns being built first are a company-policy question-and-answer agent (it answers questions from policy documents, quotes the section and source, and says so when it can't find the answer), a human approval agent (four ways to ask a person before acting) and an ambient agent (one that reacts to events on its own). Copy `patterns/_template/` to start a new one. Those three named patterns are still to come. `primitives/knowledge/` and `docs/catalog.md` are not in the repo yet. None of this has been tested on a live AWS account yet.
+`patterns/policy-qa/` is the company-policy question-and-answer agent. It answers from policy documents, quotes the section and source, and says so when it can't find the answer. The other two being built first are a human approval agent (four ways to ask a person before acting) and an ambient agent (one that reacts to events on its own). Copy `patterns/_template/` to start a new one. Those two named patterns are still to come. `primitives/knowledge/` and `docs/catalog.md` are not in the repo yet. None of this has been tested on a live AWS account yet.
 
 ## How changes are tested
 
