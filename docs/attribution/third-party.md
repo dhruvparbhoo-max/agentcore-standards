@@ -69,8 +69,15 @@ The references name an AWS document or a non-AgentCore sample for these gaps. Ea
 
 | This repo | Source | What was taken |
 | --- | --- | --- |
-| `patterns/policy-qa/` (messy fixture set, source-backed score) | aws-samples/sample-eval-first-building-enterprise-agents-with-agentcore (MIT-0) | Deliberately messy policies so a wrong source fails; groundedness 0.7 |
-| `patterns/policy-qa/agent/policy_qa/knowledge.py` (tenant/role filter) | aws-samples/sample-agentcore-and-multitenancy-blog (check the sample's licence at the repo) | Filter from the verified login, not from the model |
+| `patterns/policy-qa/` (messy fixture set, source-backed score) | EVAL-FIRST | Deliberately messy policies so a wrong source fails; groundedness 0.7 |
+| `patterns/policy-qa/agent/policy_qa/knowledge.py` (tenant/role filter) | TENANCY | Filter from the verified login, not from the model |
+
+## Step 6: human approval
+
+| This repo | Source | What was taken |
+| --- | --- | --- |
+| `patterns/human-approval/` pause and token | `primitives/approvals` plus the library page (hook / tool context / Step Functions / MCP elicitation) | One pause, one token, one expiry; the approver cannot be the actor |
+| `primitives/gateway-tools/submit_change/` | `_template` (`save_note`) | Idempotent conditional put, double-invoke test |
 
 ## BOISE substitutions
 

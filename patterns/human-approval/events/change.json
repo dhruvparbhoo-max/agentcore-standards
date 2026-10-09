@@ -1,0 +1,7 @@
+{
+  "description": "A change request. trigger is none, so this is the front door payload. The agent should pause.",
+  "session_id": "local-human-approval-session-00000000001",
+  "actor_id": "acme-user",
+  "payload": {"prompt": "please change the folder name to archive"},
+  "expect": {"status": "paused"}
+}

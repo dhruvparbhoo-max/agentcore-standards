@@ -1,0 +1,76 @@
+# Human approval. Field meanings: docs/design/library.md "pattern.yaml".
+name: human-approval
+owner: platform-team@example.com
+alert_route: email:platform-alerts@example.com
+runbook_url: docs/runbooks/README.md
+autonomy: assistant
+risk_tier: medium
+framework: create_agent
+deployment: docker
+trigger: none
+prompts:
+  system: prompts/system.md
+identity:
+  acts_as: user
+  scopes: {}
+model:
+  primary: eu.anthropic.claude-sonnet-4-5-20250929-v1:0
+  fallback: eu.anthropic.claude-haiku-4-5-20251001-v1:0
+  region_profile: eu
+  cache: "off"
+  team_tag: platform
+memory:
+  enabled: false
+  write_policy: "off"
+  namespace: "{agent_version}/{environment}"
+knowledge:
+  enabled: false
+tools:
+  from_registry:
+    - submit_change
+  cedar: policies/tools.cedar
+lifecycle:
+  idle_timeout_s: 300
+  max_lifetime_s: 1800
+  resumable: false
+  max_turns: 20
+  max_steps: 8
+  timeout_s: 120
+  max_retries: 3
+  session_id_min: 33
+context:
+  token_budget: 32000
+  compaction_at: 24000
+  clear_tool_results: true
+approval:
+  required_for:
+    - send
+    - spend
+    - delete
+    - change
+  expire_s: 86400
+  reviewers: 1
+output_schema: schemas/answer.json
+runtime:
+  protocol: HTTP
+  header_allowlist:
+    - Authorization
+    - X-Amzn-Bedrock-AgentCore-Runtime-Custom-Actor-Id
+  session_header: X-Amzn-Bedrock-AgentCore-Runtime-Session-Id
+data:
+  classification: internal
+  pii: false
+  region: eu-west-2
+  log_retention_days: 90
+  audit_retention_days: 365
+eval:
+  golden_set: eval/golden_set.json
+  threshold: 0.8
+  runs_per_case: 3
+cost:
+  max_usd_per_run: 0.25
+  monthly_cap_usd: 50
+  on_cap: pause
+release:
+  id: ""
+endpoint: DEV

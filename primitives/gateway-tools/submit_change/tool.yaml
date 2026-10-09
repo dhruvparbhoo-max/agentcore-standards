@@ -1,0 +1,23 @@
+# Gateway tool: record a requested change. action is change, so the agent pauses.
+name: submit_change
+description: Record a requested change after a person approves. The same idempotency key stores it once.
+version: 0.1.0
+owner: platform-team@example.com
+action: change
+idempotency: required
+handler: submit_change.handler.handler
+secrets: []
+input_schema:
+  type: object
+  additionalProperties: false
+  required: [idempotency_key, actor_id, summary]
+  properties:
+    idempotency_key: {type: string, minLength: 8, maxLength: 128}
+    actor_id: {type: string, minLength: 1}
+    summary: {type: string, minLength: 1, maxLength: 2000}
+output_schema:
+  type: object
+  required: [status, change_id]
+  properties:
+    status: {enum: [created, replayed]}
+    change_id: {type: string}
