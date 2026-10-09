@@ -30,6 +30,7 @@ members = [
   "primitives/front-door",
   "patterns/_template/agent",
   "patterns/policy-qa/agent",
+  "patterns/human-approval/agent",
   "infra/constructs",
   "templates/minimal-agent",
   "templates/agent-with-tools",
@@ -83,6 +84,8 @@ files = [
   "primitives/front-door/src",
   "patterns/_template/agent/template_agent",
   "patterns/policy-qa/agent/policy_qa",
+  "patterns/human-approval/agent/human_approval",
+  "primitives/gateway-tools/submit_change/submit_change",
   "infra/constructs/src",
   "primitives/gateway-tools/_template/template_tool",
   "templates/minimal-agent/src",
@@ -93,7 +96,7 @@ files = [
   "scripts/front_door_smoke.py",
   "docker/local/create_tables.py",
 ]
-mypy_path = "patterns/_template/agent:patterns/policy-qa/agent:primitives/gateway-tools/_template:templates/minimal-agent/src:templates/agent-with-tools/src"
+mypy_path = "patterns/_template/agent:patterns/policy-qa/agent:patterns/human-approval/agent:primitives/gateway-tools/submit_change:primitives/gateway-tools/_template:templates/minimal-agent/src:templates/agent-with-tools/src"
 
 [[tool.mypy.overrides]]
 module = [
@@ -124,6 +127,8 @@ testpaths = [
   "primitives/front-door/tests",
   "patterns/_template/tests",
   "patterns/policy-qa/tests",
+  "patterns/human-approval/tests",
+  "primitives/gateway-tools/submit_change/tests",
   "primitives/gateway-tools/_template/tests",
   "infra/constructs/tests",
   "templates/minimal-agent/tests",
@@ -133,6 +138,8 @@ testpaths = [
 pythonpath = [
   "patterns/_template/agent",
   "patterns/policy-qa/agent",
+  "patterns/human-approval/agent",
+  "primitives/gateway-tools/submit_change",
   "primitives/gateway-tools/_template",
   "templates/minimal-agent/src",
   "templates/agent-with-tools/src",
